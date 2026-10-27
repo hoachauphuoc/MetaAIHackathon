@@ -281,7 +281,7 @@ def test_returned_package_is_only_in_the_senders_inbox_and_keeps_its_history_on_
     r = client.post(f"/api/handoffs/{pid}/resend", json={"token": team["sales"], "values": GOOD})
     history = r.json["history"]
     assert history[0]["reason"] == "Fix the price" and r.json["return_reason"] is None
-    assert any(c.startswith("price: 1000") for c in history[0]["changes"])
+    assert any(c == "price: 1000 -> 1800" for c in history[0]["changes"])
     assert [p["id"] for p in inbox(client, team["ops2"])["packages"]] == [pid]
 
 

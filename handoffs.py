@@ -195,7 +195,9 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
     status, findings = run_check(values, params, today, ask, blocked)
-    changes = [f"{k}: {package['values'].get(k)} -> {values[k]}" for k in FIELDS
+    def shown(v):
+        return f"{v:g}" if isinstance(v, float) else v
+    changes = [f"{k}: {shown(package['values'].get(k))} -> {shown(values[k])}" for k in FIELDS
                if package["values"].get(k) != values[k]]
     # The next reviewer must see why it came back and what was fixed; this is about the document only.
     package["history"] = package.get("history", []) + [
