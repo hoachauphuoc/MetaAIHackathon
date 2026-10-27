@@ -336,16 +336,28 @@ def sort_key(package, me, today):
     return (group, not overdue(package, today), -rules.RANK[package["check_status"]])
 
 
+def visible_to(packages, me):
+    """The documents one person may see: their own, and what is open for their role. A returned
+    package is the sender's to fix; the receiving team has nothing to do with it."""
+    return [p for p in packages if p["from_person"] == me["token"]
+            or (p["state"] != "returned" and current_role(p) == me["role_id"])]
+
+
+def groups(packages, me, today):
+    """The named groups of documents one person sees, defined once for Today and the assistant."""
+    here = [p for p in packages if p["state"] == "sent" and current_role(p) == me["role_id"]]
+    return {
+        "waiting_for_me": [p for p in here if holder(p) == me["token"]],
+        "returned_to_me": [p for p in packages if p["state"] == "returned" and p["from_person"] == me["token"]],
+        "team_queue": [p for p in here if holder(p) is None and p["from_person"] != me["token"]],
+        "overdue": [p for p in packages if overdue(p, today) and current_role(p) == me["role_id"]],
+        "handled_by_teammates": [p for p in here if holder(p) not in (None, me["token"])],
+    }
+
+
 def today_summary(packages, me, today):
     """The Today panel: counts of documents, computed from current state only."""
-    waiting = [p for p in packages if p["state"] == "sent" and holder(p) == me["token"]
-               and current_role(p) == me["role_id"]]
-    returned = [p for p in packages if p["state"] == "returned" and p["from_person"] == me["token"]]
-    queue = [p for p in packages if p["state"] == "sent" and current_role(p) == me["role_id"]
-             and holder(p) is None and p["from_person"] != me["token"]]
-    late = [p for p in packages if overdue(p, today) and current_role(p) == me["role_id"]]
-    teammates = [p for p in packages if p["state"] == "sent" and current_role(p) == me["role_id"]
-                 and holder(p) not in (None, me["token"])]
-    return {"waiting_for_me": len(waiting), "returned_to_me": len(returned),
-            "in_team_queue": len(queue), "overdue_for_my_role": len(late),
-            "handled_by_teammates": len(teammates)}
+    g = groups(packages, me, today)
+    return {"waiting_for_me": len(g["waiting_for_me"]), "returned_to_me": len(g["returned_to_me"]),
+            "in_team_queue": len(g["team_queue"]), "overdue_for_my_role": len(g["overdue"]),
+            "handled_by_teammates": len(g["handled_by_teammates"])}

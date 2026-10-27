@@ -21,6 +21,7 @@ import tools
 import trust
 import vision
 import workflow
+import workspace
 
 
 def sse(event, data):
@@ -253,11 +254,26 @@ def create_app(db_path=None):
         messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "",
                                      effective_schema(db.get_company(person["sandbox_id"]) or {}))
         blocked = db.spend_model_call(person["sandbox_id"])
+        company = db.get_company(person["sandbox_id"]) or {"roles": []}
+        reader = workspace.Reader(db.list_packages(person["sandbox_id"]),
+                                  {**person, "token": str(body.get("token"))}, company["roles"],
+                                  datetime.date.today())
 
         def events():
             yield sse("meta", {"role": kit["role_title"], "model": muse.SPARK})
+            read = None if blocked else workspace.look(
+                messages, reader, ask, lambda: db.spend_model_call(person["sandbox_id"]))
+            if read and read["looked"]:
+                yield sse("read", {"looked": list(dict.fromkeys(read["looked"]))})
+            if read and read["text"]:
+                yield sse("delta", {"text": read["text"]})
+                yield sse("done", {"demo_mode": False, "demo_reason": None, "tokens_in": read["tokens_in"],
+                                   "tokens_out": read["tokens_out"], "cost_usd": read["cost_usd"]})
+                return
+            # Nothing usable from the tools: the plain streamed answer, or the labelled demo answer.
+            reason = blocked or (read and read["demo_reason"])
             source = iter(
-                [{"done": muse.demo_result(muse.SPARK, blocked)}]) if blocked else muse.stream(
+                [{"done": muse.demo_result(muse.SPARK, reason)}]) if reason else muse.stream(
                 muse.SPARK, messages)
             for item in source:
                 if "delta" in item:
@@ -425,9 +441,7 @@ def create_app(db_path=None):
         _, me, company = me_and_context()
         today = datetime.date.today()
         packages = db.list_packages(me["sandbox_id"])
-        # A returned package is the sender's to fix; the receiving team has nothing to do with it.
-        mine = [p for p in packages if p["from_person"] == me["token"]
-                or (p["state"] != "returned" and handoffs.current_role(p) == me["role_id"])]
+        mine = handoffs.visible_to(packages, me)
         mine.sort(key=lambda p: handoffs.sort_key(p, me, today))
         return jsonify(today=handoffs.today_summary(packages, me, today),
                        packages=[view_of(p, me, company) for p in mine])

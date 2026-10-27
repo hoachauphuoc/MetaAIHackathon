@@ -102,6 +102,14 @@ time at the company:
    and their own notes. The draft is private until they send it; it goes to their own team, or
    to the top role when nobody shares the role, and they cannot accept it themselves. When the
    owner removes them, the handover stays with the team.
+13. **The assistant reads your documents:** in chat, Spark can call three read-only tools (list
+   my documents by group, read one document, count them). Code scopes every result to what that
+   person sees in their inbox; no result names a person or carries a link; document text, notes
+   included, goes back to the model as untrusted data. The assistant only reads: claiming,
+   accepting, returning and sending stay with people. The answer says what it looked at, and
+   nothing is stored. Measured: 11 of 11 questions on a seeded inbox, 0 leaks, 0 followed
+   injections; equal to pasting the inbox into the prompt on accuracy and slightly dearer at this
+   size (MEASURED.md, set 8).
 
 ## Meta models used
 
@@ -130,6 +138,7 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | Morning brief: lists by rules, no names, no invented documents, owner only | `tests/test_brief.py` |
 | First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
 | Handover: private draft, own team, leaver cannot accept | `tests/test_handover.py` |
+| Chat tools: read-only, scoped to the person, no tokens or names, notes are data | `tests/test_workspace.py` |
 | Personal data masked in the browser | `tests/js/pii.test.mjs` |
 | Model text never becomes HTML | `scripts/check.ps1` fails on `innerHTML` and similar |
 
@@ -189,7 +198,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py [set1 ... set7]  # the measured sets (all, or the named ones)
+python scripts/measure.py [set1 ... set8]  # the measured sets (all, or the named ones)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

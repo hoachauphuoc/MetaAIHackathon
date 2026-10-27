@@ -34,7 +34,7 @@ async function saveHistory(history) {
 }
 
 // --- chat ------------------------------------------------------------------------------
-async function streamChat(message, history, onDelta) {
+async function streamChat(message, history, onDelta, onRead) {
   const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, message, history }) });
   if (res.status === 410) throw new Expired();
@@ -52,6 +52,7 @@ async function streamChat(message, history, onDelta) {
       const [eventLine, dataLine] = block.split('\n');
       const data = JSON.parse(dataLine.slice(6));
       if (eventLine === 'event: delta') onDelta(data.text);
+      if (eventLine === 'event: read') onRead(data.looked);
       if (eventLine === 'event: done') done = data;
     }
   }
@@ -80,8 +81,10 @@ function chatPanel(info) {
     const bubble = el('div', { class: 'msg assistant' });
     log.append(bubble);
     try {
+      // What the assistant read is shown with the answer and is not part of the saved history.
       const done = await streamChat(text, history, (chunk) => {
-        reply.content += chunk; bubble.textContent = reply.content; log.scrollTop = log.scrollHeight; });
+        reply.content += chunk; bubble.textContent = reply.content; log.scrollTop = log.scrollHeight; },
+      (looked) => bubble.after(el('p', { class: 'muted looked' }, `Looked at: ${looked.join(', ')}. Read only.`)));
       clear(notice, done && done.demo_mode ? demoNote(done.demo_reason) : null);
       history = [...history, user, reply];
       saveHistory(history);
@@ -104,7 +107,8 @@ function chatPanel(info) {
       side(`${info.role?.title || 'Role'} assistant`, res.data.role), side('Generic AI', res.data.generic)));
     compareBtn.disabled = false;
   } }, 'Compare with generic AI');
-  const jobs = el('div', { class: 'row' }, (info.assistant?.jobs || []).map((job) =>
+  const asks = ['What is waiting for me?', 'Which of my documents were returned, and why?'];
+  const jobs = el('div', { class: 'row' }, [...asks, ...(info.assistant?.jobs || [])].map((job) =>
     el('button', { onclick: () => { input.value = job; input.focus(); } }, job)));
   const clearBtn = el('button', { onclick: async () => { history = []; clear(log); saveHistory([]); } },
     'Clear my chat on this device');
