@@ -9,6 +9,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 import assistants
 import chart
 import chat
+import handoff_schema
 import handoffs
 import muse
 import rules
@@ -114,6 +115,8 @@ def create_app(db_path=None):
         previous = db.get_company(sandbox_id)
         company = {"company": body.get("company", ""), "size": size, "roles": roles,
                    "version": (previous or {}).get("version", 0) + 1}
+        if (previous or {}).get("handoff_schema"):
+            company["handoff_schema"] = previous["handoff_schema"]
         db.save_company(sandbox_id, company)
         return jsonify(company), 201
 
@@ -122,6 +125,35 @@ def create_app(db_path=None):
         if not company:
             raise LookupError("Accept the chart first.")
         return company
+
+    @app.post("/api/handoff-schema/generate")
+    def generate_handoff_schema():
+        """A proposal only: nothing is stored until the owner accepts it."""
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        answers = (request.get_json(silent=True) or {}).get("answers") or {}
+        return jsonify(handoff_schema.generate(answers, company["roles"],
+                                               lambda: db.spend_model_call(sandbox_id)))
+
+    @app.get("/api/handoff-schema")
+    def current_handoff_schema():
+        company = accepted_company(current_sandbox())
+        return jsonify(schema=effective_schema(company),
+                       standard={k: v for k, v in rules.SCHEMAS.items()})
+
+    @app.post("/api/handoff-schema")
+    def accept_handoff_schema():
+        """The owner accepts a form; the server validates again whatever the browser sends."""
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        schema = (request.get_json(silent=True) or {}).get("schema")
+        errors = rules.validate_handoff_schema(schema)
+        if errors:
+            return jsonify(error="invalid_form", errors=errors), 400
+        company["handoff_schema"] = handoff_schema.canonical(schema)
+        company["version"] = company.get("version", 0) + 1
+        db.save_company(sandbox_id, company)
+        return jsonify(schema=company["handoff_schema"]), 201
 
     @app.errorhandler(LookupError)
     def not_found(e):
@@ -175,7 +207,8 @@ def create_app(db_path=None):
         role = next((r for r in company.get("roles", []) if r["id"] == person["role_id"]), None)
         return jsonify(company=company.get("company"), role=role, assistant=kit,
                        display_name=person["display_name"],
-                       role_titles={r["id"]: r["title"] for r in company.get("roles", [])})
+                       role_titles={r["id"]: r["title"] for r in company.get("roles", [])},
+                       handoff_schema=effective_schema(company))
 
     @app.post("/api/chat")
     def chat_route():
