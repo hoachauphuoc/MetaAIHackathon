@@ -13,6 +13,7 @@ import muse
 import rules
 import store
 import tools
+import trust
 import workflow
 
 
@@ -24,6 +25,7 @@ def create_app(db_path=None):
     app = Flask(__name__)
     app.config["STORE"] = store.Store(db_path or os.environ.get("DB_PATH", ":memory:"))
     db = app.config["STORE"]
+    muse.cost_listener = db.add_cost
 
     @app.errorhandler(store.SandboxExpired)
     def sandbox_expired(_):
@@ -208,6 +210,11 @@ def create_app(db_path=None):
         except ValueError as e:
             return jsonify(error="blocked", message=str(e)), 409
         return jsonify(receipt=receipt)
+
+    @app.get("/api/trust")
+    def trust_page():
+        names = [r[0] for r in db.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
+        return jsonify(trust.build(names))
 
     @app.get("/api/company")
     def company():

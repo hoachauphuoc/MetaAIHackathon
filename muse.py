@@ -22,6 +22,9 @@ PRICES = {
 
 log = logging.getLogger("muse")
 
+# Called with the USD cost of every real model answer; the app points it at the daily ceiling.
+cost_listener = None
+
 
 class Refused(ValueError):
     """The model id is not on the allow-list, or would train on employee data."""
@@ -113,6 +116,8 @@ def complete(model, messages, reasoning_effort="low", private=False, **kwargs):
                       latency_ms=int((time.time() - start) * 1000))
         log.info("model=%s in=%d out=%d cost=%.5f ms=%d", model, out["tokens_in"],
                  out["tokens_out"], out["cost_usd"], out["latency_ms"])
+        if cost_listener:
+            cost_listener(out["cost_usd"])
         return out
 
     log.warning("model=%s failed: %s", model, error)
@@ -144,4 +149,6 @@ def stream(model, messages, reasoning_effort="minimal", **kwargs):
                   latency_ms=int((time.time() - start) * 1000))
     log.info("model=%s in=%d out=%d cost=%.5f ms=%d streamed=%s", model, tokens_in, tokens_out,
              out["cost_usd"], out["latency_ms"], started)
+    if cost_listener:
+        cost_listener(out["cost_usd"])
     yield {"done": out}

@@ -1,13 +1,16 @@
 """SQLite storage. Every company row hangs off a sandbox id and every read filters by it,
 so one sandbox can never see another's data (principle 6). There is no table for chat.
 """
+import datetime
 import json
+import os
 import secrets
 import sqlite3
 import time
 
 SANDBOX_TTL = 24 * 3600
 MODEL_CALL_CAP = 40  # per sandbox; hitting it returns the labelled demo answer
+DAILY_CEILING_USD = float(os.environ.get("DAILY_CEILING_USD", "10"))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sandboxes (
@@ -23,6 +26,7 @@ CREATE TABLE IF NOT EXISTS people (
     token TEXT PRIMARY KEY,
     sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
     role_id TEXT NOT NULL, display_name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active');
+CREATE TABLE IF NOT EXISTS daily_cost (day TEXT PRIMARY KEY, usd REAL NOT NULL);
 """
 
 
@@ -60,10 +64,24 @@ class Store:
                                   (sandbox_id,)).fetchone()
             if row is None or row[0]:
                 return "Muse switched off"
+            if self.cost_today() >= DAILY_CEILING_USD:
+                return "Demo limit reached"
             cur = self.db.execute(
                 "UPDATE sandboxes SET model_calls = model_calls + 1 WHERE id = ? AND model_calls < ?",
                 (sandbox_id, MODEL_CALL_CAP))
         return None if cur.rowcount == 1 else "Demo limit reached"
+
+    def cost_today(self):
+        row = self.db.execute("SELECT usd FROM daily_cost WHERE day = ?",
+                              (datetime.date.today().isoformat(),)).fetchone()
+        return row[0] if row else 0.0
+
+    def add_cost(self, usd):
+        """Money only, never who or what: this is the service-wide daily ceiling."""
+        with self.db:
+            self.db.execute("INSERT INTO daily_cost VALUES (?, ?) ON CONFLICT(day) "
+                            "DO UPDATE SET usd = usd + excluded.usd",
+                            (datetime.date.today().isoformat(), usd))
 
     def set_muse_off(self, sandbox_id, off):
         self.require_sandbox(sandbox_id)

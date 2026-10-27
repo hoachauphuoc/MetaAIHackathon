@@ -49,4 +49,14 @@ def test_switching_muse_off_blocks_calls_with_its_own_label(s):
 
 def test_no_table_can_hold_chat(s):
     tables = {r[0] for r in s.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    assert tables == {"sandboxes", "companies", "assistants", "people"}
+    assert tables == {"sandboxes", "companies", "assistants", "people", "daily_cost"}
+
+
+def test_daily_ceiling_stops_all_sandboxes(s, monkeypatch):
+    monkeypatch.setattr(store, "DAILY_CEILING_USD", 1.0)
+    a, b = s.create_sandbox(), s.create_sandbox()
+    assert s.spend_model_call(a) is None
+    s.add_cost(0.6)
+    s.add_cost(0.6)
+    assert s.spend_model_call(a) == "Demo limit reached"
+    assert s.spend_model_call(b) == "Demo limit reached"
