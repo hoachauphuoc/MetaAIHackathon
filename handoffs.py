@@ -65,9 +65,21 @@ def run_check(values, params, today, ask, blocked):
         findings.append({"status": "needs_human_check", "source": "model", "message":
                          "The assistant's check did not finish. A person must check this package."})
         return rules.combine_status(floor, "needs_human_check"), findings
+    # The model is shown the rules result for context; a finding that only repeats it is noise.
     findings += [{"status": verdict["status"], "source": "model", "message": m}
-                 for m in verdict["findings"]]
+                 for m in verdict["findings"] if "rule check" not in m.lower()]
     return rules.combine_status(floor, verdict["status"]), findings
+
+
+def due_problem(due, today):
+    """Why this answer-needed-by date cannot be used, or None."""
+    if not due:
+        return None
+    try:
+        day = datetime.date.fromisoformat(due)
+    except (TypeError, ValueError):
+        return "The answer-needed-by date is not a valid date."
+    return "The answer-needed-by date is in the past." if day < today else None
 
 
 def send(sandbox_id, sender, to_role, raw_values, due, db, kits, roles, params, today,
@@ -78,11 +90,8 @@ def send(sandbox_id, sender, to_role, raw_values, due, db, kits, roles, params, 
     missing = [f for f in FIELDS if values.get(f) in (None, "")]
     if missing:
         raise Refused(400, "Missing: " + ", ".join(missing) + ".")
-    if due:
-        try:
-            datetime.date.fromisoformat(due)
-        except (TypeError, ValueError):
-            raise Refused(400, "The due date is not a valid date.")
+    if due_problem(due, today):
+        raise Refused(400, due_problem(due, today))
     status, findings = run_check(values, params, today, ask, blocked)
     package = {
         "id": secrets.token_urlsafe(8), "from_role": sender["role_id"], "from_person": sender["token"],
@@ -116,6 +125,8 @@ def view(package, me, today, roles_by_id):
         "id": package["id"], "from_role": package["from_role"],
         "from_title": roles_by_id.get(package["from_role"], package["from_role"]),
         "to_role": here, "to_title": roles_by_id.get(here, here), "chain": package["chain"],
+        "chain_titles": [roles_by_id.get(r, r) for r in package["chain"]],
+        "held_by_teammate": holder(package) is not None and not mine and open_to_my_role,
         "stage": package["stage"], "state": package["state"], "values": package["values"],
         "check_status": package["check_status"], "findings": package["findings"],
         "due": package["due"], "overdue": overdue(package, today),
@@ -174,16 +185,18 @@ def decide(package, me, decision, reason):
         raise Refused(400, "Decision must be accept or return.")
 
 
-def resend(package, me, raw_values, params, today, ask, blocked, roles):
+def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
     if package["state"] != "returned" or package["from_person"] != me["token"]:
         raise Refused(409, "Only the sender can resend a returned package.")
     values = clean_values(raw_values)
     missing = [f for f in FIELDS if values.get(f) in (None, "")]
     if missing:
         raise Refused(400, "Missing: " + ", ".join(missing) + ".")
+    if due_problem(due, today):
+        raise Refused(400, due_problem(due, today))
     status, findings = run_check(values, params, today, ask, blocked)
     package.update(values=values, check_status=status, findings=findings, state="sent",
-                   stage=0, claimed_by=None, return_reason=None,
+                   stage=0, claimed_by=None, return_reason=None, due=due or None,
                    chain=approval_chain(package["chain"][0], values, params, roles))
 
 
@@ -195,5 +208,8 @@ def today_summary(packages, me, today):
     queue = [p for p in packages if p["state"] == "sent" and current_role(p) == me["role_id"]
              and holder(p) is None and p["from_person"] != me["token"]]
     late = [p for p in packages if overdue(p, today) and current_role(p) == me["role_id"]]
+    teammates = [p for p in packages if p["state"] == "sent" and current_role(p) == me["role_id"]
+                 and holder(p) not in (None, me["token"])]
     return {"waiting_for_me": len(waiting), "returned_to_me": len(returned),
-            "in_team_queue": len(queue), "overdue_for_my_role": len(late)}
+            "in_team_queue": len(queue), "overdue_for_my_role": len(late),
+            "handled_by_teammates": len(teammates)}

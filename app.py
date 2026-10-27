@@ -174,7 +174,8 @@ def create_app(db_path=None):
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         role = next((r for r in company.get("roles", []) if r["id"] == person["role_id"]), None)
         return jsonify(company=company.get("company"), role=role, assistant=kit,
-                       display_name=person["display_name"])
+                       display_name=person["display_name"],
+                       role_titles={r["id"]: r["title"] for r in company.get("roles", [])})
 
     @app.post("/api/chat")
     def chat_route():
@@ -299,9 +300,14 @@ def create_app(db_path=None):
     def precheck():
         """Private pre-check: nothing is stored."""
         body, me, company = me_and_context()
+        today = datetime.date.today()
         status, findings = handoffs.run_check(
-            handoffs.clean_values(body.get("values") or {}), tools.PARAMS, datetime.date.today(),
+            handoffs.clean_values(body.get("values") or {}), tools.PARAMS, today,
             ask, lambda: db.spend_model_call(me["sandbox_id"]))
+        problem = handoffs.due_problem(body.get("due"), today)
+        if problem:  # "Check first" must agree with "Send", which refuses this
+            findings.insert(0, {"status": "blocked", "source": "rules", "message": problem})
+            status = "blocked"
         return jsonify(status=status, findings=findings)
 
     @app.get("/api/inbox")
@@ -343,8 +349,9 @@ def create_app(db_path=None):
     def resend_package(package_id):
         body, me, company = me_and_context()
         package = package_for(me, package_id)
-        handoffs.resend(package, me, body.get("values") or {}, tools.PARAMS, datetime.date.today(),
-                        ask, lambda: db.spend_model_call(me["sandbox_id"]), company["roles"])
+        handoffs.resend(package, me, body.get("values") or {}, body.get("due"), tools.PARAMS,
+                        datetime.date.today(), ask, lambda: db.spend_model_call(me["sandbox_id"]),
+                        company["roles"])
         db.save_package(me["sandbox_id"], package)
         return jsonify(view_of(package, me, company))
 

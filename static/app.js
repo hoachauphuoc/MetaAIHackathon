@@ -168,7 +168,7 @@ async function showAssistants() {
       el('h3', {}, 'Skills'), el('ul', { class: 'plain' }, kit.skills.map((s) => el('li', {}, s))),
       kit.removed_skills.length ? el('p', { class: 'errors' }, 'Removed by the rules: ', kit.removed_skills.join(', ')) : null,
       el('h3', {}, 'Hands work to'), el('ul', { class: 'plain' }, kit.handoffs.length
-        ? kit.handoffs.map((h) => el('li', {}, `${h.to_role}: ${h.what}`)) : el('li', {}, 'Nobody')),
+        ? kit.handoffs.map((h) => el('li', {}, `${roles.find((r) => r.id === h.to_role)?.title || h.to_role}: ${h.what}`)) : el('li', {}, 'Nobody')),
       el('div', { class: 'row' }, el('button', { onclick: guard(async () => {
         const inv = await api('/api/invites', { method: 'POST', sandbox, body: {
           role_id: role.id, display_name: `${role.title} ${Math.random().toString(36).slice(2, 5)}` } });

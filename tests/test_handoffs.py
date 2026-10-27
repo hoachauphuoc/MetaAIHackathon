@@ -130,8 +130,14 @@ def test_price_above_the_limit_goes_to_the_top_role_after_the_receiver(client, t
 
 
 def test_overdue_is_a_property_of_the_package(client, team):
-    yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
-    send(client, team["sales"], due=yesterday)
+    soon = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+    pid = send(client, team["sales"], due=soon).json["id"]
+    assert inbox(client, team["ops"])["packages"][0]["overdue"] is False
+    db = client.application.config["STORE"]
+    sandbox = db.person_by_token(team["sales"])["sandbox_id"]
+    package = db.get_package(sandbox, pid)  # time passes: the date falls behind
+    package["due"] = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+    db.save_package(sandbox, package)
     got = inbox(client, team["ops"])
     assert got["packages"][0]["overdue"] is True and got["today"]["overdue_for_my_role"] == 1
 
@@ -210,3 +216,57 @@ def test_sent_documents_of_a_leaver_stay_with_the_company(client, team):
 def test_people_list_has_no_activity_or_metrics(client, team):
     person = client.get("/api/people", headers=team["h"]).json["people"][0]
     assert set(person) == {"id", "role_id", "display_name", "status"}
+
+
+def test_resend_stores_the_edited_values_and_a_new_due_date(client, team):
+    pid = send(client, team["sales"], values={"price": 1000, "cost": 1500}).json["id"]
+    claim(client, team["ops"], pid)
+    decide(client, team["ops"], pid, "return", "Fix the price")
+    later = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    r = client.post(f"/api/handoffs/{pid}/resend",
+                    json={"token": team["sales"], "values": {**GOOD, "price": 2100}, "due": later})
+    assert r.json["values"]["price"] == 2100 and r.json["due"] == later
+    assert r.json["check_status"] != "blocked"
+
+
+def test_a_past_answer_needed_by_date_is_refused_everywhere(client, team):
+    yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+    sent = send(client, team["sales"], due=yesterday)
+    assert sent.status_code == 400 and "in the past" in sent.json["message"]
+    pre = client.post("/api/precheck", json={"token": team["sales"], "values": GOOD, "due": yesterday}).json
+    assert pre["status"] == "blocked" and "in the past" in pre["findings"][0]["message"]
+    pid = send(client, team["sales"]).json["id"]
+    claim(client, team["ops"], pid)
+    decide(client, team["ops"], pid, "return", "x")
+    r = client.post(f"/api/handoffs/{pid}/resend",
+                    json={"token": team["sales"], "values": GOOD, "due": yesterday})
+    assert r.status_code == 400
+
+
+def test_view_names_roles_by_title_and_hides_who_holds_a_package(client, team):
+    pid = send(client, team["sales"], values={"price": 60000, "cost": 40000}).json["id"]
+    claim(client, team["ops"], pid)
+    mine = inbox(client, team["ops"])["packages"][0]
+    other = inbox(client, team["ops2"])
+    seen = other["packages"][0]
+    assert seen["chain_titles"] == ["Ops Lead", "MD"] and seen["held_by_teammate"] is True
+    assert mine["held_by_teammate"] is False and mine["i_hold_it"] is True
+    assert seen["can_claim"] is False and other["today"]["handled_by_teammates"] == 1
+    assert other["today"]["in_team_queue"] == 0
+    assert team["ops"] not in str(seen)
+
+
+def test_invite_returns_role_titles(client, team):
+    titles = client.get(f"/api/invite/{team['sales']}").json["role_titles"]
+    assert titles["ops"] == "Ops Lead"
+
+
+def test_model_finding_that_only_repeats_the_rules_is_dropped(client, team, monkeypatch):
+    monkeypatch.delenv("FAKE_AI", raising=False)
+    text = ('{"status": "clear", "findings": ["Rule check result is blocked", "Customer name looks '
+            'unusual"], "summary": "x"}')
+    monkeypatch.setattr(muse, "complete", lambda *a, **k: muse._result(muse.SPARK, False, text=text))
+    r = send(client, team["sales"], values={"price": 1000, "cost": 1500}).json
+    messages = [f["message"] for f in r["findings"]]
+    assert "Customer name looks unusual" in messages
+    assert not any("rule check" in m.lower() for m in messages)

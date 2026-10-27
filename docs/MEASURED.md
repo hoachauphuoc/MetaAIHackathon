@@ -1,6 +1,6 @@
 # Measured results
 
-Produced by `python scripts/measure.py` on 2026-10-27 with the real models `muse-wonder-1.0` and
+Produced by `python scripts/measure.py` on 2026-10-27 (rerun the same day after the handoff-check prompt changed; counts were identical) with the real models `muse-wonder-1.0` and
 `muse-spark-1.3`. The data is synthetic and the samples are small, so these are raw counts, not
 percentages. Anyone with a Meta key can rerun the script.
 
@@ -13,8 +13,8 @@ than the company has) with no repair.
 | Result | Value |
 |---|---|
 | Passed the rules on the first try | 10 of 10 |
-| Total cost of the 10 charts | USD 0.137 |
-| Median latency (5 in parallel) | 5.8 s |
+| Total cost of the 10 charts | USD 0.134 |
+| Median latency (5 in parallel) | 5.9 s |
 
 On the demo survey run alone through the UI, one chart took 18 s and cost USD 0.038. Latency
 varies, so the UI shows a progress line and a labelled Template stands in if Wonder fails.

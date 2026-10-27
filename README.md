@@ -69,7 +69,7 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
 
 | Model | Used for | Measured |
 |---|---|---|
-| `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.8 s; USD 0.0137 per chart |
+| `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
 | `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output) | Brief about USD 0.005; chat answer USD 0.0015 |
 | Open-weights Muse Spark Open (Private mode) | Finance-step tool call and check, through a configurable provider | **Not enabled in this build**, see Limits |
 
