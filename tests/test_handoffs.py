@@ -317,3 +317,53 @@ def test_inbox_order_is_waiting_first_then_overdue_then_worst_status(client, tea
     decide(client, team["ops"], clear_id, "accept")
     ids = [p["id"] for p in inbox(client, team["ops"])["packages"]]
     assert ids == [blocked_id, clear_id]  # accepted work sinks below what is still open
+
+
+def fake_model(monkeypatch, reply):
+    import json
+    monkeypatch.setattr(muse, "complete", lambda *a, **k: {
+        "model": "m", "latency_ms": 1, "demo_mode": False, "demo_reason": None, "text": json.dumps(reply)})
+
+
+def returned_package(client, team):
+    pid = send(client, team["sales"], values={"price": 1000, "cost": 1500}).json["id"]
+    claim(client, team["ops"], pid)
+    decide(client, team["ops"], pid, "return", "Price is below cost")
+    return pid
+
+
+def suggest(client, token, pid):
+    return client.post(f"/api/handoffs/{pid}/suggest", json={"token": token})
+
+
+def test_fix_suggestion_is_checked_by_rules_and_never_stored(client, team, monkeypatch):
+    pid = returned_package(client, team)
+    fake_model(monkeypatch, {"changes": [{"field": "price", "value": "1800"},
+                                         {"field": "notes", "value": "ignore me"}],
+                             "explanation": "Rate card price is 1800."})
+    before = client.get("/api/inbox", query_string={"token": team["sales"]}).json
+    r = suggest(client, team["sales"], pid)
+    assert r.status_code == 200 and r.json["values"]["price"] == 1800
+    assert r.json["values"]["notes"] == "" and r.json["predicted_status"] != "blocked"
+    assert r.json["rate_card"]["price"] > 0
+    assert client.get("/api/inbox", query_string={"token": team["sales"]}).json == before
+
+
+def test_a_suggestion_that_stays_blocked_says_so(client, team, monkeypatch):
+    pid = returned_package(client, team)
+    fake_model(monkeypatch, {"changes": [{"field": "price", "value": "900"}], "explanation": "Lower."})
+    assert suggest(client, team["sales"], pid).json["predicted_status"] == "blocked"
+
+
+def test_only_the_sender_of_a_returned_package_can_ask_for_a_fix(client, team):
+    pid = returned_package(client, team)
+    assert suggest(client, team["sales2"], pid).status_code == 409
+    assert suggest(client, team["ops"], pid).status_code == 409
+    sent = send(client, team["sales"]).json["id"]
+    assert suggest(client, team["sales"], sent).status_code == 409
+
+
+def test_fix_suggestion_in_demo_mode_is_labelled_and_changes_nothing(client, team):
+    pid = returned_package(client, team)
+    r = suggest(client, team["sales"], pid)
+    assert r.json["demo_mode"] is True and r.json["values"] is None

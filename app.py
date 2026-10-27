@@ -357,6 +357,14 @@ def create_app(db_path=None):
         db.save_package(me["sandbox_id"], package)
         return jsonify(view_of(package, me, company))
 
+    @app.post("/api/handoffs/<package_id>/suggest")
+    def suggest_fix(package_id):
+        body, me, company = me_and_context()
+        package = package_for(me, package_id)
+        return jsonify(handoffs.suggest_fix(
+            package, me, datetime.date.today(), tools.PARAMS, ask,
+            lambda: db.spend_model_call(me["sandbox_id"])))
+
     @app.get("/api/trust")
     def trust_page():
         return jsonify(trust.build(db.table_names()))

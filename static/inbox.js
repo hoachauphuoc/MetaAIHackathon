@@ -1,6 +1,6 @@
 // Inbox and Today: documents waiting between roles. Everything shown is about packages, never people.
 import { confirmMask } from '/static/mask.js';
-import { api, badge, clear, el, statusBadge } from '/static/ui.js';
+import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
 export const ROUTES = ['Hanoi-Haiphong', 'Hanoi-Danang', 'Haiphong-Hochiminh', 'Danang-Hochiminh'];
 
@@ -47,7 +47,10 @@ function valueFields(prefix, v = {}, due = '') {
     const notes = await confirmMask(values.notes, maskBox);
     return notes === null ? null : { values: { ...values, notes }, due: f.due.value || null };
   };
-  return { rows, read };
+  const fill = (v) => {
+    for (const key of ['customer', 'route', 'pallets', 'price', 'cost', 'delivery_date']) f[key].value = v[key];
+  };
+  return { rows, read, fill };
 }
 
 export function inboxPanel(info, token) {
@@ -84,7 +87,26 @@ export function inboxPanel(info, token) {
     if (p.can_resend) {
       const fields = valueFields(`fix-${p.id}`, v, p.due);
       const maskBox = el('div');
-      fix = el('details', { open: true }, el('summary', {}, 'Fix and resend'), ...fields.rows, maskBox,
+      const suggestion = el('div', { role: 'status' });
+      const suggest = el('button', { onclick: async () => {
+        suggest.disabled = true;
+        clear(suggestion, el('p', { class: 'progress' }, 'The assistant is reading the reason...'));
+        const res = await api(`/api/handoffs/${p.id}/suggest`, { method: 'POST', body: { token } });
+        suggest.disabled = false;
+        if (!res.ok) { clear(suggestion, el('p', { class: 'errors' }, res.data.message)); return; }
+        const s = res.data;
+        if (s.demo_mode) {
+          clear(suggestion, demoNote(s.demo_reason));
+          return;
+        }
+        fields.fill(s.values);
+        clear(suggestion, el('p', {}, el('strong', {}, 'Suggested by the assistant. You decide. '), s.explanation),
+          s.rate_card ? el('p', { class: 'muted' },
+            `Rate card for ${s.rate_card.pallets} pallets: price USD ${s.rate_card.price}, cost USD ${s.rate_card.cost}.`) : null,
+          el('p', {}, 'The rules would say: ', statusBadge(s.predicted_status)));
+      } }, 'Suggest a fix');
+      fix = el('details', { open: true }, el('summary', {}, 'Fix and resend'),
+        el('div', { class: 'row' }, suggest), suggestion, ...fields.rows, maskBox,
         el('div', { class: 'row' }, el('button', { class: 'primary', onclick: async () => {
           const got = await fields.read(maskBox);
           if (got) await call(`/api/handoffs/${p.id}/resend`, got);
