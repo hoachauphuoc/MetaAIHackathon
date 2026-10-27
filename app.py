@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Flask, Response, jsonify, request, send_from_directory
 
 import assistants
+import brief
 import chart
 import chat
 import handoff_schema
@@ -198,6 +199,16 @@ def create_app(db_path=None):
     @app.get("/api/people")
     def people():
         return jsonify(people=db.list_people(current_sandbox()))
+
+    @app.get("/api/owner/brief")
+    def owner_brief():
+        """Read-only: approvals stay in the role inbox, where maker-checker applies."""
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        # "Team member" is the default label, not a name; ruling it out would drop ordinary lines.
+        names = [p["display_name"] for p in db.list_people(sandbox_id) if p["display_name"] != "Team member"]
+        return jsonify(brief.write(brief.facts(db.list_packages(sandbox_id), company["roles"], datetime.date.today()),
+                                   names, lambda: db.spend_model_call(sandbox_id), ask))
 
     @app.post("/api/people/<int:person_id>/offboard")
     def offboard(person_id):

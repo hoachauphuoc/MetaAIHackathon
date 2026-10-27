@@ -1,6 +1,6 @@
 // Owner flow: survey -> org chart -> edit and accept -> assistants -> invite links.
 import { photoPicker } from '/static/photo.js';
-import { api, badge, clear, demoNote, el, Expired } from '/static/ui.js';
+import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
 const app = document.getElementById('app');
 const FIELDS = [
@@ -158,7 +158,7 @@ async function showAssistants() {
         drawPeople();
       }) }, 'Remove'))));
   }
-  app.append(handoffFormSection());
+  app.append(handoffFormSection(), briefSection());
   await Promise.all(roles.map(guard(async (role) => {
     const res = await api('/api/assistants', { method: 'POST', sandbox, body: { role_id: role.id } });
     if (!res.ok) { clear(cards[role.id], el('h3', {}, role.title), el('p', { class: 'errors' }, res.data.message)); return; }
@@ -181,6 +181,35 @@ async function showAssistants() {
   })));
   app.querySelector('.progress').textContent = 'Each person opens their own link and lands in their role. ' +
     'Open the Sales link to run a new order through Sales, Operations and Finance.';
+}
+
+// Read-only on purpose: signing happens in the top role's inbox, where maker-checker applies.
+function briefSection() {
+  const out = el('div');
+  const headings = { needs_signature: 'Needs the top role to sign', stuck: 'Stuck', today: 'Moving today' };
+  const write = el('button', { onclick: guard(async () => {
+    write.disabled = true;
+    clear(out, el('p', { class: 'progress', role: 'status' }, 'Reading the open documents...'));
+    const res = await api('/api/owner/brief', { sandbox });
+    write.disabled = false;
+    if (!res.ok) { clear(out, el('p', { class: 'errors' }, res.data.message)); return; }
+    const b = res.data;
+    const c = b.counts;
+    const lists = Object.entries(headings).filter(([key]) => b.lists[key].length).map(([key, title]) => [
+      el('h3', {}, title),
+      el('ul', { class: 'plain' }, b.lists[key].map((i) => el('li', {}, el('strong', {}, `${i.document}: `), i.line, ' ',
+        statusBadge(i.status), i.overdue ? [' ', badge('Overdue', 'bad')] : null))),
+      b.more[key] ? el('p', { class: 'muted' }, `and ${b.more[key]} more`) : null]);
+    clear(out, b.demo_mode ? demoNote(b.demo_reason) : badge('Lines written by Muse Spark, lists sorted by the rules', 'ok'),
+      el('div', { class: 'row' }, badge(`${c.open} open`, 'info'), badge(`${c.returned} returned`, c.returned ? 'warn' : 'info'),
+        badge(`${c.overdue} overdue`, c.overdue ? 'bad' : 'info'), badge(`${c.accepted} accepted`, 'ok')),
+      Object.keys(b.by_role).length ? el('p', { class: 'muted' },
+        'Waiting by role: ' + Object.entries(b.by_role).map(([role, n]) => `${role} ${n}`).join(', ') + '.') : null,
+      lists.length ? lists.flat() : el('p', {}, 'Nothing is waiting. Enjoy your coffee.'));
+  }) }, 'Write my morning brief');
+  return el('section', {}, el('h2', {}, 'Morning brief'),
+    el('p', { class: 'muted' }, 'Open documents in three short lists. It is about documents and roles, never about people. ' +
+      'To sign, use the top role\'s own link.'), el('div', { class: 'row' }, write), out);
 }
 
 // The handoff form is data: Muse proposes it, the rules validate it, the owner accepts it.

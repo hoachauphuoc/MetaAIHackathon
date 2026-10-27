@@ -117,7 +117,7 @@ def send(sandbox_id, sender, to_role, raw_values, due, db, kits, roles, params, 
         "chain": approval_chain(to_role, values, params, roles, schema), "stage": 0, "state": "sent",
         "claimed_by": None, "values": values, "check_status": status,
         "findings": findings, "summary": summary, "due": due or None, "return_reason": None,
-        "schema": schema,
+        "schema": schema, "sent_on": today.isoformat(),
     }
     db.save_package(sandbox_id, package)
     return package
@@ -232,6 +232,7 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
         {"reason": package["return_reason"], "changes": changes}]
     package.update(values=values, check_status=status, findings=findings, summary=summary,
                    state="sent", stage=0, claimed_by=None, return_reason=None, due=due or None,
+                   sent_on=today.isoformat(),
                    chain=approval_chain(package["chain"][0], values, params, roles, schema))
 
 
