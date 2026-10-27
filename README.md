@@ -141,7 +141,7 @@ OWASP Top 10 for LLM applications, as applied here:
 | LLM02 Sensitive information disclosure | No message table, no message logging, Referrer-Policy `no-referrer` because the invite token sits in the URL |
 | LLM05 Improper output handling | Strict JSON schemas, rules validate every output, `textContent` only in the UI, CSP `script-src 'self'` |
 | LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; signed receipts |
-| LLM10 Unbounded consumption | 40 model calls per sandbox, a daily cost ceiling, 24-hour sandboxes |
+| LLM10 Unbounded consumption | 80 model calls per sandbox, a daily cost ceiling, 24-hour sandboxes |
 
 ## Built during the hackathon
 

@@ -106,6 +106,13 @@ clean renders, not phone photos of real paper: expect worse on blurry, dark or h
 | Fields wrong | price 2, cost 2 | none |
 | Median latency, total cost | 3.6 s, USD 0.0198 | 3.3 s, USD 0.0199 |
 
+Harder variant, same day: the same ten sheets rendered like a quick phone photo (blur 1 px, lower
+contrast, a shadow across the page, twice the tilt plus 3 degrees, JPEG quality 45). Result: 60 of
+60 fields, 10 of 10 sheets, median 2.1 s; both variants together cost USD 0.0395. It is still a
+synthetic degradation, not a camera: creases, glare, handwriting and cut-off edges are not
+covered. The page scales a photo to a 1600 px long edge in the browser before sending, so a
+3 to 6 MB phone photo is no longer refused.
+
 The first run lost four amounts because the model sometimes kept the thousands separator
 ("7,200") and code could not parse it. Code now strips currency words and separators from numeric
 fields before the rules check them (`vision.read_values`); the model was not changed. Every value

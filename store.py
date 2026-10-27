@@ -11,7 +11,7 @@ import threading
 import time
 
 SANDBOX_TTL = 24 * 3600
-MODEL_CALL_CAP = 40  # per sandbox; hitting it returns the labelled demo answer
+MODEL_CALL_CAP = 80  # per sandbox; hitting it returns the labelled demo answer
 DAILY_CEILING_USD = float(os.environ.get("DAILY_CEILING_USD", "10"))
 
 SCHEMA = """

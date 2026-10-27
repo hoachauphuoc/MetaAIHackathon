@@ -257,32 +257,26 @@ SHEETS = [  # (customer, route, pallets, price, cost, date as written, ISO date,
     ("Thang Long Print", "Hanoi-Haiphong", 12, 2160, 1800, "19 Nov 2026", "2026-11-19", "Courier New", "table", 3)]
 
 
-def sheet_html(s):
+def sheet_html(s, phone=False):
+    """phone=True degrades the render like a quick phone photo: blur, low contrast, a shadow, more tilt."""
     customer, route, pallets, price, cost, written, _, font, layout, tilt = s
     rows = [("Customer", customer), ("Route", route), ("Pallets", pallets), ("Price", f"USD {price:,}"),
             ("Our cost", f"USD {cost:,}"), ("Delivery", written)]
     body = ("<table>" + "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rows) + "</table>"
             if layout == "table" else "".join(f"<p>{k}: <u>{v}</u></p>" for k, v in rows))
-    return (f"<html><body style='margin:0;background:#d9d4c7'><div style='width:560px;margin:30px;padding:24px;"
-            f"background:#fffdf5;font-family:\"{font}\";font-size:20px;transform:rotate({tilt}deg)'>"
-            "<h2>JOB SHEET - pallet quote</h2>" + body.replace("<td>", "<td style='border:1px solid #555;padding:6px'>")
-            + "<p style='margin-top:30px'>Signed: ____________</p></div></body></html>")
+    tilt = tilt * 2 + (3 if phone else 0)
+    effect = "filter:blur(1px) contrast(.85);" if phone else ""
+    shadow = ("<div style='position:absolute;inset:0;background:linear-gradient(100deg,rgba(0,0,0,0) 40%,"
+              "rgba(0,0,0,.35));pointer-events:none'></div>" if phone else "")
+    return (f"<html><body style='margin:0;background:#d9d4c7;position:relative;{effect}'>"
+            f"<div style='width:560px;margin:30px;padding:24px;background:#fffdf5;font-family:\"{font}\";"
+            f"font-size:20px;transform:rotate({tilt}deg)'><h2>JOB SHEET - pallet quote</h2>"
+            + body.replace("<td>", "<td style='border:1px solid #555;padding:6px'>")
+            + f"<p style='margin-top:30px'>Signed: ____________</p></div>{shadow}</body></html>")
 
 
-def set6():
-    import base64
-    from playwright.sync_api import sync_playwright
+def read_sheets(images):
     import vision
-    spent = []
-    muse.cost_listener = spent.append
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 720, "height": 600})
-        images = []
-        for s in SHEETS:
-            page.set_content(sheet_html(s))
-            images.append("data:image/png;base64," + base64.b64encode(page.screenshot()).decode())
-        browser.close()
 
     def one(pair):
         s, image = pair
@@ -299,8 +293,28 @@ def set6():
             "fields_exact": sum(sum(m.values()) for m in matches), "fields_total": sum(len(m) for m in matches),
             "sheets_fully_correct": sum(all(m.values()) for m in matches),
             "misread_by_field": {k: sum(not m[k] for m in matches) for k in matches[0]},
-            "median_latency_s": round(sorted(t for _, t, _ in rows)[len(rows) // 2], 1),
-            "cost_usd": round(sum(spent), 4)}
+            "median_latency_s": round(sorted(t for _, t, _ in rows)[len(rows) // 2], 1)}
+
+
+def set6():
+    import base64
+    from playwright.sync_api import sync_playwright
+    spent = []
+    muse.cost_listener = spent.append
+    images = {"clean": [], "phone": []}
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 720, "height": 600})
+        for s in SHEETS:
+            page.set_content(sheet_html(s))
+            images["clean"].append("data:image/png;base64," + base64.b64encode(page.screenshot()).decode())
+            page.set_content(sheet_html(s, phone=True))
+            shot = page.screenshot(type="jpeg", quality=45)
+            images["phone"].append("data:image/jpeg;base64," + base64.b64encode(shot).decode())
+        browser.close()
+    out = {name: read_sheets(imgs) for name, imgs in images.items()}
+    out["cost_usd"] = round(sum(spent), 4)
+    return out
 
 
 BRIEF_ROLES = [{"id": "md", "title": "Managing Director", "reports_to": None, "headcount": 1},
