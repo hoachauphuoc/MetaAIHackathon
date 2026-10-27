@@ -10,3 +10,4 @@ __pycache__/
 *key*.txt
 recordings/
 node_modules/
+demo_video/
