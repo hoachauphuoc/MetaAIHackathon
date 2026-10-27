@@ -100,6 +100,8 @@ export function inboxPanel(info, token) {
         `Approval path: ${p.chain_titles.join(', then ')}.`),
       p.held_by_teammate ? el('p', { class: 'muted' }, 'A teammate in your team is handling this.') : null,
       p.return_reason ? el('p', { class: 'errors' }, `Returned: ${p.return_reason}`) : null,
+      p.history.map((h) => el('p', { class: 'muted' },
+        `Returned before: ${h.reason}. ` + (h.changes.length ? `Then changed ${h.changes.join('; ')}.` : 'Sent again unchanged.'))),
       ...findingsBlock(p.findings),
       why ? el('p', { class: 'errors', role: 'status' }, `You cannot accept this: ${why} Return it with a reason.`) : null,
       el('div', { class: 'row' }, actions), fix);

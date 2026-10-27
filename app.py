@@ -315,8 +315,9 @@ def create_app(db_path=None):
         _, me, company = me_and_context()
         today = datetime.date.today()
         packages = db.list_packages(me["sandbox_id"])
+        # A returned package is the sender's to fix; the receiving team has nothing to do with it.
         mine = [p for p in packages if p["from_person"] == me["token"]
-                or handoffs.current_role(p) == me["role_id"]]
+                or (p["state"] != "returned" and handoffs.current_role(p) == me["role_id"])]
         return jsonify(today=handoffs.today_summary(packages, me, today),
                        packages=[view_of(p, me, company) for p in mine])
 

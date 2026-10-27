@@ -130,7 +130,7 @@ def view(package, me, today, roles_by_id):
         "stage": package["stage"], "state": package["state"], "values": package["values"],
         "check_status": package["check_status"], "findings": package["findings"],
         "due": package["due"], "overdue": overdue(package, today),
-        "return_reason": package["return_reason"],
+        "return_reason": package["return_reason"], "history": package.get("history", []),
         "i_sent_it": package["from_person"] == me["token"], "i_hold_it": mine,
         "can_claim": open_to_my_role and holder(package) is None
                      and package["from_person"] != me["token"],
@@ -195,6 +195,11 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
     status, findings = run_check(values, params, today, ask, blocked)
+    changes = [f"{k}: {package['values'].get(k)} -> {values[k]}" for k in FIELDS
+               if package["values"].get(k) != values[k]]
+    # The next reviewer must see why it came back and what was fixed; this is about the document only.
+    package["history"] = package.get("history", []) + [
+        {"reason": package["return_reason"], "changes": changes}]
     package.update(values=values, check_status=status, findings=findings, state="sent",
                    stage=0, claimed_by=None, return_reason=None, due=due or None,
                    chain=approval_chain(package["chain"][0], values, params, roles))
