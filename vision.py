@@ -6,6 +6,7 @@ Values read from a photo are only a proposal that fills the form; the person che
 import base64
 import binascii
 import json
+import re
 
 import handoff_schema
 import handoffs
@@ -74,7 +75,11 @@ def read_values(data_url, schema, params, today, blocked):
         raw = json.loads(call["text"])
     except ValueError:
         return {**empty, "demo_mode": True, "demo_reason": "Muse returned an unreadable reading"}
-    values = handoffs.clean_values(raw if isinstance(raw, dict) else {}, schema)
+    raw = raw if isinstance(raw, dict) else {}
+    # Paper says "USD 7,200"; the rules need 7200. Code strips the decoration, the model is not trusted to.
+    numeric = {f["key"] for f in schema["fields"] if f["type"] in rules.NUMERIC}
+    raw = {k: re.sub(r"[^0-9.\-]", "", v) if k in numeric and isinstance(v, str) else v for k, v in raw.items()}
+    values = handoffs.clean_values(raw, schema)
     values.pop("notes", None)  # notes are the person's own words, never read from a photo
     status, findings = rules.check_package(values, params, today, schema)
     return {"values": values, "predicted_status": status, "findings": findings,

@@ -29,8 +29,9 @@ def open_documents(packages, token, titles):
             continue
         schema = handoffs.package_schema(p)
         here = titles.get(handoffs.current_role(p), handoffs.current_role(p))
-        where = (f"returned to you: {p['return_reason']}" if p["state"] == "returned"
-                 else f"you hold it for the {here} team" if p["claimed_by"] == token
+        # Worded for the next person, who reads the handover, not for the one leaving.
+        where = (f"returned for a fix: {p['return_reason']}" if p["state"] == "returned"
+                 else f"taken from the {here} queue, not decided yet" if p["claimed_by"] == token
                  else f"waiting for {here}")
         docs.append({"document": str(p["values"].get(schema["title_field"]) or schema["title"])[:80],
                      "form": schema["title"], "where": where, "status": p["check_status"]})

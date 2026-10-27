@@ -81,12 +81,34 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    shown. Every package keeps the form it was sent with. The model never writes interface code:
    the page draws inputs from the form definition and the CSP stays `script-src 'self'`.
 
+The same rule (code decides, the model writes, a person approves) runs through a person's whole
+time at the company:
+
+9. **Paper to form:** a person photographs a paper job sheet and Spark vision fills the handoff
+   form. Code checks the file (png, jpeg or webp by its first bytes, at most 4 MB), strips
+   currency and separators from amounts, and the rules re-check every value before the person
+   sends. The owner can also design the company's form from a photo of the paper form in use
+   today. Photos are sent once and never stored. Measured: 60 of 60 fields on 10 rendered sheets.
+10. **Morning brief:** the owner presses one button and sees the open documents in three short
+   lists (needs the top role, stuck, moving today) with counts by role. Code puts each document
+   in its list; Spark writes one line per document and never sees names or links; a line for an
+   unknown document or naming a person is replaced by a line written by code. Read-only: signing
+   still happens in the top role's inbox.
+11. **First three days:** a new person opens their link and gets a three-day plan built from
+   their role's assistant: what they send and to whom, which assistant skill helps. Only the
+   kit's skills survive; a labelled template stands in without Muse. The plan and the ticks
+   stay in that browser, so nobody, the owner included, sees how far they got.
+12. **Kind exit:** a person leaving drafts a handover from the documents they still hold or sent
+   and their own notes. The draft is private until they send it; it goes to their own team, or
+   to the top role when nobody shares the role, and they cannot accept it themselves. When the
+   owner removes them, the handover stays with the team.
+
 ## Meta models used
 
 | Model | Used for | Measured |
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
-| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output) | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package |
+| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields, median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines |
 | Open-weights Muse Spark Open (Private mode) | Finance-step tool call and check, through a configurable provider | **Not enabled in this build**, see Limits |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
@@ -104,6 +126,10 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | A person approves every handoff; the model cannot lower a rules status | `tests/test_workflow.py`, `tests/test_tools_and_gate.py` |
 | Private never falls back to the standard API | `tests/test_workflow.py`, `tests/test_trust.py` |
 | Handoffs: maker-checker, claim, blocked cannot be accepted, leaver gets 410 | `tests/test_handoffs.py` |
+| Photos: type checked by bytes, never stored, values re-checked by rules | `tests/test_vision.py` |
+| Morning brief: lists by rules, no names, no invented documents, owner only | `tests/test_brief.py` |
+| First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
+| Handover: private draft, own team, leaver cannot accept | `tests/test_handover.py` |
 | Personal data masked in the browser | `tests/js/pii.test.mjs` |
 | Model text never becomes HTML | `scripts/check.ps1` fails on `innerHTML` and similar |
 
@@ -137,9 +163,13 @@ OWASP Top 10 for LLM applications, as applied here:
   `/trust` shows "Built with Muse Spark Open".
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
-- Spark vision, voice and web search are not used. `scripts/smoke.py` shows the API accepts an
-  image but my one-pixel test was inconclusive, the `web_search` tool type is rejected (HTTP 400)
-  in the form I tried, and voice was not tried.
+- Photo reading was measured on clean rendered sheets, not phone photos of real, creased or
+  handwritten paper; expect misreads there. Photos are not masked for personal data. Voice and
+  web search are not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried,
+  and voice was not tried.
+- The morning brief, first-days plan and handover draft were each run against the real model
+  only a few times (see MEASURED); the handover is worded by the model from the person's own
+  notes, which the person must read before sending.
 - Measured sets are synthetic and small; the model layer of the gate was not tested for
   contradictions the rules cannot see.
 - The handoff form is generic; the fixed Sales, Operations, Finance order demo and its rate card
@@ -147,7 +177,7 @@ OWASP Top 10 for LLM applications, as applied here:
   field is masked for personal data in the browser; the other text fields are not, so do not type
   personal names into them (also stated on `/trust`).
 - Not built: Shadow/Assist/Primary modes, handoffs to a named person, manager assignment, parallel
-  approval, CSV import, export, document intake, voice, Day-1 guide, org advisor.
+  approval, CSV import, export, voice, org advisor.
 - PII masking is pattern-based and cannot detect names (shown to the user and on `/trust`).
 
 ## Run it
@@ -159,7 +189,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py [set1 ... set5]  # the measured sets (all, or the named ones)
+python scripts/measure.py [set1 ... set7]  # the measured sets (all, or the named ones)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

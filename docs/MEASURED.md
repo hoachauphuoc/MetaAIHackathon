@@ -92,7 +92,50 @@ Handover" with seven fields, a margin rule on patient charge versus treatment co
 | Median fields per form | 7 |
 | Median latency, total cost | 10.0 s, USD 0.0748 |
 
-## Set 6: personal-data masking in the browser
+## Set 6: reading paper documents from a photo
+
+`python scripts/measure.py set6`, 2026-10-27, Spark 1.3 vision. Ten job sheets rendered by
+Playwright with known values: five fonts (one handwriting-like, Segoe Print), table and line
+layouts, tilted up to 3 degrees, amounts written "USD 7,200", dates written two ways. These are
+clean renders, not phone photos of real paper: expect worse on blurry, dark or handwritten pages.
+
+| Result | First run | After the fix below |
+|---|---|---|
+| Fields read exactly (6 per sheet) | 56 of 60 | 60 of 60 |
+| Sheets fully correct | 8 of 10 | 10 of 10 |
+| Fields wrong | price 2, cost 2 | none |
+| Median latency, total cost | 3.6 s, USD 0.0198 | 3.3 s, USD 0.0199 |
+
+The first run lost four amounts because the model sometimes kept the thousands separator
+("7,200") and code could not parse it. Code now strips currency words and separators from numeric
+fields before the rules check them (`vision.read_values`); the model was not changed. Every value
+only fills the form: the person checks each field and the rules check them again before sending.
+
+## Set 7: the owner's morning brief
+
+`python scripts/measure.py set7`, 2026-10-27, Spark 1.3. Twenty seeded documents (19 open: 4
+waiting for the top role, 9 stuck, 6 moving), 4 people's names in the company, 5 runs. Code
+decides which list each document is in; the model writes one line per document and never sees
+names or link tokens. Names cannot leak through the model here by construction; the count checks
+the whole output anyway.
+
+| Result | Value |
+|---|---|
+| Lines shown (5 per list, 5 runs) | 70 |
+| Lines written by Spark | 70 of 70 |
+| Model lines dropped (unknown id) or replaced (named a person) | 0 |
+| People's names in the output | 0 |
+| Link tokens in the output | 0 |
+| Median latency, total cost | 3.8 s, USD 0.0218 |
+
+## Day-One plan and handover draft (one real run each)
+
+2026-10-27, Spark 1.3, a Sales Lead kit. Day-One: 3 days of 3 to 4 tasks, every skill one the kit
+has, 0 skills removed, 6.2 s. Handover draft: both open documents listed with where they stand,
+the person's two notes kept as written, who-to-ask from the role's handoffs, 4.2 s. Total USD
+0.0107. One run is a smoke test, not a measurement.
+
+## Personal-data masking in the browser (no model)
 
 `node --test tests/js` on `tests/js/pii_cases.json`: 40 sentences written by the project author,
 so they test the patterns, not an independent sample.

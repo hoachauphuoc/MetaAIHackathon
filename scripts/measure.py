@@ -7,7 +7,11 @@ Set 3: the fix assistant on 10 returned packages (rules re-check what it propose
 Set 4: role playbook + company rules in the chat prompt versus the plain role prompt, 10 questions
 with facts that code checks by string match (no model judge).
 Set 5: Spark designs a handoff form for 10 companies in different trades; the rules validate it.
-Usage: python scripts/measure.py [set1 ... set5]   (no argument runs all; key via META_API_KEY
+Set 6: Spark vision reads 10 rendered paper job sheets (fonts, a handwriting-like font, tilt,
+two layouts); exact field matches against the known values.
+Set 7: the owner's morning brief on 19 open seeded documents, 5 runs: model lines dropped, people
+names and link tokens in the output.
+Usage: python scripts/measure.py [set1 ... set7]   (no argument runs all; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures
@@ -240,9 +244,118 @@ def set5():
             "cost_usd": round(sum(r.get("cost_usd", 0) for r in own), 4)}
 
 
+SHEETS = [  # (customer, route, pallets, price, cost, date as written, ISO date, font, layout, tilt)
+    ("Minh Anh Bakery", "Hanoi-Haiphong", 10, 1800, 1500, "2026-11-20", "2026-11-20", "Georgia", "table", 0),
+    ("Song Hong Textiles", "Hanoi-Danang", 24, 7200, 6100, "20 Nov 2026", "2026-11-20", "Arial", "lines", -2),
+    ("Blue Lotus Cafe", "Haiphong-Hochiminh", 4, 520, 470, "2026-12-01", "2026-12-01", "Segoe Print", "lines", 3),
+    ("Pho Viet Kitchens", "Danang-Hochiminh", 15, 9750, 8400, "5 Dec 2026", "2026-12-05", "Courier New", "table", 0),
+    ("Green Field Farms", "Hanoi-Haiphong", 32, 5760, 4800, "2026-11-28", "2026-11-28", "Segoe Print", "table", -3),
+    ("Lam Son Hardware", "Hanoi-Danang", 8, 2400, 2350, "14 Nov 2026", "2026-11-14", "Times New Roman", "lines", 1),
+    ("Saigon Paper Co", "Haiphong-Hochiminh", 50, 6500, 5900, "2026-11-30", "2026-11-30", "Arial", "table", 2),
+    ("Hoa Binh Ceramics", "Danang-Hochiminh", 6, 3900, 3360, "2 Dec 2026", "2026-12-02", "Georgia", "lines", 0),
+    ("Mekong Rice Mill", "Haiphong-Hochiminh", 40, 5200, 4700, "2026-11-25", "2026-11-25", "Segoe Print", "lines", -1),
+    ("Thang Long Print", "Hanoi-Haiphong", 12, 2160, 1800, "19 Nov 2026", "2026-11-19", "Courier New", "table", 3)]
+
+
+def sheet_html(s):
+    customer, route, pallets, price, cost, written, _, font, layout, tilt = s
+    rows = [("Customer", customer), ("Route", route), ("Pallets", pallets), ("Price", f"USD {price:,}"),
+            ("Our cost", f"USD {cost:,}"), ("Delivery", written)]
+    body = ("<table>" + "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rows) + "</table>"
+            if layout == "table" else "".join(f"<p>{k}: <u>{v}</u></p>" for k, v in rows))
+    return (f"<html><body style='margin:0;background:#d9d4c7'><div style='width:560px;margin:30px;padding:24px;"
+            f"background:#fffdf5;font-family:\"{font}\";font-size:20px;transform:rotate({tilt}deg)'>"
+            "<h2>JOB SHEET - pallet quote</h2>" + body.replace("<td>", "<td style='border:1px solid #555;padding:6px'>")
+            + "<p style='margin-top:30px'>Signed: ____________</p></div></body></html>")
+
+
+def set6():
+    import base64
+    from playwright.sync_api import sync_playwright
+    import vision
+    spent = []
+    muse.cost_listener = spent.append
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 720, "height": 600})
+        images = []
+        for s in SHEETS:
+            page.set_content(sheet_html(s))
+            images.append("data:image/png;base64," + base64.b64encode(page.screenshot()).decode())
+        browser.close()
+
+    def one(pair):
+        s, image = pair
+        started = time.time()
+        out = vision.read_values(image, rules.DEFAULT_SCHEMA, tools.PARAMS, TODAY, lambda: None)
+        truth = {"customer": s[0], "route": s[1], "pallets": s[2], "price": float(s[3]), "cost": float(s[4]),
+                 "delivery_date": s[6]}
+        got = out["values"] or {}
+        return {k: got.get(k) == v for k, v in truth.items()}, time.time() - started, out["demo_mode"]
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        rows = list(pool.map(one, zip(SHEETS, images)))
+    matches = [m for m, _, _ in rows]
+    return {"sheets": len(rows), "answered": sum(not d for _, _, d in rows),
+            "fields_exact": sum(sum(m.values()) for m in matches), "fields_total": sum(len(m) for m in matches),
+            "sheets_fully_correct": sum(all(m.values()) for m in matches),
+            "misread_by_field": {k: sum(not m[k] for m in matches) for k in matches[0]},
+            "median_latency_s": round(sorted(t for _, t, _ in rows)[len(rows) // 2], 1),
+            "cost_usd": round(sum(spent), 4)}
+
+
+BRIEF_ROLES = [{"id": "md", "title": "Managing Director", "reports_to": None, "headcount": 1},
+               {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 3},
+               {"id": "ops", "title": "Operations Lead", "reports_to": "md", "headcount": 3},
+               {"id": "finance", "title": "Finance Lead", "reports_to": "md", "headcount": 2}]
+BRIEF_PEOPLE = ["Lan Pham", "Duc Tran", "Mai Nguyen", "Quang Le"]
+
+
+def brief_packages():
+    out = []
+    for i in range(20):
+        values = {**clean_package(i), "customer": f"Customer {i}"}
+        chain = ["ops", "md"] if i % 5 == 0 else ["ops"] if i % 2 else ["finance"]
+        status = ["clear", "needs_attention", "needs_human_check", "blocked"][i % 4]
+        p = handoffs.new_package({"role_id": "sales", "token": f"person-{i % 3}"}, chain, values, status, [], "",
+                                 (TODAY - datetime.timedelta(days=1)).isoformat() if i % 7 == 0 else None,
+                                 rules.DEFAULT_SCHEMA, TODAY - datetime.timedelta(days=i % 6))
+        if i % 5 == 0:
+            p["stage"] = 1
+        if i % 9 == 4:
+            p.update(state="returned", return_reason="The price is under the floor.")
+        if i == 19:
+            p["state"] = "accepted"
+        out.append(p)
+    return out
+
+
+def set7():
+    import brief
+    facts = brief.facts(brief_packages(), BRIEF_ROLES, TODAY)
+
+    def one(_):
+        started = time.time()
+        return brief.write(facts, BRIEF_PEOPLE, lambda: None,
+                           lambda m, **kw: muse.complete(muse.SPARK, m, **kw)), time.time() - started
+    spent = []
+    muse.cost_listener = spent.append
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        rows = list(pool.map(one, range(5)))
+    items = [i for r, _ in rows for name in brief.LISTS for i in r["lists"][name]]
+    text = json.dumps([r for r, _ in rows])
+    return {"runs": len(rows), "open_documents": len(facts["items"]), "lines_shown": len(items),
+            "lines_written_by_muse": sum(i["written_by"] == "muse" for i in items),
+            "model_lines_dropped_or_replaced": sum(r["replaced_lines"] for r, _ in rows),
+            "people_names_in_output": sum(text.count(n) for n in BRIEF_PEOPLE),
+            "link_tokens_in_output": text.count("person-"),
+            "median_latency_s": round(sorted(t for _, t in rows)[len(rows) // 2], 1),
+            "cost_usd": round(sum(spent), 4)}
+
+
 SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
         "set3": ("set3_fix_assistant", set3), "set4": ("set4_playbook", set4),
-        "set5": ("set5_handoff_form", set5)}
+        "set5": ("set5_handoff_form", set5), "set6": ("set6_photo_reading", set6),
+        "set7": ("set7_morning_brief", set7)}
 
 if __name__ == "__main__":
     out = {"date": datetime.date.today().isoformat(), "models": [muse.WONDER, muse.SPARK]}

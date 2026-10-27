@@ -70,6 +70,13 @@ def test_a_photo_fills_the_form_and_the_rules_check_the_reading(client, team, mo
     assert seen[0][0]["content"][1]["image_url"]["url"] == PNG
 
 
+def test_amounts_written_with_currency_and_separators_are_read_as_numbers(client, team, monkeypatch):
+    fake(monkeypatch, {"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "24 pallets",
+                       "price": "USD 7,200", "cost": "$6,100.50", "delivery_date": NEXT_WEEK})
+    r = client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": PNG})
+    assert (r.json["values"]["pallets"], r.json["values"]["price"], r.json["values"]["cost"]) == (24, 7200, 6100.5)
+
+
 def test_a_misread_value_is_caught_by_the_rules_not_trusted(client, team, monkeypatch):
     fake(monkeypatch, {"customer": "X", "route": "Hanoi Haiphong", "pallets": "ten", "price": "1800",
                        "cost": "1500", "delivery_date": "12/11/2026"})
