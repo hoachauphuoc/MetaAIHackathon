@@ -96,7 +96,7 @@ export function inboxPanel(info, token) {
       el('p', {}, statusBadge(p.check_status), ' ', badge(stateLabel(p), 'info'), ' ',
         p.overdue ? badge('Overdue', 'bad') : null),
       el('p', { class: 'muted' },
-        `From ${p.from_title}. Price USD ${v.price}, cost USD ${v.cost}, answer needed by ${p.due || 'not set'}. ` +
+        `From ${p.from_title}. Price USD ${v.price}, cost USD ${v.cost}, ${p.due ? `answer needed by ${p.due}` : 'no deadline'}. ` +
         `Approval path: ${p.chain_titles.join(', then ')}.`),
       p.held_by_teammate ? el('p', { class: 'muted' }, 'A teammate in your team is handling this.') : null,
       p.return_reason ? el('p', { class: 'errors' }, `Returned: ${p.return_reason}`) : null,
