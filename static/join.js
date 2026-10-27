@@ -141,7 +141,7 @@ function workflowPanel() {
   box.append(el('p', { class: 'muted' }, 'Each step runs one assistant. You approve every handoff; ' +
     'a blocked step can never be approved.'),
   el('label', { for: 'customer' }, 'Customer'), f.customer,
-  el('label', { for: 'route' }, 'Route'), f.route,
+  el('label', { for: 'route' }, 'Shipping route'), f.route,
   el('label', { for: 'pallets' }, 'Pallets'), f.pallets,
   el('label', { for: 'date' }, 'Delivery date'), f.delivery_date,
   el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
