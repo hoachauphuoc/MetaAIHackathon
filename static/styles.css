@@ -31,6 +31,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
 .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--bg); }
+img.photo { display: block; max-width: 100%; max-height: 240px; margin: 8px 0; border: 1px solid #ccc; }
 .badge { display: inline-block; font-size: 14px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
 .badge-ok { background: var(--ok-bg); color: var(--ok); }
 .badge-warn { background: var(--warn-bg); color: var(--warn); }

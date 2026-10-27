@@ -66,34 +66,41 @@ def from_model(raw):
                        "percent": None, "usd": None} for r in raw.get("rules", [])]}
 
 
+def fallback(industry, reason):
+    return {"schema": template_for(industry), "errors": [], "source": "template",
+            "demo_mode": True, "demo_reason": reason}
+
+
+def from_call(call, industry):
+    """Turn a model answer into a usable form, or the labelled template for the industry."""
+    if call["demo_mode"]:
+        return fallback(industry, call["demo_reason"])
+    try:
+        schema = from_model(json.loads(call["text"]))
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return fallback(industry, "Muse returned an unreadable form")
+    if rules.validate_handoff_schema(schema):
+        return fallback(industry, "Muse's form broke a rule")
+    return {"schema": schema, "errors": [], "source": "muse", "demo_mode": False, "demo_reason": None,
+            "cost_usd": call["cost_usd"], "latency_ms": call["latency_ms"]}
+
+
+def response_format():
+    return {"type": "json_schema",
+            "json_schema": {"name": "handoff_form", "strict": True, "schema": FORM_SCHEMA}}
+
+
 def generate(answers, roles, blocked=lambda: None):
     """Return {schema, errors, source, demo_mode, demo_reason}. Never stored here."""
     industry = clean_text((answers or {}).get("industry"), 40).lower()
-
-    def fallback(reason):
-        return {"schema": template_for(industry), "errors": [], "source": "template",
-                "demo_mode": True, "demo_reason": reason}
-
     reason = blocked()
     if reason:
-        return fallback(reason)
+        return fallback(industry, reason)
     prompt = "Survey answers:\n" + "\n".join(
         f"- {k}: {clean_text(v)}" for k, v in (answers or {}).items()
         if k in ("company_name", "industry", "main_work", "departments", "tools", "time_sinks"))
     prompt += "\nRoles: " + ", ".join(clean_text(r.get("title"), 60) for r in roles)
     call = muse.complete(
         muse.SPARK, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
-        reasoning_effort="low", max_tokens=2000,
-        response_format={"type": "json_schema",
-                         "json_schema": {"name": "handoff_form", "strict": True, "schema": FORM_SCHEMA}})
-    if call["demo_mode"]:
-        return fallback(call["demo_reason"])
-    try:
-        schema = from_model(json.loads(call["text"]))
-    except (ValueError, KeyError, TypeError, AttributeError):
-        return fallback("Muse returned an unreadable form")
-    errors = rules.validate_handoff_schema(schema)
-    if errors:
-        return fallback("Muse's form broke a rule")
-    return {"schema": schema, "errors": [], "source": "muse", "demo_mode": False, "demo_reason": None,
-            "cost_usd": call["cost_usd"], "latency_ms": call["latency_ms"]}
+        reasoning_effort="low", max_tokens=2000, response_format=response_format())
+    return from_call(call, industry)

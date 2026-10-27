@@ -16,6 +16,7 @@ import rules
 import store
 import tools
 import trust
+import vision
 import workflow
 
 
@@ -27,6 +28,7 @@ def create_app(db_path=None):
     app = Flask(__name__)
     app.config["STORE"] = store.Store(db_path or os.environ.get("DB_PATH", ":memory:"))
     db = app.config["STORE"]
+    app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # a 4 MB photo as base64, plus the form
     muse.cost_listener = db.add_cost
 
     @app.errorhandler(store.SandboxExpired)
@@ -154,6 +156,24 @@ def create_app(db_path=None):
         company["version"] = company.get("version", 0) + 1
         db.save_company(sandbox_id, company)
         return jsonify(schema=company["handoff_schema"]), 201
+
+    @app.errorhandler(vision.BadImage)
+    def bad_image(e):
+        return jsonify(error="bad_image", message=str(e)), 400
+
+    @app.errorhandler(413)
+    def too_large(e):
+        return jsonify(error="too_large", message="The photo is larger than 4 MB."), 413
+
+    @app.post("/api/handoff-schema/from-photo")
+    def handoff_schema_from_photo():
+        """A proposal from a photo of the paper form; stored only through the accept route."""
+        sandbox_id = current_sandbox()
+        accepted_company(sandbox_id)
+        body = request.get_json(silent=True) or {}
+        industry = handoff_schema.clean_text((body.get("answers") or {}).get("industry"), 40).lower()
+        return jsonify(vision.form_from_image(body.get("image"), industry,
+                                              lambda: db.spend_model_call(sandbox_id)))
 
     @app.errorhandler(LookupError)
     def not_found(e):
@@ -334,6 +354,13 @@ def create_app(db_path=None):
             company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked,
             effective_schema(company))
         return jsonify(view_of(package, me, company)), 201
+
+    @app.post("/api/handoffs/from-photo")
+    def handoff_from_photo():
+        """Read a paper document into the company's form. Nothing is stored: the person checks and sends."""
+        body, me, company = me_and_context()
+        return jsonify(vision.read_values(body.get("image"), effective_schema(company), tools.PARAMS,
+                                          datetime.date.today(), lambda: db.spend_model_call(me["sandbox_id"])))
 
     @app.post("/api/precheck")
     def precheck():

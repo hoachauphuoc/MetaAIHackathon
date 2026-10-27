@@ -1,5 +1,6 @@
 // Inbox and Today: documents waiting between roles. Everything shown is about packages, never people.
 import { confirmMask } from '/static/mask.js';
+import { photoPicker } from '/static/photo.js';
 import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -155,6 +156,17 @@ export function inboxPanel(info, token) {
   const fields = valueFields('send', schema, {}, '', schema.id === 'logistics');
   const maskBox = el('div');
   const result = el('div');
+  const photoResult = el('div', { role: 'status' });
+
+  const photo = photoPicker('send-photo', 'Fill from a photo of the paper (optional)', 'Read the photo', async (image) => {
+    clear(photoResult, el('p', { class: 'progress' }, 'The assistant is reading the photo...'));
+    const res = await api('/api/handoffs/from-photo', { method: 'POST', body: { token, image } });
+    if (!res.ok) { clear(photoResult, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+    if (res.data.demo_mode) { clear(photoResult, demoNote(res.data.demo_reason)); return; }
+    fields.fill(res.data.values);
+    clear(photoResult, el('p', {}, el('strong', {}, 'Read by the assistant. Check every field. '),
+      'The rules would say: ', statusBadge(res.data.predicted_status)), ...findingsBlock(res.data.findings));
+  });
 
   const check = el('button', { onclick: async () => {
     const got = await fields.read(maskBox);
@@ -182,6 +194,6 @@ export function inboxPanel(info, token) {
   return el('section', {}, el('h2', {}, 'Inbox'), todayBox, msg, list,
     el('h3', {}, 'Send a handoff'),
     el('p', { class: 'muted' }, 'It goes to the whole receiving team. Someone there takes it and decides. Nobody can decide on their own package.'),
-    el('label', { for: 'to-role' }, 'To'), toRole, ...fields.rows, maskBox,
+    el('label', { for: 'to-role' }, 'To'), toRole, photo, photoResult, ...fields.rows, maskBox,
     el('div', { class: 'row' }, check, sendBtn), result);
 }

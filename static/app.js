@@ -1,4 +1,5 @@
 // Owner flow: survey -> org chart -> edit and accept -> assistants -> invite links.
+import { photoPicker } from '/static/photo.js';
 import { api, badge, clear, demoNote, el, Expired } from '/static/ui.js';
 
 const app = document.getElementById('app');
@@ -242,9 +243,17 @@ function handoffFormSection() {
     if (!res.ok) { clear(preview, el('p', { class: 'errors' }, res.data.message)); return; }
     show(res.data, standard);
   }) }, 'Design the form for my company');
+  const fromPhoto = photoPicker('form-photo', 'Or start from a photo of the paper form you use today', 'Design from this photo',
+    async (image) => {
+      clear(preview, el('p', { class: 'progress', role: 'status' }, 'Muse Spark is reading your paper form (about 10 seconds)...'));
+      const standard = await showCurrent();
+      const res = await api('/api/handoff-schema/from-photo', { method: 'POST', sandbox, body: { image, answers: state.answers || {} } });
+      if (!res.ok) { clear(preview, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+      show(res.data, standard);
+    });
   showCurrent();
   body.append(el('p', { class: 'muted' }, 'The handoff form is what people fill in when they pass work to another team. ' +
-    'Until you choose one, the pallet-quote form is used.'), status, el('div', { class: 'row' }, design), preview);
+    'Until you choose one, the pallet-quote form is used.'), status, el('div', { class: 'row' }, design), fromPhoto, preview);
   return el('section', {}, el('h2', {}, '4. Handoff form'), body);
 }
 
