@@ -1,6 +1,6 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
-import { findingsBlock, inboxPanel, ROUTES } from '/static/inbox.js';
+import { findingsBlock, inboxPanel } from '/static/inbox.js';
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
@@ -114,11 +114,11 @@ function chatPanel(info) {
 }
 
 // --- workflow --------------------------------------------------------------------------
-function workflowPanel() {
+function workflowPanel(routes) {
   const box = el('section', {}, el('h2', {}, 'New order: Sales, Operations, Finance'));
   const f = {
     customer: el('input', { id: 'customer', value: 'Acme Foods' }),
-    route: el('select', { id: 'route' }, ROUTES.map((r) => el('option', { value: r }, r))),
+    route: el('select', { id: 'route' }, routes.map((r) => el('option', { value: r }, r))),
     pallets: el('input', { id: 'pallets', type: 'number', min: '1', value: '12' }),
     delivery_date: el('input', { id: 'date', type: 'date',
       value: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10) }),
@@ -214,7 +214,10 @@ function describe(result) {
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
       info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
-      inboxPanel(info, token), chatPanel(info), workflowPanel());
+      inboxPanel(info, token), chatPanel(info),
+      // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
+      ...(info.handoff_schema.id === 'logistics'
+        ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []));
   } catch (e) {
     clear(app, el('section', {}, el('p', { class: 'errors', role: 'alert' },
       'This link has ended or was never valid. Ask the owner for a new one.')));

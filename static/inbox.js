@@ -2,8 +2,6 @@
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
-export const ROUTES = ['Hanoi-Haiphong', 'Hanoi-Danang', 'Haiphong-Hochiminh', 'Danang-Hochiminh'];
-
 const today = () => new Date().toISOString().slice(0, 10);
 const inDays = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 
@@ -22,35 +20,44 @@ export function findingsBlock(findings) {
   return [...group('rules', 'Checked by the rules'), ...group('model', "Assistant's notes")];
 }
 
-// One set of fields for sending and for fixing a returned package.
-function valueFields(prefix, v = {}, due = '') {
-  const f = {
-    customer: el('input', { id: `${prefix}-customer`, value: v.customer ?? 'Acme Foods' }),
-    route: el('select', { id: `${prefix}-route` },
-      ROUTES.map((r) => el('option', { value: r, selected: r === v.route }, r))),
-    pallets: el('input', { id: `${prefix}-pallets`, type: 'number', min: '1', value: v.pallets ?? 10 }),
-    price: el('input', { id: `${prefix}-price`, type: 'number', value: v.price ?? 1800 }),
-    cost: el('input', { id: `${prefix}-cost`, type: 'number', value: v.cost ?? 1500 }),
-    delivery_date: el('input', { id: `${prefix}-date`, type: 'date', value: v.delivery_date ?? inDays(14) }),
-    due: el('input', { id: `${prefix}-due`, type: 'date', min: today(), value: due || '' }),
-    notes: el('textarea', { id: `${prefix}-notes` }, v.notes ?? ''),
-  };
+// One set of fields for sending and for fixing a returned package, drawn from the company's form.
+const DEMO_DEFAULTS = { customer: 'Acme Foods', pallets: 10, price: 1800, cost: 1500 };
+
+function inputFor(prefix, field, value) {
+  const id = `${prefix}-${field.key}`;
+  if (field.type === 'choice') {
+    return el('select', { id }, field.options.map((o) => el('option', { value: o, selected: o === value }, o)));
+  }
+  const kind = { text: 'text', date: 'date', integer: 'number', number: 'number', money: 'number' }[field.type];
+  const extra = field.type === 'integer' ? { step: '1', min: '0' } : kind === 'number' ? { step: 'any', min: '0' } : {};
+  return el('input', { id, type: kind, value: value ?? '', ...extra });
+}
+
+function valueFields(prefix, schema, v = {}, due = '', demo = false) {
+  const first = (key, fallback) => (v[key] ?? (demo ? fallback : ''));
+  const inputs = Object.fromEntries(schema.fields.map((field) => [field.key, inputFor(prefix, field,
+    field.type === 'date' ? first(field.key, inDays(14)) : first(field.key, DEMO_DEFAULTS[field.key]))]));
+  const dueInput = el('input', { id: `${prefix}-due`, type: 'date', min: today(), value: due || '' });
+  const notes = el('textarea', { id: `${prefix}-notes` }, v.notes ?? '');
   const labelled = (label, node) => [el('label', { for: node.id }, label), node];
   const rows = [
-    ...labelled('Customer', f.customer), ...labelled('Shipping route', f.route),
-    ...labelled('Pallets', f.pallets), ...labelled('Price (USD)', f.price), ...labelled('Cost (USD)', f.cost),
-    ...labelled('Delivery date', f.delivery_date), ...labelled('Answer needed by (optional)', f.due),
-    ...labelled('Notes (untrusted text)', f.notes)];
+    ...schema.fields.flatMap((field) => labelled(field.required ? field.label : `${field.label} (optional)`, inputs[field.key])),
+    ...labelled('Answer needed by (optional)', dueInput), ...labelled('Notes (untrusted text)', notes)];
   const read = async (maskBox) => {
-    const values = {};
-    for (const key of ['customer', 'route', 'pallets', 'price', 'cost', 'delivery_date', 'notes']) values[key] = f[key].value;
-    const notes = await confirmMask(values.notes, maskBox);
-    return notes === null ? null : { values: { ...values, notes }, due: f.due.value || null };
+    const values = Object.fromEntries(schema.fields.map((field) => [field.key, inputs[field.key].value]));
+    const masked = await confirmMask(notes.value, maskBox);
+    return masked === null ? null : { values: { ...values, notes: masked }, due: dueInput.value || null };
   };
-  const fill = (v) => {
-    for (const key of ['customer', 'route', 'pallets', 'price', 'cost', 'delivery_date']) f[key].value = v[key];
+  const fill = (values) => {
+    for (const field of schema.fields) inputs[field.key].value = values[field.key] ?? '';
   };
   return { rows, read, fill };
+}
+
+// "Label: value" for every field except the one used as the title.
+function detailLine(schema, v) {
+  return schema.fields.filter((f) => f.key !== schema.title_field)
+    .map((f) => `${f.label}: ${v[f.key] ?? '-'}`).join(' · ');
 }
 
 export function inboxPanel(info, token) {
@@ -85,7 +92,7 @@ export function inboxPanel(info, token) {
 
     let fix = null;
     if (p.can_resend) {
-      const fields = valueFields(`fix-${p.id}`, v, p.due);
+      const fields = valueFields(`fix-${p.id}`, p.schema, v, p.due);
       const maskBox = el('div');
       const suggestion = el('div', { role: 'status' });
       const suggest = el('button', { onclick: async () => {
@@ -114,11 +121,11 @@ export function inboxPanel(info, token) {
     }
 
     return el('div', { class: 'card' },
-      el('p', {}, el('strong', {}, `${v.customer}: ${v.pallets} pallets, shipping route ${v.route}`)),
+      el('p', {}, el('strong', {}, v[p.schema.title_field] || p.schema.title), ` ${detailLine(p.schema, v)}`),
       el('p', {}, statusBadge(p.check_status), ' ', badge(stateLabel(p), 'info'), ' ',
         p.overdue ? badge('Overdue', 'bad') : null),
       el('p', { class: 'muted' },
-        `From ${p.from_title}. Price USD ${v.price}, cost USD ${v.cost}, ${p.due ? `answer needed by ${p.due}` : 'no deadline'}. ` +
+        `From ${p.from_title}. ${p.due ? `Answer needed by ${p.due}` : 'No deadline'}. ` +
         `Approval path: ${p.chain_titles.join(', then ')}.`),
       p.summary ? el('p', {}, el('strong', {}, 'In short: '), p.summary) : null,
       p.held_by_teammate ? el('p', { class: 'muted' }, 'A teammate in your team is handling this.') : null,
@@ -144,7 +151,8 @@ export function inboxPanel(info, token) {
 
   const toRole = el('select', { id: 'to-role' }, (info.assistant?.handoffs || []).map((h) =>
     el('option', { value: h.to_role }, `${titles[h.to_role] || h.to_role}: ${h.what}`)));
-  const fields = valueFields('send');
+  const schema = info.handoff_schema;
+  const fields = valueFields('send', schema, {}, '', schema.id === 'logistics');
   const maskBox = el('div');
   const result = el('div');
 

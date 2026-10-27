@@ -157,6 +157,7 @@ async function showAssistants() {
         drawPeople();
       }) }, 'Remove'))));
   }
+  app.append(handoffFormSection());
   await Promise.all(roles.map(guard(async (role) => {
     const res = await api('/api/assistants', { method: 'POST', sandbox, body: { role_id: role.id } });
     if (!res.ok) { clear(cards[role.id], el('h3', {}, role.title), el('p', { class: 'errors' }, res.data.message)); return; }
@@ -179,6 +180,72 @@ async function showAssistants() {
   })));
   app.querySelector('.progress').textContent = 'Each person opens their own link and lands in their role. ' +
     'Open the Sales link to run a new order through Sales, Operations and Finance.';
+}
+
+// The handoff form is data: Muse proposes it, the rules validate it, the owner accepts it.
+function handoffFormSection() {
+  const body = el('div');
+  const status = el('p', { class: 'muted', role: 'status' });
+  const preview = el('div');
+  const label = (schema, key) => schema.fields.find((f) => f.key === key)?.label || key;
+
+  async function showCurrent() {
+    const res = await api('/api/handoff-schema', { sandbox });
+    clear(status, `In use: ${res.data.schema.title} (${res.data.schema.fields.map((f) => f.label).join(', ')}).`);
+    return res.data.standard;
+  }
+
+  function accept(schema) {
+    return guard(async () => {
+      const res = await api('/api/handoff-schema', { method: 'POST', sandbox, body: { schema } });
+      clear(preview, res.ok ? el('p', { role: 'status' }, badge('Saved', 'ok'), ' Everyone now sends this form.')
+        : el('div', { class: 'errors', role: 'alert' }, (res.data.errors || [res.data.message]).join(' ')));
+      if (res.ok) await showCurrent();
+    });
+  }
+
+  function show(proposal, standard) {
+    const schema = JSON.parse(JSON.stringify(proposal.schema));
+    const thresholds = schema.rules.filter((r) => r.kind === 'min_margin' || r.kind === 'escalate_over').map((r) => {
+      const input = el('input', { id: `th-${r.kind}`, type: 'number', min: '1', placeholder: r.kind === 'min_margin' ? 'company default 12' : 'company default 50000',
+        'aria-label': r.kind === 'min_margin' ? 'Margin floor in percent' : 'Approval limit in USD',
+        value: r.percent ?? r.usd ?? '', onchange: (e) => {
+          const n = e.target.value === '' ? null : Number(e.target.value);
+          if (r.kind === 'min_margin') r.percent = n; else r.usd = n;
+        } });
+      return el('div', {}, el('label', { for: input.id }, r.kind === 'min_margin' ? 'Margin floor (percent)'
+        : `Above this ${label(schema, r.field)}, the top role also approves (USD)`), input);
+    });
+    const words = schema.rules.filter((r) => r.kind === 'not_below' || r.kind === 'date_not_past').map((r) => el('li', {},
+      r.kind === 'not_below' ? `${label(schema, r.field)} must not be below ${label(schema, r.other)}`
+        : `${label(schema, r.field)} must not be in the past`));
+    clear(preview,
+      proposal.demo_mode ? demoNote(proposal.demo_reason) : badge('Designed by Muse Spark', 'ok'),
+      proposal.source === 'template' ? el('p', { class: 'muted' }, 'This is a standard form (Template).') : null,
+      el('h3', {}, schema.title),
+      el('ul', { class: 'plain' }, schema.fields.map((f) => el('li', {},
+        `${f.label}: ${f.type}${f.required ? ', required' : ''}${f.options.length ? ` (${f.options.join(', ')})` : ''}`))),
+      words.length ? el('ul', { class: 'plain' }, words) : null, ...thresholds,
+      el('p', { class: 'muted' }, 'The rules apply these numbers, never the model. Leave a number empty to use the company default.'),
+      el('div', { class: 'row' },
+        el('button', { class: 'primary', onclick: accept(schema) }, 'Use this form'),
+        el('button', { onclick: accept(standard[(state.answers?.industry || '').toLowerCase()] || standard.services) },
+          'Use the standard form instead')));
+  }
+
+  const design = el('button', { onclick: guard(async () => {
+    design.disabled = true;
+    clear(preview, el('p', { class: 'progress', role: 'status' }, 'Muse Spark is designing the form (about 10 seconds)...'));
+    const standard = await showCurrent();
+    const res = await api('/api/handoff-schema/generate', { method: 'POST', sandbox, body: { answers: state.answers || {} } });
+    design.disabled = false;
+    if (!res.ok) { clear(preview, el('p', { class: 'errors' }, res.data.message)); return; }
+    show(res.data, standard);
+  }) }, 'Design the form for my company');
+  showCurrent();
+  body.append(el('p', { class: 'muted' }, 'The handoff form is what people fill in when they pass work to another team. ' +
+    'Until you choose one, the pallet-quote form is used.'), status, el('div', { class: 'row' }, design), preview);
+  return el('section', {}, el('h2', {}, '4. Handoff form'), body);
 }
 
 if (sandbox) {
