@@ -11,7 +11,8 @@ MODEL_CALL_CAP = 40  # per sandbox; hitting it returns the labelled demo answer
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sandboxes (
-    id TEXT PRIMARY KEY, created_at REAL NOT NULL, model_calls INTEGER NOT NULL DEFAULT 0);
+    id TEXT PRIMARY KEY, created_at REAL NOT NULL, model_calls INTEGER NOT NULL DEFAULT 0,
+    muse_off INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS companies (
     sandbox_id TEXT PRIMARY KEY REFERENCES sandboxes(id) ON DELETE CASCADE,
     data TEXT NOT NULL);
@@ -52,13 +53,22 @@ class Store:
             raise SandboxExpired(sandbox_id)
         return {"id": sandbox_id, "model_calls": row[0]}
 
-    def try_spend_model_call(self, sandbox_id):
-        """True and counted if the sandbox is under its cap; False means answer in demo mode."""
+    def spend_model_call(self, sandbox_id):
+        """None if the call may go ahead (and is counted), else the reason to answer in demo mode."""
         with self.db:
+            row = self.db.execute("SELECT muse_off FROM sandboxes WHERE id = ?",
+                                  (sandbox_id,)).fetchone()
+            if row is None or row[0]:
+                return "Muse switched off"
             cur = self.db.execute(
                 "UPDATE sandboxes SET model_calls = model_calls + 1 WHERE id = ? AND model_calls < ?",
                 (sandbox_id, MODEL_CALL_CAP))
-        return cur.rowcount == 1
+        return None if cur.rowcount == 1 else "Demo limit reached"
+
+    def set_muse_off(self, sandbox_id, off):
+        self.require_sandbox(sandbox_id)
+        with self.db:
+            self.db.execute("UPDATE sandboxes SET muse_off = ? WHERE id = ?", (int(off), sandbox_id))
 
     def save_company(self, sandbox_id, company):
         self.require_sandbox(sandbox_id)

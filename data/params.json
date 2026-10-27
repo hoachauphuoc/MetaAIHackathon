@@ -1,0 +1,10 @@
+{
+  "margin_floor_pct": 12,
+  "escalation_usd": 50000,
+  "rate_card": {
+    "Hanoi-Haiphong": {"price": 180, "cost": 150},
+    "Hanoi-Danang": {"price": 420, "cost": 360},
+    "Haiphong-Hochiminh": {"price": 640, "cost": 560},
+    "Danang-Hochiminh": {"price": 380, "cost": 330}
+  }
+}

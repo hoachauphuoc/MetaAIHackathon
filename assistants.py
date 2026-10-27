@@ -45,14 +45,15 @@ def fallback_kit(role, roles):
             "handoffs": handoffs, "limits": list(DEFAULT_LIMITS)}
 
 
-def build(role, roles, may_call_model=lambda: True):
+def build(role, roles, blocked=lambda: None):
     """Return the kit plus what was removed. demo_mode is True whenever Spark did not write it."""
     other_ids = [r["id"] for r in roles if r["id"] != role["id"]]
     skill_ids = sorted(rules.ALLOWED_SKILLS)
     result = {"role_id": role["id"], "role_title": role["title"]}
-    if not may_call_model():
+    reason = blocked()
+    if reason:
         return {**result, **fallback_kit(role, roles), "removed_skills": [], "demo_mode": True,
-                "demo_reason": "Demo limit reached"}
+                "demo_reason": reason}
     call = muse.complete(
         muse.SPARK,
         [{"role": "system", "content": SYSTEM.format(skills=", ".join(skill_ids),
@@ -65,6 +66,8 @@ def build(role, roles, may_call_model=lambda: True):
     try:
         kit = json.loads(call["text"]) if not call["demo_mode"] else None
     except ValueError:
+        kit = None
+    if kit is not None and not (isinstance(kit, dict) and set(KIT_SCHEMA["required"]) <= set(kit)):
         kit = None
     if not kit:
         return {**result, **fallback_kit(role, roles), "removed_skills": [], "demo_mode": True,

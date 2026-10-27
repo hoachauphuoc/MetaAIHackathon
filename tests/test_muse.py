@@ -33,7 +33,7 @@ def real_path(monkeypatch):
 
 def use_client(monkeypatch, *outcomes):
     client = FakeClient(outcomes)
-    monkeypatch.setattr(muse, "_client", lambda: client)
+    monkeypatch.setattr(muse, "_client", lambda cfg=None: client)
     return client
 
 

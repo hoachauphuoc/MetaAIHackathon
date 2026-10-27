@@ -27,15 +27,25 @@ class Refused(ValueError):
     """The model id is not on the allow-list, or would train on employee data."""
 
 
-def check_model(model):
+def check_model(model, private=False):
     if model.endswith("-contributor"):
         raise Refused(f"{model}: Contributor models may train on data; Standard mode only")
-    if model not in PRICES:
+    if not private and model not in PRICES:
         raise Refused(f"{model}: not on the allow-list")
 
 
+def private_config():
+    """Private mode runs an open-weights Muse model on a provider chosen by PRIVATE_PROVIDER
+    (baseten | fireworks | modal). Nothing is configured by default."""
+    cfg = {"provider": os.environ.get("PRIVATE_PROVIDER"),
+           "base_url": os.environ.get("PRIVATE_BASE_URL"),
+           "model": os.environ.get("PRIVATE_MODEL"),
+           "key_file": os.environ.get("PRIVATE_API_KEY_FILE")}
+    return cfg if all(cfg.values()) else None
+
+
 def cost_usd(model, tokens_in, tokens_out):
-    price_in, price_out = PRICES[model]
+    price_in, price_out = PRICES.get(model, (0.0, 0.0))  # open-weights models: price unknown
     return (tokens_in * price_in + tokens_out * price_out) / 1_000_000
 
 
@@ -48,7 +58,11 @@ def _api_key():
     return key
 
 
-def _client():
+def _client(private=None):
+    if private:
+        with open(private["key_file"], encoding="utf-8") as f:
+            return OpenAI(api_key=f.read().strip(), base_url=private["base_url"], max_retries=0,
+                          timeout=60)
     key = _api_key()
     if not key:
         raise RuntimeError("no Meta API key configured")
@@ -68,9 +82,17 @@ def demo_result(model, reason):
     return _result(model, True, reason)
 
 
-def complete(model, messages, reasoning_effort="low", **kwargs):
-    """One model call with one retry. Extra kwargs (tools, response_format...) pass through."""
-    check_model(model)
+def complete(model, messages, reasoning_effort="low", private=False, **kwargs):
+    """One model call with one retry. Extra kwargs (tools, response_format...) pass through.
+    private=True sends the call to the open-weights provider and never to the Meta API: when
+    Private mode is not configured the answer is a labelled "unavailable", not a substitute."""
+    cfg = None
+    if private:
+        cfg = private_config()
+        if cfg is None:
+            return _result("private", True, "Private mode unavailable")
+        model = cfg["model"]
+    check_model(model, private)
     if os.environ.get("FAKE_AI"):
         return _result(model, True, "FAKE_AI")
 
@@ -78,7 +100,7 @@ def complete(model, messages, reasoning_effort="low", **kwargs):
     for _ in range(2):
         start = time.time()
         try:
-            r = _client().chat.completions.create(
+            r = _client(cfg).chat.completions.create(
                 model=model, messages=messages, reasoning_effort=reasoning_effort, **kwargs)
         except Exception as e:  # any failure, including a missing key, becomes a labelled fallback
             error = type(e).__name__

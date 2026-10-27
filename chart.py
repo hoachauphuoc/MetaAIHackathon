@@ -67,7 +67,7 @@ def template_chart(industry, size):
     return roles
 
 
-def generate(answers, may_call_model=lambda: True):
+def generate(answers, blocked=lambda: None):
     """Return {company, roles, errors, model, demo_mode, source, demo_reason}."""
     a = clean_answers(answers)
     size = a["headcount"]
@@ -79,8 +79,9 @@ def generate(answers, may_call_model=lambda: True):
                 "model": muse.WONDER if call is None else call["model"], "source": "template",
                 "demo_mode": True, "demo_reason": reason}
 
-    if not may_call_model():
-        return fallback("Demo limit reached")
+    reason = blocked()
+    if reason:
+        return fallback(reason)
     prompt = "Survey answers:\n" + "\n".join(f"- {k}: {v}" for k, v in a.items())
     call = muse.complete(
         muse.WONDER, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],

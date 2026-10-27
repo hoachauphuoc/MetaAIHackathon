@@ -50,7 +50,7 @@ def test_muse_failure_gives_a_labelled_fallback_with_the_work_order(monkeypatch)
 
 def test_cap_reached_never_calls_the_model(monkeypatch):
     monkeypatch.setattr(muse, "complete", lambda *a, **k: (_ for _ in ()).throw(AssertionError))
-    out = assistants.build(ROLES[1], ROLES, lambda: False)
+    out = assistants.build(ROLES[1], ROLES, lambda: "Demo limit reached")
     assert out["demo_reason"] == "Demo limit reached"
 
 

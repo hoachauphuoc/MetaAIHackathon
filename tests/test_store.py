@@ -34,9 +34,17 @@ def test_sandbox_and_its_data_are_deleted_after_24_hours(s):
 
 def test_model_call_cap(s):
     sandbox = s.create_sandbox()
-    spent = [s.try_spend_model_call(sandbox) for _ in range(store.MODEL_CALL_CAP + 1)]
-    assert spent.count(True) == store.MODEL_CALL_CAP
-    assert spent[-1] is False
+    spent = [s.spend_model_call(sandbox) for _ in range(store.MODEL_CALL_CAP + 1)]
+    assert spent.count(None) == store.MODEL_CALL_CAP
+    assert spent[-1] == "Demo limit reached"
+
+
+def test_switching_muse_off_blocks_calls_with_its_own_label(s):
+    sandbox = s.create_sandbox()
+    s.set_muse_off(sandbox, True)
+    assert s.spend_model_call(sandbox) == "Muse switched off"
+    s.set_muse_off(sandbox, False)
+    assert s.spend_model_call(sandbox) is None
 
 
 def test_no_table_can_hold_chat(s):

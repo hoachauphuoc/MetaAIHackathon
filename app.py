@@ -1,4 +1,5 @@
 """Flask entry point. Routes stay thin: rules, store, chart and muse hold the logic."""
+import datetime
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import chat
 import muse
 import rules
 import store
+import tools
+import workflow
 
 
 def sse(event, data):
@@ -39,6 +42,13 @@ def create_app(db_path=None):
     def new_sandbox():
         return jsonify(sandbox=db.create_sandbox()), 201
 
+    @app.post("/api/sandbox/muse")
+    def muse_switch():
+        """Lets a visitor see the labelled demo mode on demand (golden path step 9)."""
+        sandbox_id = current_sandbox()
+        db.set_muse_off(sandbox_id, bool((request.get_json(silent=True) or {}).get("off")))
+        return jsonify(ok=True)
+
     @app.get("/api/survey/demo")
     def survey_demo():
         path = Path(__file__).parent / "data" / "demo_survey.json"
@@ -49,7 +59,7 @@ def create_app(db_path=None):
         sandbox_id = current_sandbox()
         answers = (request.get_json(silent=True) or {}).get("answers") or {}
         try:
-            return jsonify(chart.generate(answers, lambda: db.try_spend_model_call(sandbox_id)))
+            return jsonify(chart.generate(answers, lambda: db.spend_model_call(sandbox_id)))
         except ValueError as e:
             return jsonify(error="bad_answers", message=str(e)), 400
 
@@ -93,7 +103,7 @@ def create_app(db_path=None):
         role = next((r for r in company["roles"] if r["id"] == role_id), None)
         if role is None:
             raise LookupError("No such role.")
-        kit = assistants.build(role, company["roles"], lambda: db.try_spend_model_call(sandbox_id))
+        kit = assistants.build(role, company["roles"], lambda: db.spend_model_call(sandbox_id))
         db.save_assistant(sandbox_id, role_id, kit)
         return jsonify(kit)
 
@@ -132,12 +142,13 @@ def create_app(db_path=None):
         if kit is None:
             raise LookupError("This role has no assistant yet.")
         messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "")
-        allowed = db.try_spend_model_call(person["sandbox_id"])
+        blocked = db.spend_model_call(person["sandbox_id"])
 
         def events():
             yield sse("meta", {"role": kit["role_title"], "model": muse.SPARK})
-            source = muse.stream(muse.SPARK, messages) if allowed else iter(
-                [{"done": muse.demo_result(muse.SPARK, "Demo limit reached")}])
+            source = iter(
+                [{"done": muse.demo_result(muse.SPARK, blocked)}]) if blocked else muse.stream(
+                muse.SPARK, messages)
             for item in source:
                 if "delta" in item:
                     yield sse("delta", {"text": item["delta"]})
@@ -151,6 +162,52 @@ def create_app(db_path=None):
 
         return Response(events(), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+    def workflow_body():
+        body = request.get_json(silent=True) or {}
+        return body, db.person_by_token(str(body.get("token") or ""))
+
+    @app.post("/api/workflow/plan")
+    def workflow_plan():
+        body, person = workflow_body()
+        company = db.get_company(person["sandbox_id"]) or {}
+        kits = db.get_assistants(person["sandbox_id"])
+        try:
+            plan, errors = workflow.make_plan(body.get("task") or {}, company.get("roles", []), kits)
+        except ValueError as e:
+            return jsonify(error="bad_task", message=str(e)), 400
+        if errors:
+            return jsonify(error="invalid_plan", errors=errors), 422
+        return jsonify(plan=plan, signature=workflow.sign("plan", plan["run_id"], "-", plan),
+                       roles={r["id"]: r["title"] for r in company["roles"]})
+
+    @app.post("/api/workflow/step")
+    def workflow_step():
+        body, person = workflow_body()
+        plan = body.get("plan") or {}
+        try:
+            workflow.verify_plan(plan, body.get("signature"))
+            out = workflow.run_step(
+                plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
+                tools.PARAMS, lambda: db.spend_model_call(person["sandbox_id"]))
+        except PermissionError as e:
+            return jsonify(error="not_approved", message=str(e)), 409
+        except (StopIteration, KeyError):
+            return jsonify(error="bad_step", message="No such step."), 400
+        return jsonify(out)
+
+    @app.post("/api/workflow/approve")
+    def workflow_approve():
+        body, _ = workflow_body()
+        try:
+            workflow.verify_plan(body.get("plan") or {}, body.get("signature"))
+            receipt = workflow.approve(body["plan"], body.get("step_id"), body.get("result"),
+                                       body.get("ticket"))
+        except PermissionError as e:
+            return jsonify(error="forged", message=str(e)), 403
+        except ValueError as e:
+            return jsonify(error="blocked", message=str(e)), 409
+        return jsonify(receipt=receipt)
 
     @app.get("/api/company")
     def company():

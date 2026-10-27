@@ -1,4 +1,5 @@
 """Rules decide structure; the model only writes words (principle 1). Pure functions, no I/O."""
+import datetime
 import json
 from pathlib import Path
 
@@ -63,3 +64,61 @@ def filter_skills(requested):
     for skill in requested:
         (kept if skill in ALLOWED_SKILLS and skill not in FORBIDDEN_SKILLS else removed).append(skill)
     return kept, removed
+
+
+# --- Handoff checks ---------------------------------------------------------------------
+# Status rank: clear < needs_attention < needs_human_check < blocked. The model may only raise.
+RANK = {"clear": 0, "needs_attention": 1, "needs_human_check": 2, "blocked": 3}
+
+
+def combine_status(rules_floor, model_status):
+    """An unknown or missing model status fails closed to needs_human_check."""
+    model = model_status if model_status in RANK else "needs_human_check"
+    return max(rules_floor, model, key=RANK.__getitem__)
+
+
+def validate_plan(plan, roles, edges):
+    """A workflow may only move along handoffs the assistants declared. Returns [message]."""
+    errors, steps = [], plan.get("steps", [])
+    known = {r["id"] for r in roles}
+    if not 1 <= len(steps) <= 6:
+        errors.append("A workflow has between 1 and 6 steps.")
+    if len({s["id"] for s in steps}) != len(steps):
+        errors.append("Every step needs a unique id.")
+    for step in steps:
+        if step["role_id"] not in known:
+            errors.append(f"Step {step['id']} is for a role that does not exist.")
+    for before, after in zip(steps, steps[1:]):
+        if before["role_id"] != after["role_id"] and (before["role_id"], after["role_id"]) not in edges:
+            errors.append(f"There is no handoff from {before['role_id']} to {after['role_id']}.")
+    return errors
+
+
+def check_package(values, params, today):
+    """Hard checks on a quote package. Returns (status, findings); findings carry source=rules."""
+    findings = []
+
+    def add(status, message):
+        findings.append({"status": status, "message": message, "source": "rules"})
+
+    for field in ("customer", "route", "pallets", "price", "cost", "delivery_date"):
+        if values.get(field) in (None, ""):
+            add("blocked", f"Missing: {field}.")
+    price, cost = values.get("price"), values.get("cost")
+    if isinstance(price, (int, float)) and isinstance(cost, (int, float)) and price > 0:
+        if price < cost:
+            add("blocked", "The price is below the cost.")
+        elif (price - cost) / price * 100 < params["margin_floor_pct"]:
+            add("needs_attention", f"The margin is under the {params['margin_floor_pct']}% floor.")
+        if price > params["escalation_usd"]:
+            add("needs_attention", f"The price is above USD {params['escalation_usd']:,}: the "
+                                   "Managing Director must approve.")
+    date = values.get("delivery_date")
+    if date:
+        try:
+            if datetime.date.fromisoformat(date) < today:
+                add("needs_attention", "The delivery date is in the past.")
+        except (TypeError, ValueError):
+            add("blocked", "The delivery date is not a valid date.")
+    status = max((f["status"] for f in findings), key=RANK.__getitem__, default="clear")
+    return status, findings

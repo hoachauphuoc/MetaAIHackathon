@@ -56,7 +56,7 @@ def test_muse_failure_is_demo_mode(monkeypatch):
 
 def test_cap_reached_never_calls_the_model(monkeypatch):
     monkeypatch.setattr(muse, "complete", lambda *a, **k: pytest.fail("model was called"))
-    out = chart.generate(ANSWERS, lambda: False)
+    out = chart.generate(ANSWERS, lambda: "Demo limit reached")
     assert out["demo_reason"] == "Demo limit reached" and out["demo_mode"] is True
 
 
