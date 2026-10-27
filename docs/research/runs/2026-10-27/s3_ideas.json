@@ -1,0 +1,85 @@
+{
+ "model": "muse-spark-1.3",
+ "date": "2026-10-27",
+ "demo_mode": false,
+ "demo_reason": null,
+ "cost_usd": 0.0113,
+ "ideas": [
+  {
+   "effort_days": 3,
+   "evidence_ids": [
+    "b1-01",
+    "b1-04"
+   ],
+   "principle_risk": "none",
+   "title": "Owner admin draft pack",
+   "why": "Owners lose 22.4% of time to admin plus legal and compliance and 27% say less day-to-day admin would accelerate growth, so drafts that a person approves save time without changing handoffs"
+  },
+  {
+   "effort_days": 3,
+   "evidence_ids": [
+    "b1-02",
+    "b1-03"
+   ],
+   "principle_risk": "none",
+   "title": "Weekly finance admin summarizer",
+   "why": "Owners spend 11 hours weekly on admin or finance tasks and 1 hour 36 minutes daily on unproductive tasks, so a code-structured summary with owner approval focuses effort"
+  },
+  {
+   "effort_days": 4,
+   "evidence_ids": [
+    "b4-03",
+    "b4-06",
+    "b4-09"
+   ],
+   "principle_risk": "code decides structure and numbers and the model writes words",
+   "title": "Receipt snap to ledger with check",
+   "why": "77.6% still manually store some receipts while paper offices lose about six hours weekly searching documents and AI struggles past 95% on forms, so code extracts amounts and a person approves"
+  },
+  {
+   "effort_days": 3,
+   "evidence_ids": [
+    "b4-01",
+    "b4-02",
+    "b4-10"
+   ],
+   "principle_risk": "none",
+   "title": "Paper notebook digitizer",
+   "why": "45% of SMB operations still rely on paper and 44% of informal microbusinesses keep systematic records mostly in notebooks, so phone capture into code-defined fields with approval bridges paper to digital"
+  },
+  {
+   "effort_days": 4,
+   "evidence_ids": [
+    "b3-01",
+    "b3-02",
+    "b3-03"
+   ],
+   "principle_risk": "nothing is kept about how a person works",
+   "title": "Role handbook builder",
+   "why": "84% say retiree knowledge loss is a big loss with 4.8 months average onboarding and 20% salary replacement cost, so role-level guides built from approved documents speed handover"
+  },
+  {
+   "effort_days": 2,
+   "evidence_ids": [
+    "b2-01",
+    "b2-02",
+    "b2-06"
+   ],
+   "principle_risk": "none",
+   "title": "No-train trust mode",
+   "why": "52% worry about future workplace AI use and 66% fear misuse of worker evaluation data with 74% wanting legislation on training with employee data, so explicit no-training plus approval logs build trust"
+  },
+  {
+   "effort_days": 2,
+   "evidence_ids": [
+    "b2-04",
+    "b5-03",
+    "b5-04"
+   ],
+   "principle_risk": "never evaluate, rank or monitor people",
+   "title": "Approved starter seats to replace shadow AI",
+   "why": "71% of UK employees used unapproved shadow AI while only 43% of 2-9 employee businesses use AI for work, so low-friction approved seats with task-only prompts reduce risky workarounds"
+  }
+ ],
+ "dropped_ideas": 0
+}

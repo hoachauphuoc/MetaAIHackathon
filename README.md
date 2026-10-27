@@ -33,7 +33,16 @@ as published; the product answers each one with a design rule that has a test.
 | 81% of US adults say AI used to evaluate workers would make workers feel inappropriately watched (fielded 12-18 Dec 2022, n = 11,004 adults) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/ai-in-hiring-and-evaluating-workers-what-americans-think) | No per-person metrics exist anywhere in the data model |
 | 48% of respondents entered non-public company information and 45% entered employee information into GenAI tools (Cisco 2024 Data Privacy Benchmark, n = 2,600 privacy and security professionals) | [Cisco](https://newsroom.cisco.com/c/r/newsroom/en/us/a/y2024/m01/organizations-ban-use-of-generative-ai-over-data-privacy-security-cisco-study.html) | Chat is never stored on the server; Standard mode only; a Private mode path for open weights |
 | 45% of US employees used AI at work at least a few times a year in Q3 2025, 10% daily (fielded 5-19 Aug 2025) | [Gallup](https://www.gallup.com/workplace/699689/ai-use-at-work-rises.aspx) | Role jobs make AI useful for the daily job without writing prompts |
+| 22.4% of owner time goes to administrative tasks plus legal and compliance (UENI's own survey, n = 837 US businesses with five or fewer employees, May 2024) | [UENI](https://ueni.com/en-us/small-business-research/how-microbusiness-owners-spend-their-time) | The morning brief lists open documents by role so the owner sees what waits on whom; the model writes words, code picks the documents |
+| 11 hours a week on administrative or finance tasks (American Express SME Barometer, a company-run survey, n = 1,000 UK owners, July 2026) | [Retail Times](https://retailtimes.co.uk/amex-sme-barometer-small-business-owners-spend-nearly-twice-the-time-on-admin-than-growing-their-business/) | Handoffs carry a checked form instead of a chat thread, and the chat assistant reads the person's own documents. We measured accuracy, not hours saved |
+| 66% of US adults agree AI-based worker evaluation would lead to the collected information being misused (Pew, 20 Apr 2023) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/americans-views-on-use-of-ai-to-monitor-and-evaluate-workers/) | Nothing is kept about how a person works, and the onboarding plan shows nobody, including the owner, how far a new hire got |
+| 4.8 months average onboarding time for a new technical hire (Linux Foundation, 2024 State of Tech Talent, 418 records; tech roles, not small firms) | [Linux Foundation](https://www.linuxfoundation.org/blog/the-2024-state-of-tech-talent-report) | Day-One gives a new hire a first-three-days plan from their role's kit, and Kind exit lets a leaver hand over to their own team |
+| 44% of informal microbusinesses keep systematic records, about three-quarters of those in notebooks (ILO survey, n = 1,400 firms in Guatemala, Honduras and El Salvador, working paper Oct 2025) | [Wharton School](https://accounting.wharton.upenn.edu/wp-content/uploads/2025/10/AguilarLindRamesh.pdf) | Paper to form turns a photo of the paper into a form a person checks. Measured on synthetic sheets only |
 
+The five rows added in October 2026 were found by a chained research run (Claude Haiku, Sonnet and
+Opus helped as development tools; the product itself runs on Muse only) and each figure was opened
+again at its source by a second pass. Two rows are a company's own survey and say so. The method,
+the 39 checked figures and what they do not show are in [docs/research](docs/research/README.md).
 The strongest evidence is our own measured set, which you can rerun: [docs/MEASURED.md](docs/MEASURED.md).
 
 ## How it works
@@ -88,7 +97,10 @@ time at the company:
    form. Code checks the file (png, jpeg or webp by its first bytes, at most 4 MB), strips
    currency and separators from amounts, and the rules re-check every value before the person
    sends. The owner can also design the company's form from a photo of the paper form in use
-   today. Photos are sent once and never stored. Measured: 60 of 60 fields on 10 rendered sheets.
+   today. Photos are sent once and never stored. When the model cannot read a field it names it, and
+   code empties that field and marks it "A person must check this" instead of keeping a guess.
+   Measured: 60 of 60 fields on 10 rendered sheets; on 10 phone-degraded handwriting-style sheets
+   53 of 56 legible fields, and 4 of 4 smudged fields left empty.
 10. **Morning brief:** the owner presses one button and sees the open documents in three short
    lists (needs the top role, stuck, moving today) with counts by role. Code puts each document
    in its list; Spark writes one line per document and never sees names or links; a line for an
@@ -134,7 +146,7 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | A person approves every handoff; the model cannot lower a rules status | `tests/test_workflow.py`, `tests/test_tools_and_gate.py` |
 | Private never falls back to the standard API | `tests/test_workflow.py`, `tests/test_trust.py` |
 | Handoffs: maker-checker, claim, blocked cannot be accepted, leaver gets 410 | `tests/test_handoffs.py` |
-| Photos: type checked by bytes, never stored, values re-checked by rules | `tests/test_vision.py` |
+| Photos: type checked by bytes, never stored, values re-checked by rules, unreadable fields emptied by code | `tests/test_vision.py` |
 | Morning brief: lists by rules, no names, no invented documents, owner only | `tests/test_brief.py` |
 | First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
 | Handover: private draft, own team, leaver cannot accept | `tests/test_handover.py` |
@@ -172,8 +184,8 @@ OWASP Top 10 for LLM applications, as applied here:
   `/trust` shows "Built with Muse Spark Open".
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
-- Photo reading was measured on clean rendered sheets, not phone photos of real, creased or
-  handwritten paper; expect misreads there. Photos are not masked for personal data. Voice and
+- Photo reading was measured on rendered sheets, including phone-degraded ones in handwriting-style
+  fonts (set 9), not phone photos of real, creased or handwritten paper; expect misreads there. Photos are not masked for personal data. Voice and
   web search are not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried,
   and voice was not tried.
 - The morning brief, first-days plan and handover draft were each run against the real model
@@ -198,7 +210,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py [set1 ... set8]  # the measured sets (all, or the named ones)
+python scripts/measure.py [set1 ... set9]  # the measured sets (all, or the named ones)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

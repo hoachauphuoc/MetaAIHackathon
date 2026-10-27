@@ -1,0 +1,38 @@
+[
+  {
+    "id": "b3-01",
+    "brief": "b3",
+    "url": "https://www.linuxfoundation.org/blog/the-2024-state-of-tech-talent-report",
+    "publisher": "Linux Foundation",
+    "kind": "independent",
+    "date": "2024-04-16",
+    "figure": "4.8 months",
+    "unit": "average onboarding time for a new hire",
+    "sample_size": "418 records",
+    "quote": "Onboarding poses similar challenges, with an average time of 4.8 months."
+  },
+  {
+    "id": "b3-02",
+    "brief": "b3",
+    "url": "https://brandonhall.com/?p=36113",
+    "publisher": "Brandon Hall Group",
+    "kind": "vendor",
+    "date": "2024-06-25",
+    "figure": "20% of the base salary",
+    "unit": "cost to recruit a replacement hire, as share of base salary",
+    "sample_size": "not stated",
+    "quote": "it costs organizations 20% of the base salary to recruit a replacement hire"
+  },
+  {
+    "id": "b3-03",
+    "brief": "b3",
+    "url": "https://www.expresspros.com/newsroom/news-releases/news-releases/2023/08/employers-say-perfect-retirement-age-is-60-69-leaving-workforce-in-a-crunch",
+    "publisher": "Express Employment Professionals (Harris Poll)",
+    "kind": "vendor",
+    "date": "2023-08-16",
+    "figure": "84%",
+    "unit": "share of U.S. employees who say it is a big loss when older employees retire without passing on knowledge",
+    "sample_size": "2,002 U.S. adults ages 18+ (Sept. 28-Oct. 13, 2021 survey, incl. 547 boomer employees)",
+    "quote": "84% of U.S. employees say it's a big loss when older employees retire"
+  }
+]

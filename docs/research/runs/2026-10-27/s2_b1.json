@@ -1,0 +1,50 @@
+[
+ {
+  "id": "b1-01",
+  "brief": "b1",
+  "url": "https://ueni.com/en-us/small-business-research/how-microbusiness-owners-spend-their-time",
+  "publisher": "UENI Research",
+  "kind": "vendor",
+  "date": "2024-05",
+  "figure": "22.4",
+  "unit": "percent of owner time spent on administrative tasks plus legal and compliance",
+  "sample_size": "837 US businesses with five or fewer employees",
+  "quote": "administrative tasks combined with legal and compliance consumed, on average, 22.4% of business owner time"
+ },
+ {
+  "id": "b1-02",
+  "brief": "b1",
+  "url": "https://retailtimes.co.uk/amex-sme-barometer-small-business-owners-spend-nearly-twice-the-time-on-admin-than-growing-their-business/",
+  "publisher": "Retail Times (American Express SME Barometer)",
+  "kind": "vendor",
+  "date": "2026-07-20",
+  "figure": "11",
+  "unit": "hours a week owners spend on administrative or finance-related tasks",
+  "sample_size": "1,000 owners of UK micro, small and medium-sized businesses",
+  "quote": "an average of 11 hours per week on administrative or finance-related tasks"
+ },
+ {
+  "id": "b1-03",
+  "brief": "b1",
+  "url": "https://talkerresearch.com/survey-reveals-top-time-wasters-for-entrepreneurs/",
+  "publisher": "Talker Research (commissioned by Slack)",
+  "kind": "vendor",
+  "date": "2024-08-14",
+  "figure": "one hour and 36 minutes",
+  "unit": "time lost each day per owner to tasks they deem unproductive",
+  "sample_size": "2,000 US small business owners",
+  "quote": "loses one hour and 36 minutes each day to tasks they deem unproductive"
+ },
+ {
+  "id": "b1-04",
+  "brief": "b1",
+  "url": "https://news.microsoft.com/en-au/2015/06/24/australian-smbs-lose-35-working-days-a-year-to-unproductive-time/",
+  "publisher": "Microsoft Australia",
+  "kind": "vendor",
+  "date": "2015-06-24",
+  "figure": "27",
+  "unit": "percent of owners saying not wasting time on day-to-day admin would help them accelerate growth",
+  "sample_size": "400 Australian small business owners",
+  "quote": "Not having to waste time on day to day admin (27%)"
+ }
+]

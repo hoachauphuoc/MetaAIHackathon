@@ -1,0 +1,110 @@
+[
+  {
+    "id": "b2-01",
+    "brief": "b2",
+    "url": "https://www.pewresearch.org/social-trends/2025/02/25/workers-views-of-ai-use-in-the-workplace/",
+    "publisher": "Pew Research Center",
+    "kind": "independent",
+    "date": "2025-02-25",
+    "figure": "52",
+    "unit": "% of U.S. workers who feel worried about how AI may be used in the workplace in the future",
+    "sample_size": "not stated",
+    "quote": "About half of workers (52%) say they feel worried about how AI may be used"
+  },
+  {
+    "id": "b2-02",
+    "brief": "b2",
+    "url": "https://www.pewresearch.org/internet/2023/04/20/americans-views-on-use-of-ai-to-monitor-and-evaluate-workers/",
+    "publisher": "Pew Research Center",
+    "kind": "independent",
+    "date": "2023-04-20",
+    "figure": "66",
+    "unit": "% of U.S. adults who agree AI-based worker evaluation would lead to the collected information being misused",
+    "sample_size": "not stated",
+    "quote": "information collected about workers being misused (66%)"
+  },
+  {
+    "id": "b2-03",
+    "brief": "b2",
+    "url": "https://fortune.com/2024/08/22/workers-ok-with-workplace-message-monitoring-surveillance-chats-email",
+    "publisher": "Fortune (reporting a Qualtrics survey)",
+    "kind": "vendor",
+    "date": "2024-08-22",
+    "figure": "43",
+    "unit": "% of office workers who would probably or definitely voluntarily give their company access to work messages and email text for AI analysis",
+    "sample_size": "1,000 office workers",
+    "quote": "43% of respondents said “probably yes” or “definitely yes,”"
+  },
+  {
+    "id": "b2-04",
+    "brief": "b2",
+    "url": "https://www.euronews.com/next/2025/10/14/most-uk-employees-use-ai-at-work-without-permission-microsoft-survey-finds",
+    "publisher": "Euronews (reporting a Censuswide survey for Microsoft)",
+    "kind": "vendor",
+    "date": "2025-10-14",
+    "figure": "71",
+    "unit": "% of UK employees who used unapproved \"shadow AI\" tools at work",
+    "sample_size": "over 2,000 employees",
+    "quote": "Seventy-one per cent of the respondents said they turned to “shadow AI,”"
+  },
+  {
+    "id": "b2-05",
+    "brief": "b2",
+    "url": "https://www.workday.com/en-us/perspectives/ai/ai-at-work-september.html",
+    "publisher": "Workday",
+    "kind": "vendor",
+    "date": "2026-09-22",
+    "figure": "42",
+    "unit": "% of employees who trust their employer to use AI in a way that benefits employees",
+    "sample_size": "5,944 employees across the globe",
+    "quote": "Only 42% say they trust their employer on this point."
+  },
+  {
+    "id": "b2-06",
+    "brief": "b2",
+    "url": "https://prezohoweb.zoho.com/news/zoho-survey-reveals-overwhelming-concern-and-adoption-of-genai-in-workplace.html",
+    "publisher": "Zoho",
+    "kind": "vendor",
+    "date": "2024-08-28",
+    "figure": "74",
+    "unit": "% of US employees who say government legislation is needed for training AI with employee data",
+    "sample_size": "1,000 US employees",
+    "quote": "74% of respondents claimed government legislation was needed for training AI with employee data"
+  },
+  {
+    "id": "b2-07",
+    "brief": "b2",
+    "url": "https://ai.uq.edu.au/node/1681",
+    "publisher": "University of Queensland",
+    "kind": "independent",
+    "date": "2023-02-22",
+    "figure": "40",
+    "unit": "% of Australians who trust the use of AI at work",
+    "sample_size": "more than 17,000 respondents across 17 countries (Australian subsample not stated)",
+    "quote": "only 40% of Australians trust the use of artificial intelligence (AI) at work."
+  },
+  {
+    "id": "b2-08",
+    "brief": "b2",
+    "url": "https://tech.yahoo.com/ai/articles/more-third-us-workers-worried-195234646.html",
+    "publisher": "The Hill (via Yahoo, reporting a YouGov poll)",
+    "kind": "independent",
+    "date": "2024-04-24",
+    "figure": "36",
+    "unit": "% of US workers concerned that AI will take over their jobs",
+    "sample_size": "2,000 U.S. adults",
+    "quote": "workers are concerned that AI will take over their jobs."
+  },
+  {
+    "id": "b2-09",
+    "brief": "b2",
+    "url": "https://workplaceinsight.net/workers-voice-concerns-over-ai-in-the-workplace-think-it-makes-them-less-intelligent/",
+    "publisher": "Workplace Insight (reporting a Howdy survey)",
+    "kind": "vendor",
+    "date": "2025-09-22",
+    "figure": "20",
+    "unit": "% of full-time workers who say AI already makes them less capable",
+    "sample_size": "1,007 full-time workers aged 19 to 77",
+    "quote": "a fifth said the technology already makes them less capable"
+  }
+]

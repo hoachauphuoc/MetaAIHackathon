@@ -1,0 +1,20 @@
+[
+  {"id": "b1", "question": "How much time and attention do small-company owners lose to admin work and chasing documents, and what do they say they would give up to get it back?",
+   "queries": ["small business owners hours per week administrative tasks survey", "small business owner time spent on paperwork survey 2025 2026", "owners context switching lost hours per week small company", "SMB owners biggest barrier lack of time survey"],
+   "good_source": "A survey or study with a stated sample size, an independent publisher (government, university, research firm, trade body) preferred over a software vendor."},
+  {"id": "b2", "question": "What worries employees about AI at work, and what makes them accept or reject an AI assistant?",
+   "queries": ["employee attitudes AI at work survey trust monitoring", "workers worried AI workplace survey 2025", "employees data privacy AI tools workplace survey", "AI monitoring employees acceptance survey"],
+   "good_source": "Large-sample polling (Pew, Gallup, academic) with the question wording and date; vendor surveys only as labelled vendor figures."},
+  {"id": "b3", "question": "What does lost knowledge cost when a person joins or leaves a small company (time to productivity, handover gaps)?",
+   "queries": ["cost of employee turnover small business knowledge loss", "time to productivity new hire onboarding study", "knowledge transfer when employees leave survey", "onboarding small business survey first weeks"],
+   "good_source": "Studies or surveys with a stated method and sample; avoid unsourced blog statistics."},
+  {"id": "b4", "question": "How common are paper and photo documents in small companies, and what changes when they are read automatically?",
+   "queries": ["small businesses still use paper documents survey", "document digitization small business time saved study", "OCR data entry errors small business", "paper forms small companies emerging markets survey"],
+   "good_source": "Surveys or case studies with numbers; note the country and year, since paper use differs by market."},
+  {"id": "b5", "question": "Which existing tools cover workspace AI, document workflow and small-business assistants, and where does a role-based, rules-first assistant that never evaluates people differ?",
+   "queries": ["AI workspace assistant small business tools comparison", "role-based AI assistant small teams product", "document approval workflow AI tools small business", "AI assistant privacy no training on customer data small business"],
+   "good_source": "Product documentation and pricing pages (kind vendor, label them), plus independent comparisons; capture what the product does, not marketing adjectives."},
+  {"id": "b6", "question": "What does the Meta Global AI Developer Hackathon Build for Your World track reward, and which Meta model features and responsible-use expectations apply?",
+   "queries": ["Meta Global AI Developer Hackathon Build for Your World", "Meta Muse Spark API documentation vision function calling", "Meta AI developer hackathon judging criteria", "Muse Spark open weights license responsible use"],
+   "good_source": "Meta's own pages and the hackathon guide; capture the exact criteria and dates."}
+]

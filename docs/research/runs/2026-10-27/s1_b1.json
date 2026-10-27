@@ -1,0 +1,74 @@
+[
+  {
+    "brief": "b1",
+    "url": "https://ueni.com/en-us/small-business-research/how-microbusiness-owners-spend-their-time",
+    "title": "How microbusiness owners spend their time",
+    "publisher": "UENI Research",
+    "date": "2024-05",
+    "reason": "Page confirms 837 US firms with five or fewer staff; reports admin plus legal/compliance share of owner time. Run by a web-builder vendor."
+  },
+  {
+    "brief": "b1",
+    "url": "https://retailtimes.co.uk/amex-sme-barometer-small-business-owners-spend-nearly-twice-the-time-on-admin-than-growing-their-business/",
+    "title": "Amex SME Barometer: small business owners spend nearly twice the time on admin than growing their business",
+    "publisher": "Retail Times (American Express survey)",
+    "date": "2026-07-20",
+    "reason": "Page confirms 1,000 UK owners surveyed by American Express; headline says admin time is nearly twice time spent on growth. Vendor-sponsored."
+  },
+  {
+    "brief": "b1",
+    "url": "https://talkerresearch.com/survey-reveals-top-time-wasters-for-entrepreneurs/",
+    "title": "Survey reveals top time wasters for entrepreneurs",
+    "publisher": "Talker Research (commissioned by Slack)",
+    "date": "2024-08-14",
+    "reason": "Page confirms 2,000 US small business owners; reports time lost to tasks owners call unproductive. Commissioned by a software vendor."
+  },
+  {
+    "brief": "b1",
+    "url": "https://www.ipsos.com/en-ca/small-business-owners-thinking-big-when-it-comes-using-technology",
+    "title": "Small Business Owners Thinking Big When It Comes To Using Technology",
+    "publisher": "Ipsos (Ipsos Reid)",
+    "date": "2005-10-13",
+    "reason": "Page confirms 855 small business owners; reports lack of funds ranked above lack of time as a productivity barrier. Dated 2005, so old."
+  },
+  {
+    "brief": "b1",
+    "url": "https://pro.hubrunner.com/blog/2015/06/10/new-survey-reveals-top-challenges-faced-by-american-business-owners/",
+    "title": "New Survey Reveals Top Challenges Faced by American Business Owners",
+    "publisher": "Hubrunner",
+    "date": "2015-06-10",
+    "reason": "Vendor blog on a 2015 US owner survey where time constraints ranked top. Not fetched; date taken from URL; sample unchecked."
+  },
+  {
+    "brief": "b1",
+    "url": "https://news.microsoft.com/en-au/2015/06/24/australian-smbs-lose-35-working-days-a-year-to-unproductive-time/",
+    "title": "Australian SMB's lose 35 working days a year to unproductive time",
+    "publisher": "Microsoft (Australia news)",
+    "date": "2015-06-24",
+    "reason": "Vendor press release on Australian SMBs losing 35 working days a year to unproductive time. Not fetched; date from URL; method unchecked."
+  },
+  {
+    "brief": "b1",
+    "url": "https://www.thinkadvisor.com/2004/01/07/nfib-paperwork-costs-small-firms-dearly/",
+    "title": "NFIB: paperwork costs small firms dearly",
+    "publisher": "ThinkAdvisor (reporting NFIB)",
+    "date": "2004-01-07",
+    "reason": "Trade-press report of an NFIB estimate of paperwork and record-keeping cost per hour. Old and secondhand; not fetched."
+  },
+  {
+    "brief": "b1",
+    "url": "https://www.barchart.com/story/news/977876/new-survey-from-legalzoom-reveals-compliance-is-weighing-on-small-businesses-in-2026",
+    "title": "New survey from LegalZoom reveals compliance is weighing on small businesses in 2026",
+    "publisher": "Barchart (LegalZoom survey)",
+    "date": "2026",
+    "reason": "Headline year 2026; page body not retrievable on fetch. Reports a LegalZoom survey of US owners on compliance time. Vendor-run."
+  },
+  {
+    "brief": "b1",
+    "url": "https://www.dailysignal.com/2016/10/27/rising-red-tape-near-top-of-small-business-fears/",
+    "title": "Rising Red Tape Near Top of Small Business Fears",
+    "publisher": "The Daily Signal",
+    "date": "2016-10-27",
+    "reason": "2016 news report on small business red-tape concerns, likely citing NFIB data. Not fetched, so the underlying survey is unverified."
+  }
+]

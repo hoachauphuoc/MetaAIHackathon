@@ -1,0 +1,58 @@
+[
+  {
+    "brief": "b6",
+    "url": "https://internshala.com/competitions/?p=12509",
+    "title": "Meta Global AI Developer Hackathon",
+    "publisher": "Internshala",
+    "date": "2026",
+    "reason": "Third-party listing of the 2026 event: $1M prize pool, indie and startup tracks, 20,000 applicant cap, submission due 5 Nov 2026 6:30 AM IST, no judging rubric; page shows no publish date."
+  },
+  {
+    "brief": "b6",
+    "url": "https://www.mind-verse.de/news/meta-plant-globalen-ki-hackathon-fuer-entwickler",
+    "title": "Meta plant globalen KI Hackathon fuer Entwickler",
+    "publisher": "mind-verse",
+    "date": "2026-09-25",
+    "reason": "German news at announcement: 10 days, fully virtual, $1M pool, $150 API credit each; tracks and official criteria not yet published, so its seven judging dimensions are the author's suggestions only."
+  },
+  {
+    "brief": "b6",
+    "url": "https://developer.meta.com/ai/products/meta-model-api/",
+    "title": "Meta Model API",
+    "publisher": "Meta",
+    "date": "2026",
+    "reason": "Meta's official product page (redirects to dev.meta.ai): lists Muse Spark 1.1 to 1.3 with contributor variants, self-serve access, and Muse Image and SAM 3.1; no date shown."
+  },
+  {
+    "brief": "b6",
+    "url": "https://ai.developer.meta.com/docs/models/",
+    "title": "Meta Model API",
+    "publisher": "Meta",
+    "date": "2026",
+    "reason": "Official docs: muse-spark-1.3 is the recommended default; all Muse Spark versions take text, image, video, audio and PDF input; tool calling and structured output listed; Standard mode excludes training, Contributor mode may be used for training."
+  },
+  {
+    "brief": "b6",
+    "url": "https://docs.litellm.ai/docs/providers/meta",
+    "title": "Meta Model API",
+    "publisher": "LiteLLM",
+    "date": "2026",
+    "reason": "Third-party integration docs: base URL https://api.meta.ai/v1, muse-spark-1.1 supports function calling, image and PDF input, structured outputs and web search; corroborates the official docs but is not Meta's."
+  },
+  {
+    "brief": "b6",
+    "url": "https://www.trendingtopics.eu/muse-spark-open-meta-open-weight-license/",
+    "title": "Muse Spark Open: Meta open-weight license",
+    "publisher": "TrendingTopics",
+    "date": "2026-10-15",
+    "reason": "Muse Model License terms: internal and product use allowed, notice and separate agreement above $20M revenue for AI services, required 'Built with Muse Spark Open' label, and an acceptable-use policy banning weapons, malware, fraud and impersonation."
+  },
+  {
+    "brief": "b6",
+    "url": "https://itdaily.com/news/innovation/meta-muse-spark-open-weigh/",
+    "title": "Meta makes Muse Spark available as an open-weight model",
+    "publisher": "IT Daily",
+    "date": "2026-10-16",
+    "reason": "Confirms the weights fall under the proprietary Muse Model License with limited commercial terms, 816B total and 42B active parameters, and extra safety training; does not list usage-policy terms and does not call the release open source."
+  }
+]

@@ -1,0 +1,450 @@
+[
+ {
+  "brief": "b1",
+  "url": "https://ueni.com/en-us/small-business-research/how-microbusiness-owners-spend-their-time",
+  "title": "How microbusiness owners spend their time",
+  "publisher": "UENI Research",
+  "date": "2024-05",
+  "reason": "Page confirms 837 US firms with five or fewer staff; reports admin plus legal/compliance share of owner time. Run by a web-builder vendor."
+ },
+ {
+  "brief": "b1",
+  "url": "https://retailtimes.co.uk/amex-sme-barometer-small-business-owners-spend-nearly-twice-the-time-on-admin-than-growing-their-business/",
+  "title": "Amex SME Barometer: small business owners spend nearly twice the time on admin than growing their business",
+  "publisher": "Retail Times (American Express survey)",
+  "date": "2026-07-20",
+  "reason": "Page confirms 1,000 UK owners surveyed by American Express; headline says admin time is nearly twice time spent on growth. Vendor-sponsored."
+ },
+ {
+  "brief": "b1",
+  "url": "https://talkerresearch.com/survey-reveals-top-time-wasters-for-entrepreneurs/",
+  "title": "Survey reveals top time wasters for entrepreneurs",
+  "publisher": "Talker Research (commissioned by Slack)",
+  "date": "2024-08-14",
+  "reason": "Page confirms 2,000 US small business owners; reports time lost to tasks owners call unproductive. Commissioned by a software vendor."
+ },
+ {
+  "brief": "b1",
+  "url": "https://www.ipsos.com/en-ca/small-business-owners-thinking-big-when-it-comes-using-technology",
+  "title": "Small Business Owners Thinking Big When It Comes To Using Technology",
+  "publisher": "Ipsos (Ipsos Reid)",
+  "date": "2005-10-13",
+  "reason": "Page confirms 855 small business owners; reports lack of funds ranked above lack of time as a productivity barrier. Dated 2005, so old."
+ },
+ {
+  "brief": "b1",
+  "url": "https://pro.hubrunner.com/blog/2015/06/10/new-survey-reveals-top-challenges-faced-by-american-business-owners/",
+  "title": "New Survey Reveals Top Challenges Faced by American Business Owners",
+  "publisher": "Hubrunner",
+  "date": "2015-06-10",
+  "reason": "Vendor blog on a 2015 US owner survey where time constraints ranked top. Not fetched; date taken from URL; sample unchecked."
+ },
+ {
+  "brief": "b1",
+  "url": "https://news.microsoft.com/en-au/2015/06/24/australian-smbs-lose-35-working-days-a-year-to-unproductive-time/",
+  "title": "Australian SMB's lose 35 working days a year to unproductive time",
+  "publisher": "Microsoft (Australia news)",
+  "date": "2015-06-24",
+  "reason": "Vendor press release on Australian SMBs losing 35 working days a year to unproductive time. Not fetched; date from URL; method unchecked."
+ },
+ {
+  "brief": "b1",
+  "url": "https://www.thinkadvisor.com/2004/01/07/nfib-paperwork-costs-small-firms-dearly/",
+  "title": "NFIB: paperwork costs small firms dearly",
+  "publisher": "ThinkAdvisor (reporting NFIB)",
+  "date": "2004-01-07",
+  "reason": "Trade-press report of an NFIB estimate of paperwork and record-keeping cost per hour. Old and secondhand; not fetched."
+ },
+ {
+  "brief": "b1",
+  "url": "https://www.barchart.com/story/news/977876/new-survey-from-legalzoom-reveals-compliance-is-weighing-on-small-businesses-in-2026",
+  "title": "New survey from LegalZoom reveals compliance is weighing on small businesses in 2026",
+  "publisher": "Barchart (LegalZoom survey)",
+  "date": "2026",
+  "reason": "Headline year 2026; page body not retrievable on fetch. Reports a LegalZoom survey of US owners on compliance time. Vendor-run."
+ },
+ {
+  "brief": "b1",
+  "url": "https://www.dailysignal.com/2016/10/27/rising-red-tape-near-top-of-small-business-fears/",
+  "title": "Rising Red Tape Near Top of Small Business Fears",
+  "publisher": "The Daily Signal",
+  "date": "2016-10-27",
+  "reason": "2016 news report on small business red-tape concerns, likely citing NFIB data. Not fetched, so the underlying survey is unverified."
+ },
+ {
+  "brief": "b2",
+  "url": "https://www.pewresearch.org/social-trends/2025/02/25/workers-views-of-ai-use-in-the-workplace/markdown",
+  "title": "U.S. Workers Are More Worried Than Hopeful About Future AI Use in the Workplace",
+  "publisher": "Pew Research Center",
+  "date": "2025-02-25",
+  "reason": "Large national survey of U.S. workers on worry versus hope about AI at work; primary publisher."
+ },
+ {
+  "brief": "b2",
+  "url": "https://www.pewresearch.org/internet/2023/04/20/americans-views-on-use-of-ai-to-monitor-and-evaluate-workers/markdown",
+  "title": "Americans' Views on Use of AI to Monitor and Evaluate Workers",
+  "publisher": "Pew Research Center",
+  "date": "2023-04-20",
+  "reason": "Shows unease about six employer AI monitoring uses; older than the 2024-2026 preference, kept for monitoring evidence."
+ },
+ {
+  "brief": "b2",
+  "url": "https://fortune.com/2024/08/22/workers-ok-with-workplace-message-monitoring-surveillance-chats-email",
+  "title": "Workers OK with workplace message monitoring, surveillance of chats and email",
+  "publisher": "Fortune",
+  "date": "2024-08-22",
+  "reason": "Reports survey results on employee comfort with employer monitoring of work chats and email (secondary coverage)."
+ },
+ {
+  "brief": "b2",
+  "url": "https://www.euronews.com/next/2025/10/14/most-uk-employees-use-ai-at-work-without-permission-microsoft-survey-finds",
+  "title": "Most UK employees use AI at work without permission, Microsoft survey finds",
+  "publisher": "Euronews",
+  "date": "2025-10-14",
+  "reason": "Reports a Microsoft UK survey on unapproved AI use and privacy concern; vendor-commissioned figures."
+ },
+ {
+  "brief": "b2",
+  "url": "https://www.myperfectcv.co.uk/blog/european-ai-at-work-report",
+  "title": "58% of European Workers Use AI on the Job, But 65% Worry About Data Privacy",
+  "publisher": "MyPerfectCV",
+  "date": "2026",
+  "reason": "Vendor-run survey of 1,000 workers in five European countries on data privacy worries about AI."
+ },
+ {
+  "brief": "b2",
+  "url": "https://www.workday.com/en-us/perspectives/ai/ai-at-work-september.html",
+  "title": "AI Adoption Is Moving Faster Than Employee Trust",
+  "publisher": "Workday",
+  "date": "2026",
+  "reason": "Vendor survey of about 5,400 employees on AI as opportunity and threat and on trust gaps (vendor figures)."
+ },
+ {
+  "brief": "b2",
+  "url": "https://prezohoweb.zoho.com/news/zoho-survey-reveals-overwhelming-concern-and-adoption-of-genai-in-workplace.html",
+  "title": "Zoho survey reveals overwhelming concern and adoption of GenAI in workplace",
+  "publisher": "Zoho",
+  "date": "2024",
+  "reason": "Vendor survey of U.S. employees on GenAI concern and wanting legislation on AI training with employee data (vendor figures)."
+ },
+ {
+  "brief": "b2",
+  "url": "https://policy-futures.centre.uq.edu.au/node/2840",
+  "title": "A survey of over 17,000 people indicates only half of us are willing to trust AI at work",
+  "publisher": "University of Queensland",
+  "date": "2023-02",
+  "reason": "Large 17-country survey on willingness to trust AI at work; pre-ChatGPT, older than the preferred range."
+ },
+ {
+  "brief": "b2",
+  "url": "https://tech.yahoo.com/ai/articles/more-third-us-workers-worried-195234646.html",
+  "title": "More than a third of US workers worried AI will take their jobs",
+  "publisher": "The Hill (via Yahoo)",
+  "date": "2025",
+  "reason": "Secondary coverage of a 2025 YouGov poll on worker fear of AI job loss; check against the original YouGov release."
+ },
+ {
+  "brief": "b2",
+  "url": "https://workplaceinsight.net/workers-voice-concerns-over-ai-in-the-workplace-think-it-makes-them-less-intelligent/",
+  "title": "Workers voice concerns over AI in the workplace, think it makes them less intelligent",
+  "publisher": "Workplace Insight",
+  "date": "2025",
+  "reason": "Reports a 2025 Howdy survey of 1,007 full-time workers on fear of losing skills to AI (vendor-commissioned)."
+ },
+ {
+  "brief": "b3",
+  "url": "https://www.linuxfoundation.org/blog/the-2024-state-of-tech-talent-report",
+  "title": "The 2024 State of Tech Talent Report",
+  "publisher": "Linux Foundation",
+  "date": "2024-04-16",
+  "reason": "Web survey of 418 valid records (Dec 2023 to Feb 2024); onboarding averages 4.8 months to normal productivity, though secondary sites cite 321 organizations."
+ },
+ {
+  "brief": "b3",
+  "url": "https://pure.athabascau.ca/en/publications/coping-with-the-sudden-loss-of-an-indispensable-employee-an-explo/",
+  "title": "Coping with the Sudden Loss of an Indispensable Employee: An Exploratory Case Study",
+  "publisher": "Journal of Applied Behavioral Science",
+  "date": "2003",
+  "reason": "Peer-reviewed case study of a small manufacturer tracking knowledge flows to the replacement with real-time surveys and interviews; one firm, no headcount figures."
+ },
+ {
+  "brief": "b3",
+  "url": "https://www.bls.gov/opub/mlr/2019/article/an-analysis-of-the-new-job-openings-and-labor-turnover-data-by-size-of-firm.htm",
+  "title": "An analysis of the new job openings and labor turnover data by size of firm",
+  "publisher": "U.S. Bureau of Labor Statistics",
+  "date": "2019-05",
+  "reason": "Official BLS method article on JOLTS turnover by firm size; gives context for small-firm turnover data but no onboarding or knowledge-loss figures."
+ },
+ {
+  "brief": "b3",
+  "url": "https://www.gallup.com/workplace/247091/create-exceptional-onboarding-journey-new-employees.aspx",
+  "title": "Create an Exceptional Onboarding Journey for Your New Employees",
+  "publisher": "Gallup",
+  "date": "2019-03-01",
+  "reason": "Gallup onboarding guidance from its 2019 perspective paper; names no survey sample, so use only as qualitative support."
+ },
+ {
+  "brief": "b3",
+  "url": "https://brandonhall.com/?p=36113",
+  "title": "Unlocking the Power of Onboarding to Aid Employee Retention",
+  "publisher": "Brandon Hall Group",
+  "date": "2024-06-25",
+  "reason": "Cites Brandon Hall's onboarding study: 41% of organizations see over 5% new-hire turnover; the article does not state the sample size."
+ },
+ {
+  "brief": "b3",
+  "url": "https://www.americanprogress.org/?p=47988",
+  "title": "There Are Significant Business Costs to Replacing Employees",
+  "publisher": "Center for American Progress",
+  "date": "2012-11-16",
+  "reason": "Review of 30 turnover-cost case studies, with a median cost near 20% of salary for lower-paid roles; the page returned 403 to WebFetch, so verify before citing."
+ },
+ {
+  "brief": "b3",
+  "url": "https://advocacy.sba.gov/wp-content/uploads/2022/05/Labor-Market-Fact-Sheet-rev-May-2022-508c.pdf",
+  "title": "Labor Market Fact Sheet (rev. May 2022)",
+  "publisher": "U.S. Small Business Administration, Office of Advocacy",
+  "date": "2022-05",
+  "reason": "Government fact sheet using JOLTS data on small-establishment job openings; context on small-business hiring, not on knowledge loss; WebFetch returned 403."
+ },
+ {
+  "brief": "b3",
+  "url": "https://ro.uow.edu.au/buspapers/1417",
+  "title": "Measuring the impact of knowledge loss: a longitudinal study",
+  "publisher": "University of Wollongong",
+  "date": "2018",
+  "reason": "Longitudinal case study of an Australian government department linking knowledge loss to longer time to competence; the repository returned 403, so verify the figures."
+ },
+ {
+  "brief": "b3",
+  "url": "https://expresspros.com/Newsroom/America-Employed/Documents/2022/5-25-2022-EEP-Release-AE.aspx",
+  "title": "Express Employment Professionals release on knowledge transfer when older workers retire",
+  "publisher": "Express Employment Professionals (Harris Poll survey)",
+  "date": "2022-05-25",
+  "reason": "Staffing-firm-commissioned Harris Poll survey where 84% of US employees call unpassed knowledge a big loss; vendor-sourced, and the page returned a 500 error."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.cpapracticeadvisor.com/?p=65788",
+  "title": "Half of Small to Medium-Sized Businesses Still Rely on Paper Records",
+  "publisher": "CPA Practice Advisor",
+  "date": "2022-07-26",
+  "reason": "Reports an Act! survey of more than 1,100 SMB owners in which 45% of SMB operations still rely on paper records (US)."
+ },
+ {
+  "brief": "b4",
+  "url": "https://accountantsdaily.com.au/technology/13868-smes-still-tech-averse-myob",
+  "title": "SMEs still tech averse, MYOB",
+  "publisher": "Accountants Daily",
+  "date": "2019-12-30",
+  "reason": "Survey of 523 accountants and bookkeepers in Australia: 41% said at least half their SME clients provide paper documents rather than electronic ones."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.accountantsdaily.com.au/technology/9112-3-in-4-smes-still-using-shoebox-accounting",
+  "title": "3 in 4 SMEs still using shoebox accounting",
+  "publisher": "Accountants Daily",
+  "date": "2016-05-10",
+  "reason": "Xero study in Australia: 77.6% of small businesses still store at least some receipts and invoices in shoeboxes; sample size not stated."
+ },
+ {
+  "brief": "b4",
+  "url": "https://accountantsdaily.com.au/tax-compliance/10298-smes-not-on-board-with-digital-trails-research-finds",
+  "title": "SMEs not on board with digital trails, research finds",
+  "publisher": "Accountants Daily",
+  "date": "2017-06-01",
+  "reason": "H&R Block and Officeworks survey in Australia: only 5% of small business owners track receipts digitally all year, most keep paper just to be safe."
+ },
+ {
+  "brief": "b4",
+  "url": "https://idm.net.au/node/9326",
+  "title": "Over half of global businesses in paper jam",
+  "publisher": "IDM",
+  "date": "2012-10-25",
+  "reason": "Basware and Institute of Financial Operations study of more than 900 finance professionals: 53% of companies still scan and capture paper invoices in-house (global, older)."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.cmswire.com/document-management/doc-mgt-roll-up-its-time-to-transition-to-digital/",
+  "title": "Document management roll-up: it's time to transition to digital",
+  "publisher": "CMSWire",
+  "date": "2015-09-18",
+  "reason": "Cites a Software Advice survey of 576 US information workers: about six hours a week spent searching for documents in paper-based offices (2015, modest sample)."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.inderscience.com/filter.php?aid=20053",
+  "title": "Meeting the challenge of high quality data entry: a free double-entry system",
+  "publisher": "Inderscience Publishers",
+  "date": "2008-08-22",
+  "reason": "Academic paper arguing small businesses rely on minimally trained staff for manual data entry and proposing a free double-entry verification method; no figures given."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11917072/",
+  "title": "Streamlining data recording through optical character recognition: a prospective multi-center study in intensive care units",
+  "publisher": "Critical Care (peer-reviewed journal)",
+  "date": "2025-03-18",
+  "reason": "Multi-center ICU study in 3 countries: OCR-based entry reached 96.9% accuracy and took 3.4 minutes per patient versus 6.0 manual, over 1,018 validated data points (hospital setting, not small firms)."
+ },
+ {
+  "brief": "b4",
+  "url": "https://www.smartcompany.com.au/technology/smes-spend-up-to-1000-a-year-on-paper-why-telstra-says-your-business-needs-to-up-your-apps/",
+  "title": "SMEs spend up to 1000 a year on paper: why Telstra says your business needs to up your apps",
+  "publisher": "SmartCompany",
+  "date": "2014-10-29",
+  "reason": "Reports a Telstra survey of 1,000 Australian small business owners: SMEs spend up to $1,000 a year on paper (vendor-commissioned, 2014)."
+ },
+ {
+  "brief": "b4",
+  "url": "https://hackernoon.com/handwriting-vs-ai-real-performance-of-ai-on-handwritten-documents?source=rss",
+  "title": "Why Handwritten Forms Still Break Smart AI",
+  "publisher": "HackerNoon",
+  "date": "2026-02-10",
+  "reason": "Benchmark run by a vendor CEO (not peer reviewed): even the best AI models struggled to consistently exceed 95% business-level accuracy on real handwritten forms."
+ },
+ {
+  "brief": "b4",
+  "url": "https://accounting.wharton.upenn.edu/wp-content/uploads/2025/10/AguilarLindRamesh.pdf",
+  "title": "Aguilar, Lind and Ramesh: accounting records in informal microbusinesses (working paper)",
+  "publisher": "Wharton School, University of Pennsylvania",
+  "date": "2025-10",
+  "reason": "ILO survey of about 1,400 firms in Guatemala, Honduras and El Salvador: 44% of informal microbusinesses keep systematic records, about three-quarters of them on notebooks (PDF unreadable in fetch; figures from search summary, to verify)."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.vellum.ai/md/blog/best-ai-assistant-for-small-business",
+  "title": "10 Best AI Assistants for Small Business in 2026: Reviewed & Compared",
+  "publisher": "Vellum",
+  "date": "2026-07-14",
+  "reason": "Compares ten small-business assistants (ChatGPT, Copilot, Gemini, Claude, Lindy, Zapier, Smith.ai); vendor blog where Vellum ranks itself first."
+ },
+ {
+  "brief": "b5",
+  "url": "https://support.teamwork.com/projects/TeamworkAI/ai-teammates-overview",
+  "title": "AI Teammates Overview - Teamwork.com Support",
+  "publisher": "Teamwork.com",
+  "date": "2026-06-29",
+  "reason": "Role-based AI Teammates summarize work and draft updates from workspace data, limited to each user's existing permissions; admins control access."
+ },
+ {
+  "brief": "b5",
+  "url": "https://blog.fastbots.ai/best-ai-tools-for-small-business/",
+  "title": "Best AI Tools for Small Business in 2026: 10 Compared by Function",
+  "publisher": "FastBots",
+  "date": "2026-09-07",
+  "reason": "Compares ten small-business AI tools by job (chatbots, assistants, research, CRM, bookkeeping, automation); published by a vendor that ranks its own tool first."
+ },
+ {
+  "brief": "b5",
+  "url": "https://resources.rework.com/tools/ai-tools/best-ai-tools-for-small-business-2026",
+  "title": "Best AI Tools for Small Business in 2026: 13 Tools Ranked by Function and Fit",
+  "publisher": "Rework",
+  "date": "2026-07-16",
+  "reason": "Ranks 13 tools by business job (general assistants, CRM, support, bookkeeping, automation) and flags recent price changes; date is last-updated."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.eesel.ai/blog/best-ai-teammates",
+  "title": "The 10 best AI teammates for work in 2026, tested and compared",
+  "publisher": "eesel AI",
+  "date": "2026-09-10",
+  "reason": "Compares ten AI teammate products for support, operations and no-code builds; vendor blog where eesel ranks its own product first."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.larksuite.com/en_us/blog/document-approval-software",
+  "title": "Top 10 Document Approval Software Tools in 2026",
+  "publisher": "Lark",
+  "date": "2026-09-18",
+  "reason": "Ranks ten document approval tools (Wrike, Filestage, PandaDoc, Ziflow, Kissflow, Cflow); vendor blog, so rankings are not independent."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.smartcompany.com.au/partner-content/how-to-streamline-document-workflows/",
+  "title": "How to streamline document workflows with AI without adding more apps to your stack",
+  "publisher": "SmartCompany (Adobe partner content)",
+  "date": "2026-07-17",
+  "reason": "Sponsored piece arguing AI approvals, summaries and e-signatures should run inside existing document platforms; uses Adobe Acrobat Studio as the example."
+ },
+ {
+  "brief": "b5",
+  "url": "https://dev.to/alifar/ai-assistants-and-data-privacy-who-trains-on-your-data-who-doesnt-njj",
+  "title": "AI Assistants and Data Privacy: Who Trains on Your Data, Who Doesn't",
+  "publisher": "DEV Community (alifar)",
+  "date": "2025-09-13",
+  "reason": "States consumer ChatGPT, Gemini, personal Copilot and Qwen assistants train on user data by default unless opted out; enterprise tiers are treated differently."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.layer3labs.io/guides/chatgpt-team-vs-plus-vs-enterprise",
+  "title": "ChatGPT Team Plan (Now Business) vs Plus vs Enterprise",
+  "publisher": "Layer3 Labs",
+  "date": "2026-10-16",
+  "reason": "Third-party guide saying Business and Enterprise workspaces do not train on data by default while personal Plus lacks that exclusion; date is last-updated."
+ },
+ {
+  "brief": "b5",
+  "url": "https://www.adobe.com/in/acrobat/roc/blog/ai-powered-workflows-time-savings-advantage",
+  "title": "How AI is turning time savings into a competitive advantage",
+  "publisher": "Adobe Acrobat India",
+  "date": "2026-04-13",
+  "reason": "Vendor blog on AI document workflows for small businesses: summaries, version comparison, templates and e-signing, with time-saving claims that are unverified."
+ },
+ {
+  "brief": "b6",
+  "url": "https://internshala.com/competitions/?p=12509",
+  "title": "Meta Global AI Developer Hackathon",
+  "publisher": "Internshala",
+  "date": "2026",
+  "reason": "Third-party listing of the 2026 event: $1M prize pool, indie and startup tracks, 20,000 applicant cap, submission due 5 Nov 2026 6:30 AM IST, no judging rubric; page shows no publish date."
+ },
+ {
+  "brief": "b6",
+  "url": "https://www.mind-verse.de/news/meta-plant-globalen-ki-hackathon-fuer-entwickler",
+  "title": "Meta plant globalen KI Hackathon fuer Entwickler",
+  "publisher": "mind-verse",
+  "date": "2026-09-25",
+  "reason": "German news at announcement: 10 days, fully virtual, $1M pool, $150 API credit each; tracks and official criteria not yet published, so its seven judging dimensions are the author's suggestions only."
+ },
+ {
+  "brief": "b6",
+  "url": "https://developer.meta.com/ai/products/meta-model-api/",
+  "title": "Meta Model API",
+  "publisher": "Meta",
+  "date": "2026",
+  "reason": "Meta's official product page (redirects to dev.meta.ai): lists Muse Spark 1.1 to 1.3 with contributor variants, self-serve access, and Muse Image and SAM 3.1; no date shown."
+ },
+ {
+  "brief": "b6",
+  "url": "https://ai.developer.meta.com/docs/models/",
+  "title": "Meta Model API",
+  "publisher": "Meta",
+  "date": "2026",
+  "reason": "Official docs: muse-spark-1.3 is the recommended default; all Muse Spark versions take text, image, video, audio and PDF input; tool calling and structured output listed; Standard mode excludes training, Contributor mode may be used for training."
+ },
+ {
+  "brief": "b6",
+  "url": "https://docs.litellm.ai/docs/providers/meta",
+  "title": "Meta Model API",
+  "publisher": "LiteLLM",
+  "date": "2026",
+  "reason": "Third-party integration docs: base URL https://api.meta.ai/v1, muse-spark-1.1 supports function calling, image and PDF input, structured outputs and web search; corroborates the official docs but is not Meta's."
+ },
+ {
+  "brief": "b6",
+  "url": "https://www.trendingtopics.eu/muse-spark-open-meta-open-weight-license/",
+  "title": "Muse Spark Open: Meta open-weight license",
+  "publisher": "TrendingTopics",
+  "date": "2026-10-15",
+  "reason": "Muse Model License terms: internal and product use allowed, notice and separate agreement above $20M revenue for AI services, required 'Built with Muse Spark Open' label, and an acceptable-use policy banning weapons, malware, fraud and impersonation."
+ },
+ {
+  "brief": "b6",
+  "url": "https://itdaily.com/news/innovation/meta-muse-spark-open-weigh/",
+  "title": "Meta makes Muse Spark available as an open-weight model",
+  "publisher": "IT Daily",
+  "date": "2026-10-16",
+  "reason": "Confirms the weights fall under the proprietary Muse Model License with limited commercial terms, 816B total and 42B active parameters, and extra safety training; does not list usage-policy terms and does not call the release open source."
+ }
+]

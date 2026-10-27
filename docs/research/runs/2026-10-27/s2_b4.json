@@ -1,0 +1,122 @@
+[
+  {
+    "id": "b4-01",
+    "brief": "b4",
+    "url": "https://www.cpapracticeadvisor.com/?p=65788",
+    "publisher": "CPA Practice Advisor",
+    "kind": "vendor",
+    "date": "2022-07-26",
+    "figure": "45%",
+    "unit": "share of small and medium-sized businesses whose operations still rely on paper records (survey by Act!, a CRM provider; country not stated)",
+    "sample_size": "more than 1,100 SMB owners and decision-makers",
+    "quote": "45% of the SMBs' operations still relied on paper records"
+  },
+  {
+    "id": "b4-02",
+    "brief": "b4",
+    "url": "https://accountantsdaily.com.au/technology/13868-smes-still-tech-averse-myob",
+    "publisher": "Accountants Daily",
+    "kind": "vendor",
+    "date": "2019-12-30",
+    "figure": "41%",
+    "unit": "share of accountants and bookkeepers saying at least half of their SME clients provide paper documentation rather than electronic (MYOB survey, Australia)",
+    "sample_size": "523 accountants and bookkeepers",
+    "quote": "at least half of their SME clients provide paper documentation"
+  },
+  {
+    "id": "b4-03",
+    "brief": "b4",
+    "url": "https://www.accountantsdaily.com.au/technology/9112-3-in-4-smes-still-using-shoebox-accounting",
+    "publisher": "Accountants Daily",
+    "kind": "vendor",
+    "date": "2016-05-10",
+    "figure": "77.6 per cent",
+    "unit": "share of small businesses that still manually store at least some receipts and invoices (Xero study, Australia)",
+    "sample_size": "not stated",
+    "quote": "77.6 per cent still manually store at least some of their receipts and invoices"
+  },
+  {
+    "id": "b4-04",
+    "brief": "b4",
+    "url": "https://accountantsdaily.com.au/tax-compliance/10298-smes-not-on-board-with-digital-trails-research-finds",
+    "publisher": "Accountants Daily",
+    "kind": "vendor",
+    "date": "2017-06-01",
+    "figure": "5% (one in 20)",
+    "unit": "share of small business owners who track receipts digitally throughout the year (H&R Block and Officeworks survey, Australia)",
+    "sample_size": "not stated",
+    "quote": "only one in 20 small business owners tracks their receipts throughout the year"
+  },
+  {
+    "id": "b4-05",
+    "brief": "b4",
+    "url": "https://idm.net.au/node/9326",
+    "publisher": "IDM",
+    "kind": "vendor",
+    "date": "2012-10-25",
+    "figure": "53%",
+    "unit": "share of businesses that still scan and capture physical invoices in-house (Basware and Institute of Financial Operations study; US, UK, Sweden, Norway, Germany, Finland)",
+    "sample_size": "more than 900 finance professionals",
+    "quote": "53% of businesses still scan and capture physical invoices in-house"
+  },
+  {
+    "id": "b4-06",
+    "brief": "b4",
+    "url": "https://www.cmswire.com/document-management/doc-mgt-roll-up-its-time-to-transition-to-digital/",
+    "publisher": "CMSWire",
+    "kind": "vendor",
+    "date": "2015-09-18",
+    "figure": "about six hours per week",
+    "unit": "time information workers in traditional paper-based offices spend looking for documents (Software Advice survey, US)",
+    "sample_size": "576 US information workers",
+    "quote": "workers in traditional offices spent about six hours per week just looking for reports"
+  },
+  {
+    "id": "b4-07",
+    "brief": "b4",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11917072/",
+    "publisher": "Critical Care (peer-reviewed journal)",
+    "kind": "independent",
+    "date": "2025-03-18",
+    "figure": "96.9% accuracy; 3.4 minutes per patient with OCR versus 6.0 minutes manual",
+    "unit": "data-entry accuracy and time of OCR-based entry in intensive care units (hospitals in Hong Kong, Thailand, Australia; not small firms)",
+    "sample_size": "1,018 validated data points",
+    "quote": "the overall data accuracy was 96.9% (range 95.3–100%)"
+  },
+  {
+    "id": "b4-08",
+    "brief": "b4",
+    "url": "https://www.smartcompany.com.au/technology/smes-spend-up-to-1000-a-year-on-paper-why-telstra-says-your-business-needs-to-up-your-apps/",
+    "publisher": "SmartCompany",
+    "kind": "vendor",
+    "date": "2014-10-29",
+    "figure": "up to $1000 a year",
+    "unit": "spend on paper per small business per year (Telstra survey, Australia, taken September 2014)",
+    "sample_size": "1,000 small business owners",
+    "quote": "Australian SMEs are spending up to $1000 each year on paper"
+  },
+  {
+    "id": "b4-09",
+    "brief": "b4",
+    "url": "https://hackernoon.com/handwriting-vs-ai-real-performance-of-ai-on-handwritten-documents?source=rss",
+    "publisher": "HackerNoon",
+    "kind": "vendor",
+    "date": "2026-02-10",
+    "figure": "95%",
+    "unit": "business-level accuracy threshold that even the best AI models struggled to consistently exceed on hand-filled paper forms (benchmark by the CEO of Businessware Technologies, not peer reviewed)",
+    "sample_size": "not stated",
+    "quote": "Even the best-performing models in our benchmark struggled to consistently exceed 95% business-level accuracy."
+  },
+  {
+    "id": "b4-10",
+    "brief": "b4",
+    "url": "https://accounting.wharton.upenn.edu/wp-content/uploads/2025/10/AguilarLindRamesh.pdf",
+    "publisher": "Wharton School, University of Pennsylvania (working paper by Rice University and University of Pittsburgh authors)",
+    "kind": "independent",
+    "date": "2025-10",
+    "figure": "44 percent keep systematic records, roughly three-quarters of them in notebooks",
+    "unit": "share of informal microbusinesses with systematic financial records (ILO survey, Guatemala, Honduras and El Salvador)",
+    "sample_size": "1,400 firms",
+    "quote": "44 percent of informal microbusinesses maintain systematic financial records, with roughly three-quarters using notebooks"
+  }
+]

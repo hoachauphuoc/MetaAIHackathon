@@ -14,7 +14,10 @@ names and link tokens in the output.
 Set 8: the chat assistant reads the person's own documents: 11 questions over a seeded inbox of 18
 documents with a known answer key, against the same questions with every document pasted into the
 prompt; also scoping, an instruction hidden in notes, and other people's data reaching the model.
-Usage: python scripts/measure.py [set1 ... set8]   (no argument runs all; key via META_API_KEY
+Set 9: Spark vision reads 10 phone-degraded sheets in handwriting-style fonts; on 4 of them one
+field is smudged beyond reading. Legible fields are matched exactly; a smudged field must come back
+empty (flagged unreadable), never a guess.
+Usage: python scripts/measure.py [set1 ... set9]   (no argument runs all; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures
@@ -260,11 +263,13 @@ SHEETS = [  # (customer, route, pallets, price, cost, date as written, ISO date,
     ("Thang Long Print", "Hanoi-Haiphong", 12, 2160, 1800, "19 Nov 2026", "2026-11-19", "Courier New", "table", 3)]
 
 
-def sheet_html(s, phone=False):
-    """phone=True degrades the render like a quick phone photo: blur, low contrast, a shadow, more tilt."""
+def sheet_html(s, phone=False, smudge=None):
+    """phone=True degrades the render like a quick phone photo: blur, low contrast, a shadow, more tilt.
+    smudge names a row label whose value is blurred beyond reading, like a wet thumb on the ink."""
     customer, route, pallets, price, cost, written, _, font, layout, tilt = s
     rows = [("Customer", customer), ("Route", route), ("Pallets", pallets), ("Price", f"USD {price:,}"),
             ("Our cost", f"USD {cost:,}"), ("Delivery", written)]
+    rows = [(k, f"<span style='filter:blur(9px);color:#777'>{v}</span>" if k == smudge else v) for k, v in rows]
     body = ("<table>" + "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rows) + "</table>"
             if layout == "table" else "".join(f"<p>{k}: <u>{v}</u></p>" for k, v in rows))
     tilt = tilt * 2 + (3 if phone else 0)
@@ -318,6 +323,57 @@ def set6():
     out = {name: read_sheets(imgs) for name, imgs in images.items()}
     out["cost_usd"] = round(sum(spent), 4)
     return out
+
+
+HANDWRITING = ["Ink Free", "Segoe Print", "Segoe Script"]
+SMUDGED = {1: ("Price", "price"), 4: ("Delivery", "delivery_date"), 6: ("Route", "route"), 8: ("Pallets", "pallets")}
+
+
+def set9():
+    """Phone-degraded handwriting-style sheets; some fields smudged. The synthetic sheets are rendered
+    text in handwriting fonts, not real handwriting: the number is a floor on difficulty, not a claim."""
+    import base64
+    from playwright.sync_api import sync_playwright
+    import vision
+    spent = []
+    muse.cost_listener = spent.append
+    sheets = [(*s[:7], HANDWRITING[i % 3], s[8], s[9]) for i, s in enumerate(SHEETS)]
+    images = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 720, "height": 600})
+        for i, s in enumerate(sheets):
+            page.set_content(sheet_html(s, phone=True, smudge=SMUDGED.get(i, (None,))[0]))
+            images.append("data:image/jpeg;base64," + base64.b64encode(page.screenshot(type="jpeg", quality=35)).decode())
+        browser.close()
+
+    def one(args):
+        i, s, image = args
+        started = time.time()
+        out = vision.read_values(image, rules.DEFAULT_SCHEMA, tools.PARAMS, TODAY, lambda: None)
+        truth = {"customer": s[0], "route": s[1], "pallets": s[2], "price": float(s[3]), "cost": float(s[4]),
+                 "delivery_date": s[6]}
+        got = out["values"] or {}
+        hidden = SMUDGED.get(i, (None, None))[1]
+        return {"legible": {k: got.get(k) == v for k, v in truth.items() if k != hidden},
+                "hidden": None if hidden is None else {"key": hidden, "empty": got.get(hidden) in (None, ""),
+                                                       "flagged": hidden in out["unreadable"],
+                                                       "right_by_luck": got.get(hidden) == truth[hidden]},
+                "latency": time.time() - started, "demo": out["demo_mode"]}
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        rows = list(pool.map(one, [(i, s, im) for i, (s, im) in enumerate(zip(sheets, images))]))
+    legible = [v for r in rows for v in r["legible"].values()]
+    hidden = [r["hidden"] for r in rows if r["hidden"]]
+    return {"sheets": len(rows), "answered": sum(not r["demo"] for r in rows),
+            "legible_fields_exact": sum(legible), "legible_fields_total": len(legible),
+            "misread_by_field": {k: sum(not r["legible"][k] for r in rows if k in r["legible"])
+                                 for k in rows[0]["legible"] | {r["hidden"]["key"]: 1 for r in rows if r["hidden"]}},
+            "smudged_fields": len(hidden), "smudged_left_empty": sum(h["empty"] for h in hidden),
+            "smudged_flagged_unreadable": sum(h["flagged"] for h in hidden),
+            "smudged_filled_with_a_guess": sum(not h["empty"] for h in hidden),
+            "smudged_guess_right_by_luck": sum(h["right_by_luck"] for h in hidden),
+            "median_latency_s": round(sorted(r["latency"] for r in rows)[len(rows) // 2], 1),
+            "cost_usd": round(sum(spent), 4)}
 
 
 BRIEF_ROLES = [{"id": "md", "title": "Managing Director", "reports_to": None, "headcount": 1},
@@ -505,7 +561,7 @@ SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
         "set3": ("set3_fix_assistant", set3), "set4": ("set4_playbook", set4),
         "set5": ("set5_handoff_form", set5), "set6": ("set6_photo_reading", set6),
         "set7": ("set7_morning_brief", set7),
-        "set8": ("set8_reads_documents", set8)}
+        "set8": ("set8_reads_documents", set8), "set9": ("set9_handwriting_and_smudges", set9)}
 
 if __name__ == "__main__":
     out = {"date": datetime.date.today().isoformat(), "models": [muse.WONDER, muse.SPARK]}

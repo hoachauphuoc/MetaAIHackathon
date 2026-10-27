@@ -1,0 +1,74 @@
+[
+  {
+    "brief": "b3",
+    "url": "https://www.linuxfoundation.org/blog/the-2024-state-of-tech-talent-report",
+    "title": "The 2024 State of Tech Talent Report",
+    "publisher": "Linux Foundation",
+    "date": "2024-04-16",
+    "reason": "Web survey of 418 valid records (Dec 2023 to Feb 2024); onboarding averages 4.8 months to normal productivity, though secondary sites cite 321 organizations."
+  },
+  {
+    "brief": "b3",
+    "url": "https://pure.athabascau.ca/en/publications/coping-with-the-sudden-loss-of-an-indispensable-employee-an-explo/",
+    "title": "Coping with the Sudden Loss of an Indispensable Employee: An Exploratory Case Study",
+    "publisher": "Journal of Applied Behavioral Science",
+    "date": "2003",
+    "reason": "Peer-reviewed case study of a small manufacturer tracking knowledge flows to the replacement with real-time surveys and interviews; one firm, no headcount figures."
+  },
+  {
+    "brief": "b3",
+    "url": "https://www.bls.gov/opub/mlr/2019/article/an-analysis-of-the-new-job-openings-and-labor-turnover-data-by-size-of-firm.htm",
+    "title": "An analysis of the new job openings and labor turnover data by size of firm",
+    "publisher": "U.S. Bureau of Labor Statistics",
+    "date": "2019-05",
+    "reason": "Official BLS method article on JOLTS turnover by firm size; gives context for small-firm turnover data but no onboarding or knowledge-loss figures."
+  },
+  {
+    "brief": "b3",
+    "url": "https://www.gallup.com/workplace/247091/create-exceptional-onboarding-journey-new-employees.aspx",
+    "title": "Create an Exceptional Onboarding Journey for Your New Employees",
+    "publisher": "Gallup",
+    "date": "2019-03-01",
+    "reason": "Gallup onboarding guidance from its 2019 perspective paper; names no survey sample, so use only as qualitative support."
+  },
+  {
+    "brief": "b3",
+    "url": "https://brandonhall.com/?p=36113",
+    "title": "Unlocking the Power of Onboarding to Aid Employee Retention",
+    "publisher": "Brandon Hall Group",
+    "date": "2024-06-25",
+    "reason": "Cites Brandon Hall's onboarding study: 41% of organizations see over 5% new-hire turnover; the article does not state the sample size."
+  },
+  {
+    "brief": "b3",
+    "url": "https://www.americanprogress.org/?p=47988",
+    "title": "There Are Significant Business Costs to Replacing Employees",
+    "publisher": "Center for American Progress",
+    "date": "2012-11-16",
+    "reason": "Review of 30 turnover-cost case studies, with a median cost near 20% of salary for lower-paid roles; the page returned 403 to WebFetch, so verify before citing."
+  },
+  {
+    "brief": "b3",
+    "url": "https://advocacy.sba.gov/wp-content/uploads/2022/05/Labor-Market-Fact-Sheet-rev-May-2022-508c.pdf",
+    "title": "Labor Market Fact Sheet (rev. May 2022)",
+    "publisher": "U.S. Small Business Administration, Office of Advocacy",
+    "date": "2022-05",
+    "reason": "Government fact sheet using JOLTS data on small-establishment job openings; context on small-business hiring, not on knowledge loss; WebFetch returned 403."
+  },
+  {
+    "brief": "b3",
+    "url": "https://ro.uow.edu.au/buspapers/1417",
+    "title": "Measuring the impact of knowledge loss: a longitudinal study",
+    "publisher": "University of Wollongong",
+    "date": "2018",
+    "reason": "Longitudinal case study of an Australian government department linking knowledge loss to longer time to competence; the repository returned 403, so verify the figures."
+  },
+  {
+    "brief": "b3",
+    "url": "https://expresspros.com/Newsroom/America-Employed/Documents/2022/5-25-2022-EEP-Release-AE.aspx",
+    "title": "Express Employment Professionals release on knowledge transfer when older workers retire",
+    "publisher": "Express Employment Professionals (Harris Poll survey)",
+    "date": "2022-05-25",
+    "reason": "Staffing-firm-commissioned Harris Poll survey where 84% of US employees call unpassed knowledge a big loss; vendor-sourced, and the page returned a 500 error."
+  }
+]

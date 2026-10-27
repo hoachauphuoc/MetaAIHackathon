@@ -31,6 +31,13 @@ def test_trust_lists_forbidden_skills_and_the_two_standard_models(client):
     assert all(not m["id"].endswith("-contributor") for m in data["models"])
 
 
+def test_trust_links_meta_statements_only_while_every_model_is_standard(client, monkeypatch):
+    links = client.get("/api/trust").json["meta_statements"]
+    assert links and all(l["url"].startswith("https://") for l in links)
+    monkeypatch.setattr(trust, "MODEL_USE", {**trust.MODEL_USE, "muse-spark-1.3-contributor": "x"})
+    assert client.get("/api/trust").json["meta_statements"] == []
+
+
 def test_private_mode_says_unavailable_until_a_provider_is_configured(client, monkeypatch):
     for k in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
         monkeypatch.delenv(k, raising=False)

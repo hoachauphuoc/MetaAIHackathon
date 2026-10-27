@@ -39,6 +39,8 @@ function valueFields(prefix, schema, v = {}, due = '', demo = false) {
   const first = (key, fallback) => (v[key] ?? (demo ? fallback : ''));
   const inputs = Object.fromEntries(schema.fields.map((field) => [field.key, inputFor(prefix, field,
     field.type === 'date' ? first(field.key, inDays(14)) : first(field.key, DEMO_DEFAULTS[field.key]))]));
+  // Once the person types in a flagged field it is theirs; the warning goes away.
+  for (const input of Object.values(inputs)) input.addEventListener('input', () => input.removeAttribute('aria-invalid'));
   const dueInput = el('input', { id: `${prefix}-due`, type: 'date', min: today(), value: due || '' });
   const notes = el('textarea', { id: `${prefix}-notes` }, v.notes ?? '');
   const labelled = (label, node) => [el('label', { for: node.id }, label), node];
@@ -50,8 +52,12 @@ function valueFields(prefix, schema, v = {}, due = '', demo = false) {
     const masked = await confirmMask(notes.value, maskBox);
     return masked === null ? null : { values: { ...values, notes: masked }, due: dueInput.value || null };
   };
-  const fill = (values) => {
-    for (const field of schema.fields) inputs[field.key].value = values[field.key] ?? '';
+  const fill = (values, unreadable = []) => {
+    for (const field of schema.fields) {
+      inputs[field.key].value = values[field.key] ?? '';
+      if (unreadable.includes(field.key)) inputs[field.key].setAttribute('aria-invalid', 'true');
+      else inputs[field.key].removeAttribute('aria-invalid');
+    }
   };
   return { rows, read, fill };
 }
@@ -171,9 +177,13 @@ export function inboxPanel(info, token) {
     const res = await api('/api/handoffs/from-photo', { method: 'POST', body: { token, image } });
     if (!res.ok) { clear(photoResult, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
     if (res.data.demo_mode) { clear(photoResult, demoNote(res.data.demo_reason)); return; }
-    fields.fill(res.data.values);
+    fields.fill(res.data.values, res.data.unreadable);
+    const unclear = schema.fields.filter((f) => res.data.unreadable.includes(f.key)).map((f) => f.label);
     clear(photoResult, el('p', {}, el('strong', {}, 'Read by the assistant. Check every field. '),
-      'The rules would say: ', statusBadge(res.data.predicted_status)), ...findingsBlock(res.data.findings));
+      'The rules would say: ', statusBadge(res.data.predicted_status)),
+      unclear.length ? el('p', { class: 'errors', role: 'status' },
+        `A person must check this: ${unclear.join(', ')}. The photo was not clear there, so the field is empty.`) : null,
+      ...findingsBlock(res.data.findings));
   });
 
   const check = el('button', { onclick: async () => {

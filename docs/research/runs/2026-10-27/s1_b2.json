@@ -1,0 +1,82 @@
+[
+  {
+    "brief": "b2",
+    "url": "https://www.pewresearch.org/social-trends/2025/02/25/workers-views-of-ai-use-in-the-workplace/markdown",
+    "title": "U.S. Workers Are More Worried Than Hopeful About Future AI Use in the Workplace",
+    "publisher": "Pew Research Center",
+    "date": "2025-02-25",
+    "reason": "Large national survey of U.S. workers on worry versus hope about AI at work; primary publisher."
+  },
+  {
+    "brief": "b2",
+    "url": "https://www.pewresearch.org/internet/2023/04/20/americans-views-on-use-of-ai-to-monitor-and-evaluate-workers/markdown",
+    "title": "Americans' Views on Use of AI to Monitor and Evaluate Workers",
+    "publisher": "Pew Research Center",
+    "date": "2023-04-20",
+    "reason": "Shows unease about six employer AI monitoring uses; older than the 2024-2026 preference, kept for monitoring evidence."
+  },
+  {
+    "brief": "b2",
+    "url": "https://fortune.com/2024/08/22/workers-ok-with-workplace-message-monitoring-surveillance-chats-email",
+    "title": "Workers OK with workplace message monitoring, surveillance of chats and email",
+    "publisher": "Fortune",
+    "date": "2024-08-22",
+    "reason": "Reports survey results on employee comfort with employer monitoring of work chats and email (secondary coverage)."
+  },
+  {
+    "brief": "b2",
+    "url": "https://www.euronews.com/next/2025/10/14/most-uk-employees-use-ai-at-work-without-permission-microsoft-survey-finds",
+    "title": "Most UK employees use AI at work without permission, Microsoft survey finds",
+    "publisher": "Euronews",
+    "date": "2025-10-14",
+    "reason": "Reports a Microsoft UK survey on unapproved AI use and privacy concern; vendor-commissioned figures."
+  },
+  {
+    "brief": "b2",
+    "url": "https://www.myperfectcv.co.uk/blog/european-ai-at-work-report",
+    "title": "58% of European Workers Use AI on the Job, But 65% Worry About Data Privacy",
+    "publisher": "MyPerfectCV",
+    "date": "2026",
+    "reason": "Vendor-run survey of 1,000 workers in five European countries on data privacy worries about AI."
+  },
+  {
+    "brief": "b2",
+    "url": "https://www.workday.com/en-us/perspectives/ai/ai-at-work-september.html",
+    "title": "AI Adoption Is Moving Faster Than Employee Trust",
+    "publisher": "Workday",
+    "date": "2026",
+    "reason": "Vendor survey of about 5,400 employees on AI as opportunity and threat and on trust gaps (vendor figures)."
+  },
+  {
+    "brief": "b2",
+    "url": "https://prezohoweb.zoho.com/news/zoho-survey-reveals-overwhelming-concern-and-adoption-of-genai-in-workplace.html",
+    "title": "Zoho survey reveals overwhelming concern and adoption of GenAI in workplace",
+    "publisher": "Zoho",
+    "date": "2024",
+    "reason": "Vendor survey of U.S. employees on GenAI concern and wanting legislation on AI training with employee data (vendor figures)."
+  },
+  {
+    "brief": "b2",
+    "url": "https://policy-futures.centre.uq.edu.au/node/2840",
+    "title": "A survey of over 17,000 people indicates only half of us are willing to trust AI at work",
+    "publisher": "University of Queensland",
+    "date": "2023-02",
+    "reason": "Large 17-country survey on willingness to trust AI at work; pre-ChatGPT, older than the preferred range."
+  },
+  {
+    "brief": "b2",
+    "url": "https://tech.yahoo.com/ai/articles/more-third-us-workers-worried-195234646.html",
+    "title": "More than a third of US workers worried AI will take their jobs",
+    "publisher": "The Hill (via Yahoo)",
+    "date": "2025",
+    "reason": "Secondary coverage of a 2025 YouGov poll on worker fear of AI job loss; check against the original YouGov release."
+  },
+  {
+    "brief": "b2",
+    "url": "https://workplaceinsight.net/workers-voice-concerns-over-ai-in-the-workplace-think-it-makes-them-less-intelligent/",
+    "title": "Workers voice concerns over AI in the workplace, think it makes them less intelligent",
+    "publisher": "Workplace Insight",
+    "date": "2025",
+    "reason": "Reports a 2025 Howdy survey of 1,007 full-time workers on fear of losing skills to AI (vendor-commissioned)."
+  }
+]

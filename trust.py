@@ -42,7 +42,7 @@ LIMITS = [
     "other form fields are not masked, so keep personal names out of them. A handover is masked "
     "field by field. Photos are not masked: cover names and phone numbers before taking one.",
     "Reading a photo can go wrong. The values only fill the form; the person checks every field "
-    "and the rules check them again.",
+    "and the rules check them again. A field the model says it cannot read is left empty and marked.",
     "Models make mistakes. Every handoff needs a person to press Approve, and a blocked "
     "handoff can never be approved.",
     "Numbers (prices, margins) are computed by code from the company's rate card, not by a model.",
@@ -56,9 +56,21 @@ MODEL_USE = {
 }
 
 
+# Where Meta states how Standard mode treats content, so a reader can check the claim at its source.
+# Shown only while every model in use is a Standard-mode id; see docs/research FINDINGS.md.
+META_STATEMENTS = [
+    {"label": "Meta's model list: which versions are Standard mode and which may train on content",
+     "url": "https://ai.developer.meta.com/docs/models/"},
+    {"label": "Meta Model API: pricing and the data-use line for each model",
+     "url": "https://developer.meta.com/ai/products/meta-model-api/"},
+]
+
+
 def build(table_names):
     private = muse.private_config()
+    standard = not any(m.endswith("-contributor") for m in MODEL_USE)
     return {
+        "meta_statements": META_STATEMENTS if standard else [],
         "stored": [{"table": t, "what": STORED.get(t, "(undocumented)")} for t in sorted(table_names)],
         "never_stored": NEVER_STORED,
         "models": [{"id": m, "use": u} for m, u in MODEL_USE.items()],

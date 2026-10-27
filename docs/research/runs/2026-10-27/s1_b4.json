@@ -1,0 +1,90 @@
+[
+  {
+    "brief": "b4",
+    "url": "https://www.cpapracticeadvisor.com/?p=65788",
+    "title": "Half of Small to Medium-Sized Businesses Still Rely on Paper Records",
+    "publisher": "CPA Practice Advisor",
+    "date": "2022-07-26",
+    "reason": "Reports an Act! survey of more than 1,100 SMB owners in which 45% of SMB operations still rely on paper records (US)."
+  },
+  {
+    "brief": "b4",
+    "url": "https://accountantsdaily.com.au/technology/13868-smes-still-tech-averse-myob",
+    "title": "SMEs still tech averse, MYOB",
+    "publisher": "Accountants Daily",
+    "date": "2019-12-30",
+    "reason": "Survey of 523 accountants and bookkeepers in Australia: 41% said at least half their SME clients provide paper documents rather than electronic ones."
+  },
+  {
+    "brief": "b4",
+    "url": "https://www.accountantsdaily.com.au/technology/9112-3-in-4-smes-still-using-shoebox-accounting",
+    "title": "3 in 4 SMEs still using shoebox accounting",
+    "publisher": "Accountants Daily",
+    "date": "2016-05-10",
+    "reason": "Xero study in Australia: 77.6% of small businesses still store at least some receipts and invoices in shoeboxes; sample size not stated."
+  },
+  {
+    "brief": "b4",
+    "url": "https://accountantsdaily.com.au/tax-compliance/10298-smes-not-on-board-with-digital-trails-research-finds",
+    "title": "SMEs not on board with digital trails, research finds",
+    "publisher": "Accountants Daily",
+    "date": "2017-06-01",
+    "reason": "H&R Block and Officeworks survey in Australia: only 5% of small business owners track receipts digitally all year, most keep paper just to be safe."
+  },
+  {
+    "brief": "b4",
+    "url": "https://idm.net.au/node/9326",
+    "title": "Over half of global businesses in paper jam",
+    "publisher": "IDM",
+    "date": "2012-10-25",
+    "reason": "Basware and Institute of Financial Operations study of more than 900 finance professionals: 53% of companies still scan and capture paper invoices in-house (global, older)."
+  },
+  {
+    "brief": "b4",
+    "url": "https://www.cmswire.com/document-management/doc-mgt-roll-up-its-time-to-transition-to-digital/",
+    "title": "Document management roll-up: it's time to transition to digital",
+    "publisher": "CMSWire",
+    "date": "2015-09-18",
+    "reason": "Cites a Software Advice survey of 576 US information workers: about six hours a week spent searching for documents in paper-based offices (2015, modest sample)."
+  },
+  {
+    "brief": "b4",
+    "url": "https://www.inderscience.com/filter.php?aid=20053",
+    "title": "Meeting the challenge of high quality data entry: a free double-entry system",
+    "publisher": "Inderscience Publishers",
+    "date": "2008-08-22",
+    "reason": "Academic paper arguing small businesses rely on minimally trained staff for manual data entry and proposing a free double-entry verification method; no figures given."
+  },
+  {
+    "brief": "b4",
+    "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11917072/",
+    "title": "Streamlining data recording through optical character recognition: a prospective multi-center study in intensive care units",
+    "publisher": "Critical Care (peer-reviewed journal)",
+    "date": "2025-03-18",
+    "reason": "Multi-center ICU study in 3 countries: OCR-based entry reached 96.9% accuracy and took 3.4 minutes per patient versus 6.0 manual, over 1,018 validated data points (hospital setting, not small firms)."
+  },
+  {
+    "brief": "b4",
+    "url": "https://www.smartcompany.com.au/technology/smes-spend-up-to-1000-a-year-on-paper-why-telstra-says-your-business-needs-to-up-your-apps/",
+    "title": "SMEs spend up to 1000 a year on paper: why Telstra says your business needs to up your apps",
+    "publisher": "SmartCompany",
+    "date": "2014-10-29",
+    "reason": "Reports a Telstra survey of 1,000 Australian small business owners: SMEs spend up to $1,000 a year on paper (vendor-commissioned, 2014)."
+  },
+  {
+    "brief": "b4",
+    "url": "https://hackernoon.com/handwriting-vs-ai-real-performance-of-ai-on-handwritten-documents?source=rss",
+    "title": "Why Handwritten Forms Still Break Smart AI",
+    "publisher": "HackerNoon",
+    "date": "2026-02-10",
+    "reason": "Benchmark run by a vendor CEO (not peer reviewed): even the best AI models struggled to consistently exceed 95% business-level accuracy on real handwritten forms."
+  },
+  {
+    "brief": "b4",
+    "url": "https://accounting.wharton.upenn.edu/wp-content/uploads/2025/10/AguilarLindRamesh.pdf",
+    "title": "Aguilar, Lind and Ramesh: accounting records in informal microbusinesses (working paper)",
+    "publisher": "Wharton School, University of Pennsylvania",
+    "date": "2025-10",
+    "reason": "ILO survey of about 1,400 firms in Guatemala, Honduras and El Salvador: 44% of informal microbusinesses keep systematic records, about three-quarters of them on notebooks (PDF unreadable in fetch; figures from search summary, to verify)."
+  }
+]

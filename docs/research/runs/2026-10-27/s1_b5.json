@@ -1,0 +1,82 @@
+[
+  {
+    "brief": "b5",
+    "url": "https://www.vellum.ai/md/blog/best-ai-assistant-for-small-business",
+    "title": "10 Best AI Assistants for Small Business in 2026: Reviewed & Compared",
+    "publisher": "Vellum",
+    "date": "2026-07-14",
+    "reason": "Compares ten small-business assistants (ChatGPT, Copilot, Gemini, Claude, Lindy, Zapier, Smith.ai); vendor blog where Vellum ranks itself first."
+  },
+  {
+    "brief": "b5",
+    "url": "https://support.teamwork.com/projects/TeamworkAI/ai-teammates-overview",
+    "title": "AI Teammates Overview - Teamwork.com Support",
+    "publisher": "Teamwork.com",
+    "date": "2026-06-29",
+    "reason": "Role-based AI Teammates summarize work and draft updates from workspace data, limited to each user's existing permissions; admins control access."
+  },
+  {
+    "brief": "b5",
+    "url": "https://blog.fastbots.ai/best-ai-tools-for-small-business/",
+    "title": "Best AI Tools for Small Business in 2026: 10 Compared by Function",
+    "publisher": "FastBots",
+    "date": "2026-09-07",
+    "reason": "Compares ten small-business AI tools by job (chatbots, assistants, research, CRM, bookkeeping, automation); published by a vendor that ranks its own tool first."
+  },
+  {
+    "brief": "b5",
+    "url": "https://resources.rework.com/tools/ai-tools/best-ai-tools-for-small-business-2026",
+    "title": "Best AI Tools for Small Business in 2026: 13 Tools Ranked by Function and Fit",
+    "publisher": "Rework",
+    "date": "2026-07-16",
+    "reason": "Ranks 13 tools by business job (general assistants, CRM, support, bookkeeping, automation) and flags recent price changes; date is last-updated."
+  },
+  {
+    "brief": "b5",
+    "url": "https://www.eesel.ai/blog/best-ai-teammates",
+    "title": "The 10 best AI teammates for work in 2026, tested and compared",
+    "publisher": "eesel AI",
+    "date": "2026-09-10",
+    "reason": "Compares ten AI teammate products for support, operations and no-code builds; vendor blog where eesel ranks its own product first."
+  },
+  {
+    "brief": "b5",
+    "url": "https://www.larksuite.com/en_us/blog/document-approval-software",
+    "title": "Top 10 Document Approval Software Tools in 2026",
+    "publisher": "Lark",
+    "date": "2026-09-18",
+    "reason": "Ranks ten document approval tools (Wrike, Filestage, PandaDoc, Ziflow, Kissflow, Cflow); vendor blog, so rankings are not independent."
+  },
+  {
+    "brief": "b5",
+    "url": "https://www.smartcompany.com.au/partner-content/how-to-streamline-document-workflows/",
+    "title": "How to streamline document workflows with AI without adding more apps to your stack",
+    "publisher": "SmartCompany (Adobe partner content)",
+    "date": "2026-07-17",
+    "reason": "Sponsored piece arguing AI approvals, summaries and e-signatures should run inside existing document platforms; uses Adobe Acrobat Studio as the example."
+  },
+  {
+    "brief": "b5",
+    "url": "https://dev.to/alifar/ai-assistants-and-data-privacy-who-trains-on-your-data-who-doesnt-njj",
+    "title": "AI Assistants and Data Privacy: Who Trains on Your Data, Who Doesn't",
+    "publisher": "DEV Community (alifar)",
+    "date": "2025-09-13",
+    "reason": "States consumer ChatGPT, Gemini, personal Copilot and Qwen assistants train on user data by default unless opted out; enterprise tiers are treated differently."
+  },
+  {
+    "brief": "b5",
+    "url": "https://www.layer3labs.io/guides/chatgpt-team-vs-plus-vs-enterprise",
+    "title": "ChatGPT Team Plan (Now Business) vs Plus vs Enterprise",
+    "publisher": "Layer3 Labs",
+    "date": "2026-10-16",
+    "reason": "Third-party guide saying Business and Enterprise workspaces do not train on data by default while personal Plus lacks that exclusion; date is last-updated."
+  },
+  {
+    "brief": "b5",
+    "url": "https://www.adobe.com/in/acrobat/roc/blog/ai-powered-workflows-time-savings-advantage",
+    "title": "How AI is turning time savings into a competitive advantage",
+    "publisher": "Adobe Acrobat India",
+    "date": "2026-04-13",
+    "reason": "Vendor blog on AI document workflows for small businesses: summaries, version comparison, templates and e-signing, with time-saving claims that are unverified."
+  }
+]

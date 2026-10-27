@@ -4,6 +4,7 @@ Role-based AI assistants for small companies, built on Meta Muse models, for the
 
 - Plan: `C:/Users/phuochoa/MetaAI_design_pre_event/PLAN.md` (scope, principles, schedule). Progress between sessions: `C:/Users/phuochoa/MetaAI_design_pre_event/PROGRESS.md`.
 - Tooling plan: `C:/Users/phuochoa/MetaAI_design_pre_event/TOOLING_PLAN.md`. Full original plan (reference only): `C:/Users/phuochoa/MetaAI_design_pre_event/PLAN_full.md`.
+- Research: `/survey` (`.claude/skills/survey/SKILL.md`, notes in `docs/research/README.md`) is a development-time pipeline; Claude models never enter the product. README figures come only from `scripts/research.py impact-rows`.
 
 ## Working rules
 

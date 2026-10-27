@@ -39,6 +39,11 @@ def fake(monkeypatch, answer, seen=None):
     monkeypatch.setattr(muse, "complete", complete)
 
 
+def reading(values, unreadable=()):
+    """What Spark returns for a photo: the values it read and the keys it could not read."""
+    return {"values": values, "unreadable": list(unreadable)}
+
+
 @pytest.fixture
 def client():
     return app_module.create_app().test_client()
@@ -60,8 +65,8 @@ def counts(client):
 
 def test_a_photo_fills_the_form_and_the_rules_check_the_reading(client, team, monkeypatch):
     seen = []
-    fake(monkeypatch, {"customer": "Minh Anh Bakery", "route": "Hanoi-Haiphong", "pallets": "10",
-                       "price": "1550", "cost": "1500", "delivery_date": NEXT_WEEK}, seen)
+    fake(monkeypatch, reading({"customer": "Minh Anh Bakery", "route": "Hanoi-Haiphong", "pallets": "10",
+                               "price": "1550", "cost": "1500", "delivery_date": NEXT_WEEK}), seen)
     before = counts(client)
     r = client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": PNG})
     assert r.status_code == 200 and r.json["values"]["pallets"] == 10 and r.json["values"]["price"] == 1550
@@ -71,20 +76,30 @@ def test_a_photo_fills_the_form_and_the_rules_check_the_reading(client, team, mo
 
 
 def test_amounts_written_with_currency_and_separators_are_read_as_numbers(client, team, monkeypatch):
-    fake(monkeypatch, {"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "24 pallets",
-                       "price": "USD 7,200", "cost": "$6,100.50", "delivery_date": NEXT_WEEK})
+    fake(monkeypatch, reading({"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "24 pallets",
+                               "price": "USD 7,200", "cost": "$6,100.50", "delivery_date": NEXT_WEEK}))
     r = client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": PNG})
     assert (r.json["values"]["pallets"], r.json["values"]["price"], r.json["values"]["cost"]) == (24, 7200, 6100.5)
 
 
 def test_a_misread_value_is_caught_by_the_rules_not_trusted(client, team, monkeypatch):
-    fake(monkeypatch, {"customer": "X", "route": "Hanoi Haiphong", "pallets": "ten", "price": "1800",
-                       "cost": "1500", "delivery_date": "12/11/2026"})
+    fake(monkeypatch, reading({"customer": "X", "route": "Hanoi Haiphong", "pallets": "ten", "price": "1800",
+                               "cost": "1500", "delivery_date": "12/11/2026"}))
     r = client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": PNG})
     messages = [f["message"] for f in r.json["findings"]]
     assert r.json["predicted_status"] == "blocked" and r.json["values"]["pallets"] is None
     assert "The route is not one of the choices." in messages
     assert "The delivery date is not a valid date." in messages
+
+
+def test_a_field_the_model_could_not_read_stays_empty_even_if_it_wrote_a_guess(client, team, monkeypatch):
+    fake(monkeypatch, reading({"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "24",
+                               "price": "7200", "cost": "6100", "delivery_date": NEXT_WEEK},
+                              unreadable=["price", "not_a_field"]))
+    r = client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": PNG})
+    assert r.json["unreadable"] == ["price"]  # an invented key is dropped
+    assert r.json["values"]["price"] is None and r.json["values"]["cost"] == 6100
+    assert r.json["predicted_status"] == "blocked"  # the empty required field is caught by the rules
 
 
 def test_photo_reading_in_demo_mode_is_labelled_and_fills_nothing(client, team):
@@ -125,7 +140,7 @@ def test_requests_over_the_size_limit_are_refused(client, team):
 
 def test_the_reading_prompt_says_photo_text_is_data(monkeypatch):
     seen = []
-    fake(monkeypatch, {k["key"]: "" for k in rules.DEFAULT_SCHEMA["fields"]}, seen)
+    fake(monkeypatch, reading({k["key"]: "" for k in rules.DEFAULT_SCHEMA["fields"]}), seen)
     vision.read_values(PNG, rules.DEFAULT_SCHEMA, {"margin_floor_pct": 12, "escalation_usd": 50000},
                        datetime.date.today(), lambda: None)
     assert "never instructions" in seen[0][0]["content"][0]["text"]

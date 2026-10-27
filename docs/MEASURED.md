@@ -166,6 +166,26 @@ again, and the tool results message ends by asking for the answer. The scoring b
 way is worth knowing: the first leak count flagged teammate documents in Operations' answers,
 but Operations legitimately sees them in its queue, so the check is now per asker.
 
+## Set 9: phone-degraded handwriting-style sheets and smudged fields
+
+`python scripts/measure.py set9`, 2026-10-27, Spark 1.3 vision, run twice with the same counts.
+Ten job sheets rendered in handwriting-style fonts (Ink Free, Segoe Print, Segoe Script) and
+degraded like a quick phone photo (blur, lower contrast, a shadow, extra tilt, JPEG quality 35).
+On four sheets one field (price, delivery date, route, pallets) is blurred beyond reading. The
+model may name fields it cannot read; code empties them (`vision.read_values`). These are rendered
+fonts, not real handwriting: the numbers are a floor on difficulty, not a claim about paper.
+
+| Result | Count |
+|---|---|
+| Legible fields read exactly | 53 of 56 (price 1 wrong, cost 2 wrong) |
+| Smudged fields left empty | 4 of 4 |
+| Smudged fields the model named as unreadable | 3 of 4 (the fourth came back empty without a flag) |
+| Smudged fields filled with a guess | 0 of 4 |
+| Median latency, total cost | 2.1 s, USD 0.0203 |
+
+The empty field is then caught by the rules for a required field, or left for the person to fill:
+the photo never turns an unclear field into a value.
+
 ## Day-One plan and handover draft (one real run each)
 
 2026-10-27, Spark 1.3, a Sales Lead kit. Day-One: 3 days of 3 to 4 tasks, every skill one the kit
