@@ -1,5 +1,6 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
+import { maskPii } from '/static/pii.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
 const token = location.pathname.split('/').pop();
@@ -32,6 +33,23 @@ async function saveHistory(history) {
   } catch { /* storage can be blocked; the chat still works for this visit */ }
 }
 
+// --- personal data mask -----------------------------------------------------------------
+// Resolves to the text to send (masked), or null if the person cancels. Shows what was masked.
+function confirmMask(text, mount) {
+  const { text: masked, items } = maskPii(text);
+  if (!items.length) return Promise.resolve(text);
+  return new Promise((resolve) => {
+    const done = (value) => { clear(mount); resolve(value); };
+    clear(mount, el('div', { class: 'errors', role: 'alert' },
+      `${items.length} personal item${items.length > 1 ? 's' : ''} found. Placeholders will be sent instead:`,
+      el('ul', {}, items.map((i) => el('li', {}, `${i.original} becomes ${i.placeholder}`))),
+      el('p', { class: 'muted' }, 'Names cannot be detected. Remove them yourself if needed.'),
+      el('div', { class: 'row' },
+        el('button', { class: 'primary', onclick: () => done(masked) }, 'Send masked'),
+        el('button', { onclick: () => done(null) }, 'Cancel'))));
+  });
+}
+
 // --- chat ------------------------------------------------------------------------------
 async function streamChat(message, history, onDelta) {
   const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -61,15 +79,18 @@ function chatPanel(info) {
   const log = el('div', { class: 'chat-log', role: 'log', 'aria-live': 'polite' });
   const input = el('textarea', { id: 'msg', placeholder: 'Ask your assistant...' });
   const notice = el('div');
+  const maskBox = el('div');
   let history = [];
   const draw = (turn) => log.append(el('div', { class: `msg ${turn.role}` }, turn.content));
   loadHistory().then((saved) => { history = saved; history.forEach(draw); });
 
   const send = el('button', { class: 'primary', onclick: async () => {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
+    const typed = input.value.trim();
+    if (!typed) return;
     send.disabled = true;
+    const text = await confirmMask(typed, maskBox);
+    if (text === null) { send.disabled = false; return; }
+    input.value = '';
     const user = { role: 'user', content: text };
     draw(user);
     const reply = { role: 'assistant', content: '' };
@@ -85,13 +106,28 @@ function chatPanel(info) {
     send.disabled = false;
   } }, 'Send');
 
+  const compareBox = el('div');
+  const compareBtn = el('button', { onclick: async () => {
+    const typed = input.value.trim();
+    if (!typed) return;
+    compareBtn.disabled = true;
+    const text = await confirmMask(typed, maskBox);
+    if (text === null) { compareBtn.disabled = false; return; }
+    clear(compareBox, el('p', { class: 'progress', role: 'status' }, 'Asking both assistants...'));
+    const res = await api('/api/compare', { method: 'POST', body: { token, message: text } });
+    const side = (title, part) => el('div', { class: 'card' }, el('h3', {}, title),
+      part.demo_mode ? demoNote(part.demo_reason) : null, el('div', { class: 'msg assistant' }, part.text));
+    clear(compareBox, el('div', { class: 'grid' },
+      side(`${info.role?.title || 'Role'} assistant`, res.data.role), side('Generic AI', res.data.generic)));
+    compareBtn.disabled = false;
+  } }, 'Compare with generic AI');
   const jobs = el('div', { class: 'row' }, (info.assistant?.jobs || []).map((job) =>
     el('button', { onclick: () => { input.value = job; input.focus(); } }, job)));
   const clearBtn = el('button', { onclick: async () => { history = []; clear(log); saveHistory([]); } },
     'Clear my chat on this device');
   return el('section', {}, el('h2', {}, 'Chat'), el('p', { class: 'muted' },
-    'Your messages are not stored on the server. They stay in this browser.'), jobs, log, notice,
-    el('label', { for: 'msg' }, 'Message'), input, el('div', { class: 'row' }, send, clearBtn));
+    'Your messages are not stored on the server. They stay in this browser.'), jobs, log, notice, maskBox,
+    el('label', { for: 'msg' }, 'Message'), input, el('div', { class: 'row' }, send, compareBtn, clearBtn), compareBox);
 }
 
 // --- workflow --------------------------------------------------------------------------
@@ -106,8 +142,12 @@ function workflowPanel() {
     notes: el('textarea', { id: 'notes' }, ''),
   };
   const out = el('div');
+  const maskBox = el('div');
   const start = el('button', { class: 'primary', onclick: async () => {
     const task = Object.fromEntries(Object.entries(f).map(([k, n]) => [k, n.value]));
+    const notes = await confirmMask(task.notes, maskBox);
+    if (notes === null) return;
+    task.notes = notes;
     const res = await api('/api/workflow/plan', { method: 'POST', body: { token, task } });
     if (!res.ok) {
       clear(out, el('div', { class: 'errors', role: 'alert' }, res.data.message || res.data.errors?.join(' ')));
@@ -122,7 +162,7 @@ function workflowPanel() {
   el('label', { for: 'pallets' }, 'Pallets'), f.pallets,
   el('label', { for: 'date' }, 'Delivery date'), f.delivery_date,
   el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
-  el('div', { class: 'row' }, start), out);
+  maskBox, el('div', { class: 'row' }, start), out);
   return box;
 }
 

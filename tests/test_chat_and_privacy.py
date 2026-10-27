@@ -109,3 +109,36 @@ def test_chat_history_is_trimmed_and_roles_are_checked():
     assert msgs[0]["role"] == "system" and msgs[-1]["content"] == "now"
     assert len(msgs) == chat.MAX_HISTORY + 2
     assert all(m["content"] != "evil" for m in msgs)
+
+
+def test_compare_asks_both_assistants_and_stores_nothing(client, monkeypatch):
+    h = setup_company(client)
+    token = invite(client, h).json["token"]
+    seen = []
+
+    def fake(model, messages, **kw):
+        seen.append(messages[0]["content"])
+        return muse._result(model, False, text="SECRET-" + str(len(seen)), tokens_in=5, tokens_out=5)
+
+    monkeypatch.setattr(muse, "complete", fake)
+    before = table_counts(client)
+    r = client.post("/api/compare", json={"token": token, "message": "Draft a quote"}).json
+    assert set(r) == {"role", "generic"} and r["role"]["demo_mode"] is False
+    assert any("Sales Lead" in s for s in seen) and "You are a helpful AI assistant." in seen
+    assert table_counts(client) == before
+
+
+def test_compare_in_fake_mode_is_labelled(client):
+    h = setup_company(client)
+    token = invite(client, h).json["token"]
+    r = client.post("/api/compare", json={"token": token, "message": "x"}).json
+    assert r["role"]["demo_mode"] and r["generic"]["demo_mode"]
+
+
+def test_compare_when_muse_is_off_never_calls_the_model(client, monkeypatch):
+    h = setup_company(client)
+    token = invite(client, h).json["token"]
+    client.post("/api/sandbox/muse", json={"off": True}, headers=h)
+    monkeypatch.setattr(muse, "complete", lambda *a, **k: (_ for _ in ()).throw(AssertionError))
+    r = client.post("/api/compare", json={"token": token, "message": "x"}).json
+    assert r["role"]["demo_reason"] == "Muse switched off"

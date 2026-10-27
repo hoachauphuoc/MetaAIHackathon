@@ -235,6 +235,16 @@ def create_app(db_path=None):
             return jsonify(error="blocked", message=str(e)), 409
         return jsonify(receipt=receipt)
 
+    @app.post("/api/compare")
+    def compare_route():
+        body = request.get_json(silent=True) or {}
+        person = db.person_by_token(str(body.get("token") or ""))
+        kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
+        if kit is None:
+            raise LookupError("This role has no assistant yet.")
+        return jsonify(chat.compare(kit, body.get("message") or "",
+                                    lambda: db.spend_model_call(person["sandbox_id"])))
+
     @app.get("/api/trust")
     def trust_page():
         return jsonify(trust.build(db.table_names()))
