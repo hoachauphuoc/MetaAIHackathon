@@ -8,6 +8,9 @@ STORED = {
     "companies": "The accepted org chart: role titles, reporting lines and headcounts.",
     "assistants": "One brief per role: goal, allowed skills, everyday jobs, handoffs and limits.",
     "people": "An invite token, a display name and a role. No email, no activity, no metrics.",
+    "packages": "Handed-off business documents (a quote package: customer, route, price, dates), "
+                "who sent and who holds it, its check result. Company records, kept for the sandbox.",
+    "decisions": "Accept or return decisions on a document: the role that acted, the reason, the date.",
     "daily_cost": "Dollars spent per day across the service. No who, no what.",
 }
 

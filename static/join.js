@@ -1,11 +1,11 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
-import { maskPii } from '/static/pii.js';
+import { inboxPanel, ROUTES } from '/static/inbox.js';
+import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
 const token = location.pathname.split('/').pop();
 const app = document.getElementById('app');
-const ROUTES = ['Hanoi-Haiphong', 'Hanoi-Danang', 'Haiphong-Hochiminh', 'Danang-Hochiminh'];
 
 // --- browser-only storage ----------------------------------------------------------------
 function openDb() {
@@ -31,23 +31,6 @@ async function saveHistory(history) {
     const db = await openDb();
     db.transaction('chat', 'readwrite').objectStore('chat').put(history, token);
   } catch { /* storage can be blocked; the chat still works for this visit */ }
-}
-
-// --- personal data mask -----------------------------------------------------------------
-// Resolves to the text to send (masked), or null if the person cancels. Shows what was masked.
-function confirmMask(text, mount) {
-  const { text: masked, items } = maskPii(text);
-  if (!items.length) return Promise.resolve(text);
-  return new Promise((resolve) => {
-    const done = (value) => { clear(mount); resolve(value); };
-    clear(mount, el('div', { class: 'errors', role: 'alert' },
-      `${items.length} personal item${items.length > 1 ? 's' : ''} found. Placeholders will be sent instead:`,
-      el('ul', {}, items.map((i) => el('li', {}, `${i.original} becomes ${i.placeholder}`))),
-      el('p', { class: 'muted' }, 'Names cannot be detected. Remove them yourself if needed.'),
-      el('div', { class: 'row' },
-        el('button', { class: 'primary', onclick: () => done(masked) }, 'Send masked'),
-        el('button', { onclick: () => done(null) }, 'Cancel'))));
-  });
 }
 
 // --- chat ------------------------------------------------------------------------------
@@ -232,7 +215,7 @@ function describe(result) {
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
       info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
-      chatPanel(info), workflowPanel());
+      inboxPanel(info, token), chatPanel(info), workflowPanel());
   } catch (e) {
     clear(app, el('section', {}, el('p', { class: 'errors', role: 'alert' },
       'This link has ended or was never valid. Ask the owner for a new one.')));

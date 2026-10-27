@@ -6,6 +6,12 @@
       "runtimeExecutable": "powershell",
       "runtimeArgs": ["-NoProfile", "-File", "scripts/run.ps1", "-Real"],
       "port": 5000
+    },
+    {
+      "name": "app-fake",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-File", "scripts/run.ps1", "-Port", "5001"],
+      "port": 5001
     }
   ]
 }

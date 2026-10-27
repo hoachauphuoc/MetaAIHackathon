@@ -48,12 +48,22 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    roles that exist.
 4. **Invite links:** one per person, tied to a role. A role with no free seat refuses.
 5. **Chat:** streamed from Spark; the browser keeps the history (IndexedDB) and sends it with each
-   message. The server stores nothing.
+   message. The server stores nothing. Before anything is sent, emails, phone numbers, card
+   numbers, ID numbers and IBANs are masked in the browser, with a preview. **Compare with generic
+   AI** asks the same question of the role assistant and of a plain assistant, side by side.
 6. **Team workflow (Sales, Operations, Finance):** each step lets the model choose a tool's
    arguments by function calling; **code computes every number** (`tools.py`). A two-layer check
    follows: rules set a floor, then the model reads the package (customer notes are untrusted
    text) and may only raise the status. A person presses Approve; the server signs each result and
    refuses step N+1 without a valid receipt for step N. A blocked step cannot be approved.
+
+7. **Inbox and Today:** a person sends a quote package to another role along a declared handoff.
+   Rules and Spark check it (the model can only raise the status). The receiving team sees it in a
+   queue, one person takes it, then accepts or returns it with a reason; a blocked package cannot
+   be accepted; the sender can never decide on their own package; above USD 50,000 the top role
+   signs after the receiver; overdue is a property of the package. **Today** counts documents
+   only. The owner can remove a person: their link answers 410 with `Clear-Site-Data`, their seat
+   frees up, and work they held returns to the queue.
 
 ## Meta models used
 
@@ -77,6 +87,8 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | One sandbox cannot read another | `tests/test_store.py`, `tests/test_app.py` |
 | A person approves every handoff; the model cannot lower a rules status | `tests/test_workflow.py`, `tests/test_tools_and_gate.py` |
 | Private never falls back to the standard API | `tests/test_workflow.py`, `tests/test_trust.py` |
+| Handoffs: maker-checker, claim, blocked cannot be accepted, leaver gets 410 | `tests/test_handoffs.py` |
+| Personal data masked in the browser | `tests/js/pii.test.mjs` |
 | Model text never becomes HTML | `scripts/check.ps1` fails on `innerHTML` and similar |
 
 OWASP Top 10 for LLM applications, as applied here:
@@ -109,10 +121,14 @@ OWASP Top 10 for LLM applications, as applied here:
   `/trust` shows "Built with Muse Spark Open".
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
-- Spark vision, voice and web search were not verified and are not used.
+- Spark vision, voice and web search are not used. `scripts/smoke.py` shows the API accepts an
+  image but my one-pixel test was inconclusive, the `web_search` tool type is rejected (HTTP 400)
+  in the form I tried, and voice was not tried.
 - Measured sets are synthetic and small; the model layer of the gate was not tested for
   contradictions the rules cannot see.
-- Not built: handoff inbox, Shadow/Assist/Primary modes, PII masking, "compare with generic AI".
+- Not built: Shadow/Assist/Primary modes, handoffs to a named person, manager assignment, parallel
+  approval, CSV import, export, document intake, voice, Day-1 guide, org advisor.
+- PII masking is pattern-based and cannot detect names (shown to the user and on `/trust`).
 
 ## Run it
 

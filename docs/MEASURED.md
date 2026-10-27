@@ -47,3 +47,14 @@ one model, 8 times.
 | Workflow step (tool call + handoff check) | Spark 1.3 | about 9 s | under USD 0.01 |
 
 Reasoning tokens are included in the output token count and billed as output.
+
+## Set 3: personal-data masking in the browser
+
+`node --test tests/js` on `tests/js/pii_cases.json`: 40 sentences written by the project author,
+so they test the patterns, not an independent sample.
+
+| Result | Value |
+|---|---|
+| Detectable personal items (emails, phones, cards with a valid checksum, SSN, 12-digit IDs, IBAN) found with the right type | 24 of 24 |
+| Names (not detectable by patterns) | 0 of 4 found, by design, stated on `/trust` |
+| Ordinary business numbers (prices, order numbers, dates, plates) wrongly masked | 0 of 12 |

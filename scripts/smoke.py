@@ -33,6 +33,11 @@ ADD_TOOL = {"type": "function", "function": {
                    "required": ["qty", "unit_price"], "additionalProperties": False}}}
 
 
+# A 1x1 red PNG, so the vision check needs no file.
+RED_PIXEL = ("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8Dw"
+             "HwAFBQIAX8jx0gAAAABJRU5ErkJggg==")
+
+
 def load_key():
     key = os.environ.get("META_API_KEY")
     path = os.environ.get("META_API_KEY_FILE")
@@ -97,6 +102,25 @@ def main():
         return f"{calls[0].function.name}({calls[0].function.arguments}) {usage_text(r)}"
 
     results.append(run("function calling (Spark)", tool_call))
+
+    def vision():
+        r = client.chat.completions.create(
+            model=SPARK, reasoning_effort="minimal", max_tokens=300,
+            messages=[{"role": "user", "content": [
+                {"type": "text", "text": "What colour is this image? One word."},
+                {"type": "image_url", "image_url": {"url": RED_PIXEL}}]}])
+        return f"{r.choices[0].message.content!r} {usage_text(r)}"
+
+    results.append(run("vision (Spark)", vision))
+
+    def web_search():
+        r = client.chat.completions.create(
+            model=SPARK, reasoning_effort="minimal", max_tokens=300,
+            messages=[{"role": "user", "content": "Search the web: what is the Meta Muse model family?"}],
+            tools=[{"type": "web_search"}])
+        return usage_text(r)
+
+    results.append(run("web_search tool (Spark)", web_search))
 
     print(f"\n{sum(results)}/{len(results)} checks passed")
     sys.exit(0 if all(results) else 1)

@@ -9,6 +9,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 import assistants
 import chart
 import chat
+import handoffs
 import muse
 import rules
 import store
@@ -28,7 +29,12 @@ def create_app(db_path=None):
     muse.cost_listener = db.add_cost
 
     @app.errorhandler(store.SandboxExpired)
-    def sandbox_expired(_):
+    def sandbox_expired(e):
+        if isinstance(e, store.PersonLeft):
+            # The link is revoked; ask the browser to drop what it kept (chat history).
+            response = jsonify(error="link_revoked", message="This link has been revoked.")
+            response.headers["Clear-Site-Data"] = '"storage"'
+            return response, 410
         return jsonify(error="sandbox_expired", message="This sandbox has ended. Start again."), 410
 
     def current_sandbox():
@@ -137,6 +143,16 @@ def create_app(db_path=None):
     def list_assistants():
         return jsonify(assistants=db.get_assistants(current_sandbox()))
 
+    @app.get("/api/people")
+    def people():
+        return jsonify(people=db.list_people(current_sandbox()))
+
+    @app.post("/api/people/<int:person_id>/offboard")
+    def offboard(person_id):
+        if not db.offboard(current_sandbox(), person_id):
+            raise LookupError("No such person.")
+        return jsonify(ok=True)
+
     @app.post("/api/invites")
     def make_invite():
         sandbox_id = current_sandbox()
@@ -244,6 +260,93 @@ def create_app(db_path=None):
             raise LookupError("This role has no assistant yet.")
         return jsonify(chat.compare(kit, body.get("message") or "",
                                     lambda: db.spend_model_call(person["sandbox_id"])))
+
+    def me_and_context():
+        body = request.get_json(silent=True) or {}
+        token = str(body.get("token") or request.args.get("token") or "")
+        me = {**db.person_by_token(token), "token": token}
+        company = db.get_company(me["sandbox_id"]) or {"roles": []}
+        return body, me, company
+
+    def ask(messages, **kw):
+        return muse.complete(muse.SPARK, messages, **kw)
+
+    def package_for(me, package_id):
+        package = db.get_package(me["sandbox_id"], package_id)
+        if package is None:
+            raise LookupError("No such package.")
+        return package
+
+    @app.errorhandler(handoffs.Refused)
+    def refused(e):
+        return jsonify(error="refused", message=e.message), e.status
+
+    def view_of(package, me, company):
+        titles = {r["id"]: r["title"] for r in company["roles"]}
+        return handoffs.view(package, me, datetime.date.today(), titles)
+
+    @app.post("/api/handoffs")
+    def send_handoff():
+        body, me, company = me_and_context()
+        blocked = lambda: db.spend_model_call(me["sandbox_id"])  # noqa: E731
+        package = handoffs.send(
+            me["sandbox_id"], {**me, "token": me["token"]}, body.get("to_role"),
+            body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
+            company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked)
+        return jsonify(view_of(package, me, company)), 201
+
+    @app.post("/api/precheck")
+    def precheck():
+        """Private pre-check: nothing is stored."""
+        body, me, company = me_and_context()
+        status, findings = handoffs.run_check(
+            handoffs.clean_values(body.get("values") or {}), tools.PARAMS, datetime.date.today(),
+            ask, lambda: db.spend_model_call(me["sandbox_id"]))
+        return jsonify(status=status, findings=findings)
+
+    @app.get("/api/inbox")
+    def inbox():
+        _, me, company = me_and_context()
+        today = datetime.date.today()
+        packages = db.list_packages(me["sandbox_id"])
+        mine = [p for p in packages if p["from_person"] == me["token"]
+                or handoffs.current_role(p) == me["role_id"]]
+        return jsonify(today=handoffs.today_summary(packages, me, today),
+                       packages=[view_of(p, me, company) for p in mine])
+
+    def hold_change(package_id, action):
+        _, me, company = me_and_context()
+        package = package_for(me, package_id)
+        action(package, me)
+        db.save_package(me["sandbox_id"], package)
+        return jsonify(view_of(package, me, company))
+
+    @app.post("/api/handoffs/<package_id>/claim")
+    def claim_package(package_id):
+        return hold_change(package_id, handoffs.claim)
+
+    @app.post("/api/handoffs/<package_id>/unclaim")
+    def unclaim_package(package_id):
+        return hold_change(package_id, handoffs.unclaim)
+
+    @app.post("/api/handoffs/<package_id>/decision")
+    def decide_package(package_id):
+        body, me, company = me_and_context()
+        package = package_for(me, package_id)
+        acting_role = handoffs.current_role(package)
+        handoffs.decide(package, me, body.get("decision"), body.get("reason"))
+        db.save_package(me["sandbox_id"], package)
+        db.log_decision(package_id, body["decision"], acting_role, str(body.get("reason") or ""))
+        return jsonify(view_of(package, me, company))
+
+    @app.post("/api/handoffs/<package_id>/resend")
+    def resend_package(package_id):
+        body, me, company = me_and_context()
+        package = package_for(me, package_id)
+        handoffs.resend(package, me, body.get("values") or {}, tools.PARAMS, datetime.date.today(),
+                        ask, lambda: db.spend_model_call(me["sandbox_id"]), company["roles"])
+        db.save_package(me["sandbox_id"], package)
+        return jsonify(view_of(package, me, company))
 
     @app.get("/api/trust")
     def trust_page():

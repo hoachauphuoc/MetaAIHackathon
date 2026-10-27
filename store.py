@@ -28,12 +28,23 @@ CREATE TABLE IF NOT EXISTS people (
     token TEXT PRIMARY KEY,
     sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
     role_id TEXT NOT NULL, display_name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active');
+CREATE TABLE IF NOT EXISTS packages (
+    id TEXT PRIMARY KEY,
+    sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
+    data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS decisions (
+    package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL, role_id TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', day TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS daily_cost (day TEXT PRIMARY KEY, usd REAL NOT NULL);
 """
 
 
 class SandboxExpired(Exception):
     """Unknown or older than the TTL; the UI offers "Start again"."""
+
+
+class PersonLeft(SandboxExpired):
+    """The link was revoked because the person left; the browser is told to clear its data."""
 
 
 def locked(method):
@@ -85,6 +96,37 @@ class Store:
                 "UPDATE sandboxes SET model_calls = model_calls + 1 WHERE id = ? AND model_calls < ?",
                 (sandbox_id, MODEL_CALL_CAP))
         return None if cur.rowcount == 1 else "Demo limit reached"
+
+    @locked
+    def save_package(self, sandbox_id, package):
+        self.require_sandbox(sandbox_id)
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO packages VALUES (?, ?, ?)",
+                            (package["id"], sandbox_id, json.dumps(package)))
+
+    @locked
+    def get_package(self, sandbox_id, package_id):
+        row = self.db.execute("SELECT data FROM packages WHERE id = ? AND sandbox_id = ?",
+                              (package_id, sandbox_id)).fetchone()
+        return json.loads(row[0]) if row else None
+
+    @locked
+    def list_packages(self, sandbox_id):
+        rows = self.db.execute("SELECT data FROM packages WHERE sandbox_id = ?", (sandbox_id,))
+        return [json.loads(r[0]) for r in rows]
+
+    @locked
+    def log_decision(self, package_id, kind, role_id, reason=""):
+        """Decisions belong to the document and name the role that acted, never the person."""
+        with self.db:
+            self.db.execute("INSERT INTO decisions VALUES (?, ?, ?, ?, ?)",
+                            (package_id, kind, role_id, reason, datetime.date.today().isoformat()))
+
+    @locked
+    def decisions_for(self, package_id):
+        rows = self.db.execute("SELECT kind, role_id, reason, day FROM decisions WHERE package_id = ?",
+                               (package_id,))
+        return [dict(zip(("kind", "role_id", "reason", "day"), r)) for r in rows]
 
     @locked
     def cost_today(self):
@@ -150,13 +192,39 @@ class Store:
         return token
 
     @locked
+    def list_people(self, sandbox_id):
+        """For the owner: who holds which seat. No activity, counts or metrics."""
+        self.require_sandbox(sandbox_id)
+        rows = self.db.execute("SELECT rowid, role_id, display_name, status FROM people "
+                               "WHERE sandbox_id = ?", (sandbox_id,))
+        return [dict(zip(("id", "role_id", "display_name", "status"), r)) for r in rows]
+
+    @locked
+    def offboard(self, sandbox_id, person_id):
+        """Revoke the link at once and send every package the person held back to the queue."""
+        self.require_sandbox(sandbox_id)
+        row = self.db.execute("SELECT token FROM people WHERE rowid = ? AND sandbox_id = ?",
+                              (person_id, sandbox_id)).fetchone()
+        if row is None:
+            return False
+        with self.db:
+            self.db.execute("UPDATE people SET status = 'left' WHERE token = ?", (row[0],))
+        for package in self.list_packages(sandbox_id):
+            if package["claimed_by"] == row[0]:
+                package["claimed_by"] = None
+                self.save_package(sandbox_id, package)
+        return True
+
+    @locked
     def person_by_token(self, token):
         """The token is the whole credential; an expired sandbox takes its people with it."""
         self._purge_expired()
-        row = self.db.execute("SELECT sandbox_id, role_id, display_name FROM people "
-                              "WHERE token = ? AND status = 'active'", (token,)).fetchone()
+        row = self.db.execute("SELECT sandbox_id, role_id, display_name, status FROM people "
+                              "WHERE token = ?", (token,)).fetchone()
         if row is None:
             raise SandboxExpired(token)
+        if row[3] != "active":
+            raise PersonLeft(token)
         return {"sandbox_id": row[0], "role_id": row[1], "display_name": row[2]}
 
     @locked

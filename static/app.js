@@ -143,6 +143,20 @@ async function showAssistants() {
     grid.append(card);
     return [r.id, card];
   }));
+  const peopleList = el('div');
+  app.append(el('section', {}, el('h2', {}, 'People'),
+    el('p', { class: 'muted' }, 'Only a name, a role and a link. Removing someone revokes their link at once ' +
+      'and returns the work they held to the team queue.'), peopleList));
+  async function drawPeople() {
+    const res = await api('/api/people', { sandbox });
+    clear(peopleList, res.data.people.filter((p) => p.status === 'active').map((p) => el('div', { class: 'row' },
+      `${p.display_name} (${roles.find((r) => r.id === p.role_id)?.title || p.role_id})`,
+      el('button', { onclick: guard(async () => {
+        if (!confirm(`Remove ${p.display_name}? Their link stops working now.`)) return;
+        await api(`/api/people/${p.id}/offboard`, { method: 'POST', sandbox });
+        drawPeople();
+      }) }, 'Remove'))));
+  }
   await Promise.all(roles.map(guard(async (role) => {
     const res = await api('/api/assistants', { method: 'POST', sandbox, body: { role_id: role.id } });
     if (!res.ok) { clear(cards[role.id], el('h3', {}, role.title), el('p', { class: 'errors' }, res.data.message)); return; }
@@ -156,7 +170,9 @@ async function showAssistants() {
       el('h3', {}, 'Hands work to'), el('ul', { class: 'plain' }, kit.handoffs.length
         ? kit.handoffs.map((h) => el('li', {}, `${h.to_role}: ${h.what}`)) : el('li', {}, 'Nobody')),
       el('div', { class: 'row' }, el('button', { onclick: guard(async () => {
-        const inv = await api('/api/invites', { method: 'POST', sandbox, body: { role_id: role.id, display_name: role.title } });
+        const inv = await api('/api/invites', { method: 'POST', sandbox, body: {
+          role_id: role.id, display_name: `${role.title} ${Math.random().toString(36).slice(2, 5)}` } });
+        drawPeople();
         clear(link, inv.ok ? [el('a', { href: inv.data.url, target: '_blank', rel: 'noopener' }, 'Open invite link'),
           ' ', el('code', {}, location.origin + inv.data.url)] : inv.data.message);
       }) }, 'Create invite link')), link);
