@@ -13,6 +13,7 @@ import chat
 import handoff_schema
 import handoffs
 import muse
+import onboarding
 import rules
 import store
 import tools
@@ -316,6 +317,19 @@ def create_app(db_path=None):
         except ValueError as e:
             return jsonify(error="blocked", message=str(e)), 409
         return jsonify(receipt=receipt)
+
+    @app.post("/api/onboarding")
+    def onboarding_plan():
+        """The plan goes back to the person's browser only; the server keeps no copy and no progress."""
+        body = request.get_json(silent=True) or {}
+        person = db.person_by_token(str(body.get("token") or ""))
+        kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
+        if kit is None:
+            raise LookupError("This role has no assistant yet.")
+        company = db.get_company(person["sandbox_id"]) or {"roles": []}
+        return jsonify(onboarding.plan(kit, {r["id"]: r["title"] for r in company["roles"]},
+                                       effective_schema(company), ask,
+                                       lambda: db.spend_model_call(person["sandbox_id"])))
 
     @app.post("/api/compare")
     def compare_route():

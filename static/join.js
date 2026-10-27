@@ -113,6 +113,53 @@ function chatPanel(info) {
     el('label', { for: 'msg' }, 'Message'), input, el('div', { class: 'row' }, send, compareBtn, clearBtn), compareBox);
 }
 
+// --- first three days ------------------------------------------------------------------
+// The plan and the ticks stay in this browser; the server and the owner never learn the progress.
+const planKey = `first-days:${token}`;
+function loadPlan() {
+  try { return JSON.parse(localStorage.getItem(planKey)); } catch { return null; }
+}
+function savePlan(plan) {
+  try { localStorage.setItem(planKey, JSON.stringify(plan)); } catch { /* blocked storage: ticks last this visit */ }
+}
+
+function firstDaysPanel() {
+  const out = el('div');
+  let plan = loadPlan();
+  const draw = () => {
+    if (!plan) { clear(out); return; }
+    const done = new Set(plan.done || []);
+    clear(out, plan.demo_mode ? demoNote(plan.demo_reason) : badge('Planned by Muse Spark from your role', 'ok'),
+      plan.source === 'template' ? el('p', { class: 'muted' }, 'A standard plan for your role (Template).') : null,
+      plan.days.map((tasks, d) => [el('h3', {}, `Day ${d + 1}`), el('ul', { class: 'plain' }, tasks.map((t, i) => {
+        const id = `day${d}-task${i}`;
+        const box = el('input', { id, type: 'checkbox', checked: done.has(id), onchange: () => {
+          if (box.checked) done.add(id); else done.delete(id);
+          plan.done = [...done];
+          savePlan(plan);
+        } });
+        return el('li', { class: 'task' }, box, el('label', { for: id }, el('strong', {}, t.title), ' ', t.why,
+          t.skill ? [' ', badge(`assistant: ${t.skill.replaceAll('_', ' ')}`, 'info')] : null));
+      }))]).flat());
+  };
+  const make = el('button', { onclick: async () => {
+    make.disabled = true;
+    clear(out, el('p', { class: 'progress', role: 'status' }, 'Planning your first three days...'));
+    const res = await api('/api/onboarding', { method: 'POST', body: { token } });
+    make.disabled = false;
+    if (!res.ok) { clear(out, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+    plan = { ...res.data, done: [] };
+    savePlan(plan);
+    draw();
+    make.textContent = 'Make a new plan';
+  } }, plan ? 'Make a new plan' : 'Plan my first three days');
+  draw();
+  return el('details', { class: 'section', open: !plan || (plan.done || []).length < plan.days.flat().length },
+    el('summary', {}, el('h2', {}, 'Your first three days')),
+    el('p', { class: 'muted' }, 'Ticks stay on this device. Nobody else sees how far you are.'),
+    el('div', { class: 'row' }, make), out);
+}
+
 // --- workflow --------------------------------------------------------------------------
 function workflowPanel(routes) {
   const box = el('section', {}, el('h2', {}, 'New order: Sales, Operations, Finance'));
@@ -214,7 +261,7 @@ function describe(result) {
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
       info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
-      inboxPanel(info, token), chatPanel(info),
+      firstDaysPanel(), inboxPanel(info, token), chatPanel(info),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
       ...(info.handoff_schema.id === 'logistics'
         ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []));
