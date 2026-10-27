@@ -1,0 +1,23 @@
+{
+  "logistics": [
+    {"id": "md", "title": "Managing Director", "reports_to": null, "weight": 1},
+    {"id": "sales", "title": "Sales Lead", "reports_to": "md", "weight": 3},
+    {"id": "ops", "title": "Operations Lead", "reports_to": "md", "weight": 4},
+    {"id": "finance", "title": "Finance Lead", "reports_to": "md", "weight": 2},
+    {"id": "support", "title": "Customer Support", "reports_to": "ops", "weight": 2}
+  ],
+  "retail": [
+    {"id": "owner", "title": "Store Owner", "reports_to": null, "weight": 1},
+    {"id": "sales", "title": "Sales Lead", "reports_to": "owner", "weight": 4},
+    {"id": "stock", "title": "Inventory Lead", "reports_to": "owner", "weight": 2},
+    {"id": "finance", "title": "Bookkeeper", "reports_to": "owner", "weight": 1},
+    {"id": "support", "title": "Customer Care", "reports_to": "sales", "weight": 2}
+  ],
+  "services": [
+    {"id": "director", "title": "Director", "reports_to": null, "weight": 1},
+    {"id": "sales", "title": "Account Manager", "reports_to": "director", "weight": 2},
+    {"id": "delivery", "title": "Delivery Lead", "reports_to": "director", "weight": 4},
+    {"id": "finance", "title": "Finance Admin", "reports_to": "director", "weight": 1},
+    {"id": "support", "title": "Client Support", "reports_to": "delivery", "weight": 2}
+  ]
+}

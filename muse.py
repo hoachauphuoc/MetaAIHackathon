@@ -11,10 +11,13 @@ from openai import OpenAI
 
 BASE_URL = "https://api.meta.ai/v1"
 
+SPARK = "muse-spark-1.3"
+WONDER = "muse-wonder-1.0"
+
 # USD per 1M tokens (input, output), checked 26/10. Reasoning tokens are billed as output.
 PRICES = {
-    "muse-spark-1.3": (1.25, 4.25),
-    "muse-wonder-1.0": (4.0, 20.0),
+    SPARK: (1.25, 4.25),
+    WONDER: (4.0, 20.0),
 }
 
 log = logging.getLogger("muse")
