@@ -13,7 +13,7 @@ function stateLabel(p) {
   return 'Returned to the sender';
 }
 
-function findingsBlock(findings) {
+export function findingsBlock(findings) {
   const group = (source, title) => {
     const rows = findings.filter((f) => f.source === source);
     return rows.length ? [el('p', { class: 'muted' }, title),

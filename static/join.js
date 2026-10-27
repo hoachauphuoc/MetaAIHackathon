@@ -1,6 +1,6 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
-import { inboxPanel, ROUTES } from '/static/inbox.js';
+import { findingsBlock, inboxPanel, ROUTES } from '/static/inbox.js';
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
@@ -195,8 +195,7 @@ function describe(result) {
   else if (t.ics) lines.push(el('p', {}, `Calendar event: ${t.title} on ${t.date}. `,
     el('a', { href: URL.createObjectURL(new Blob([t.ics], { type: 'text/calendar' })), download: 'delivery.ics' }, 'Download .ics')));
   if (result.summary) lines.push(el('p', {}, result.summary));
-  if (result.findings.length) lines.push(el('ul', { class: 'plain' },
-    result.findings.map((x) => el('li', {}, `${x.message} `, el('span', { class: 'muted' }, `(${x.source})`)))));
+  lines.push(...findingsBlock(result.findings));
   lines.push(el('details', {}, el('summary', {}, 'Agent activity'), el('ul', { class: 'plain' },
     result.trace.map((x) => el('li', {}, `${x.tool}: ${x.model}, ${x.ms} ms${x.demo_mode ? ', demo' : ''}`)))));
   return lines;
