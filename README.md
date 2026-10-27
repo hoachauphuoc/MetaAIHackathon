@@ -60,7 +60,9 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
 7. **Inbox and Today:** a person sends a quote package to another role along a declared handoff.
    Rules and Spark check it (the model can only raise the status). The receiving team sees it in a
    queue, one person takes it, then accepts or returns it with a reason; a blocked package cannot
-   be accepted; the sender can never decide on their own package; above USD 50,000 the top role
+   be accepted; a returned package goes back to the sender only, who edits it and sends it again,
+   and the next reviewer sees why it came back and what changed; the sender can never decide on
+   their own package; above USD 50,000 the top role
    signs after the receiver; overdue is a property of the package. **Today** counts documents
    only. The owner can remove a person: their link answers 410 with `Clear-Site-Data`, their seat
    frees up, and work they held returns to the queue.
@@ -140,6 +142,7 @@ powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
 python scripts/measure.py                  # the measured sets
+python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 
 Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager).
