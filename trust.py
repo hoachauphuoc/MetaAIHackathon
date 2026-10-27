@@ -5,7 +5,8 @@ import rules
 # One line per table. A test fails if a table is added without a line here.
 STORED = {
     "sandboxes": "A sandbox id, when it was created, how many model calls it made (a count, no content).",
-    "companies": "The accepted org chart: role titles, reporting lines and headcounts.",
+    "companies": "The accepted org chart (role titles, reporting lines, headcounts) and the handoff form the "
+                 "owner chose: field names and rules about documents, never about people.",
     "assistants": "One brief per role: goal, allowed skills, everyday jobs, handoffs and limits.",
     "people": "An invite token, a display name and a role. No email, no activity, no metrics.",
     "packages": "Handed-off business documents (a quote package: customer, route, price, dates), "

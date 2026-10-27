@@ -217,7 +217,8 @@ def create_app(db_path=None):
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
             raise LookupError("This role has no assistant yet.")
-        messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "")
+        messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "",
+                                     effective_schema(db.get_company(person["sandbox_id"]) or {}))
         blocked = db.spend_model_call(person["sandbox_id"])
 
         def events():
@@ -293,7 +294,8 @@ def create_app(db_path=None):
         if kit is None:
             raise LookupError("This role has no assistant yet.")
         return jsonify(chat.compare(kit, body.get("message") or "",
-                                    lambda: db.spend_model_call(person["sandbox_id"])))
+                                    lambda: db.spend_model_call(person["sandbox_id"]),
+                                    effective_schema(db.get_company(person["sandbox_id"]) or {})))
 
     def me_and_context():
         body = request.get_json(silent=True) or {}

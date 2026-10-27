@@ -143,3 +143,14 @@ def test_the_package_keeps_the_form_it_was_sent_with(client):
     client.post("/api/handoff-schema", json={"schema": rules.SCHEMAS["services"]}, headers=h)
     box = client.get("/api/inbox", query_string={"token": sales}).json["packages"]
     assert box[0]["id"] == pid and box[0]["schema"]["id"] == "logistics"
+
+
+def test_chat_prompt_follows_the_companys_form_and_owner_thresholds():
+    import chat
+    kit = {"role_id": "sales", "role_title": "Sales", "goal": "g", "jobs": ["a"], "limits": ["l"]}
+    custom = {**rules.SCHEMAS["services"], "id": "custom",
+              "rules": [{**r, "percent": 20} if r["kind"] == "min_margin" else r
+                        for r in rules.SCHEMAS["services"]["rules"]]}
+    text = chat.system_prompt(None, kit, custom)
+    assert "margin floor is 20%" in text and "Job quote" in text and "Rate card" not in text
+    assert "Rate card" in chat.system_prompt(None, kit)
