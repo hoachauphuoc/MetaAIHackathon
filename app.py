@@ -282,6 +282,9 @@ def create_app(db_path=None):
     def refused(e):
         return jsonify(error="refused", message=e.message), e.status
 
+    def effective_schema(company):
+        return company.get("handoff_schema") or rules.DEFAULT_SCHEMA
+
     def view_of(package, me, company):
         titles = {r["id"]: r["title"] for r in company["roles"]}
         return handoffs.view(package, me, datetime.date.today(), titles)
@@ -293,7 +296,8 @@ def create_app(db_path=None):
         package = handoffs.send(
             me["sandbox_id"], {**me, "token": me["token"]}, body.get("to_role"),
             body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
-            company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked)
+            company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked,
+            effective_schema(company))
         return jsonify(view_of(package, me, company)), 201
 
     @app.post("/api/precheck")
@@ -301,9 +305,10 @@ def create_app(db_path=None):
         """Private pre-check: nothing is stored."""
         body, me, company = me_and_context()
         today = datetime.date.today()
+        schema = effective_schema(company)
         status, findings, _ = handoffs.run_check(
-            handoffs.clean_values(body.get("values") or {}), tools.PARAMS, today,
-            ask, lambda: db.spend_model_call(me["sandbox_id"]))
+            handoffs.clean_values(body.get("values") or {}, schema), tools.PARAMS, today,
+            ask, lambda: db.spend_model_call(me["sandbox_id"]), schema)
         problem = handoffs.due_problem(body.get("due"), today)
         if problem:  # "Check first" must agree with "Send", which refuses this
             findings.insert(0, {"status": "blocked", "source": "rules", "message": problem})

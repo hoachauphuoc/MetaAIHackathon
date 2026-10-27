@@ -1,0 +1,54 @@
+{
+  "logistics": {
+    "id": "logistics", "title": "Pallet quote", "title_field": "customer",
+    "fields": [
+      {"key": "customer", "label": "Customer", "noun": "customer", "type": "text", "required": true, "options": []},
+      {"key": "route", "label": "Shipping route", "noun": "route", "type": "choice", "required": true,
+       "options": ["Hanoi-Haiphong", "Hanoi-Danang", "Haiphong-Hochiminh", "Danang-Hochiminh"]},
+      {"key": "pallets", "label": "Pallets", "noun": "pallets", "type": "integer", "required": true, "options": []},
+      {"key": "price", "label": "Price (USD)", "noun": "price", "type": "money", "required": true, "options": []},
+      {"key": "cost", "label": "Cost (USD)", "noun": "cost", "type": "money", "required": true, "options": []},
+      {"key": "delivery_date", "label": "Delivery date", "noun": "delivery date", "type": "date", "required": true, "options": []}
+    ],
+    "rules": [
+      {"kind": "not_below", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "min_margin", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "escalate_over", "field": "price", "other": null, "percent": null, "usd": null},
+      {"kind": "date_not_past", "field": "delivery_date", "other": null, "percent": null, "usd": null}
+    ]
+  },
+  "services": {
+    "id": "services", "title": "Job quote", "title_field": "client",
+    "fields": [
+      {"key": "client", "label": "Client", "noun": "client", "type": "text", "required": true, "options": []},
+      {"key": "service", "label": "Service", "noun": "service", "type": "text", "required": true, "options": []},
+      {"key": "hours", "label": "Hours", "noun": "hours", "type": "integer", "required": true, "options": []},
+      {"key": "price", "label": "Quoted price (USD)", "noun": "price", "type": "money", "required": true, "options": []},
+      {"key": "cost", "label": "Our cost (USD)", "noun": "cost", "type": "money", "required": true, "options": []},
+      {"key": "start_date", "label": "Start date", "noun": "start date", "type": "date", "required": true, "options": []}
+    ],
+    "rules": [
+      {"kind": "not_below", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "min_margin", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "escalate_over", "field": "price", "other": null, "percent": null, "usd": null},
+      {"kind": "date_not_past", "field": "start_date", "other": null, "percent": null, "usd": null}
+    ]
+  },
+  "retail": {
+    "id": "retail", "title": "Order", "title_field": "customer",
+    "fields": [
+      {"key": "customer", "label": "Customer", "noun": "customer", "type": "text", "required": true, "options": []},
+      {"key": "item", "label": "Item", "noun": "item", "type": "text", "required": true, "options": []},
+      {"key": "quantity", "label": "Quantity", "noun": "quantity", "type": "integer", "required": true, "options": []},
+      {"key": "price", "label": "Order total (USD)", "noun": "price", "type": "money", "required": true, "options": []},
+      {"key": "cost", "label": "Our cost (USD)", "noun": "cost", "type": "money", "required": true, "options": []},
+      {"key": "delivery_date", "label": "Delivery date", "noun": "delivery date", "type": "date", "required": true, "options": []}
+    ],
+    "rules": [
+      {"kind": "not_below", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "min_margin", "field": "price", "other": "cost", "percent": null, "usd": null},
+      {"kind": "escalate_over", "field": "price", "other": null, "percent": null, "usd": null},
+      {"kind": "date_not_past", "field": "delivery_date", "other": null, "percent": null, "usd": null}
+    ]
+  }
+}
