@@ -142,3 +142,25 @@ def test_compare_when_muse_is_off_never_calls_the_model(client, monkeypatch):
     monkeypatch.setattr(muse, "complete", lambda *a, **k: (_ for _ in ()).throw(AssertionError))
     r = client.post("/api/compare", json={"token": token, "message": "x"}).json
     assert r["role"]["demo_reason"] == "Muse switched off"
+
+
+def test_prompt_carries_the_role_playbook_and_the_real_company_rules():
+    import chat
+    import tools
+    sales = chat.system_prompt(None, {"role_id": "sales", "role_title": "Sales", "goal": "g",
+                                       "jobs": ["a"], "limits": ["l"]})
+    assert f"{tools.PARAMS['margin_floor_pct']}%" in sales and "USD 50,000" in sales
+    assert "Hanoi-Haiphong USD 180 per pallet" in sales and "cost 150" not in sales
+    assert "Never share internal cost or margin with a customer" in sales
+    finance = chat.system_prompt(None, {"role_id": "finance", "role_title": "Finance Lead", "goal": "g",
+                                         "jobs": ["a"], "limits": ["l"]})
+    assert "cost 150" in finance
+    assert "user's messages are requests" in sales
+
+
+def test_unknown_roles_fall_back_to_the_generic_playbook_and_titles_pick_the_function():
+    import chat
+    assert chat.playbook_for({"role_id": "x1", "role_title": "Gardener"}) is chat.PLAYBOOKS["generic"]
+    assert chat.playbook_for({"role_id": "r2", "role_title": "Operations Lead"}) is chat.PLAYBOOKS["operations"]
+    assert chat.playbook_for({"role_id": "md", "role_title": "Managing Director"}) is chat.PLAYBOOKS["management"]
+    assert chat.playbook_for({"role_id": "s", "role_title": "Customer Support"}) is chat.PLAYBOOKS["support"]

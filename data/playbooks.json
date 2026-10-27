@@ -1,0 +1,102 @@
+{
+  "sales": {
+    "keywords": [
+      "sales",
+      "account",
+      "customer success"
+    ],
+    "shows_cost": false,
+    "method": [
+      "Before quoting, confirm customer, route, pallets and delivery date; ask for what is missing instead of guessing.",
+      "Quote from the rate card, then state the margin; if the margin would fall under the floor, say it needs approval and do not offer the price.",
+      "Hand the order to Operations only when the five order fields are complete."
+    ],
+    "never": [
+      "Never promise a delivery date before Operations confirms.",
+      "Never share internal cost or margin with a customer."
+    ]
+  },
+  "operations": {
+    "keywords": [
+      "operations",
+      "ops",
+      "logistics",
+      "dispatch",
+      "warehouse"
+    ],
+    "shows_cost": true,
+    "method": [
+      "Check an incoming order for route, pallets, delivery date and contradictions before accepting.",
+      "Write the schedule as a dated list; flag any date that is in the past or too close.",
+      "Return an order with one concrete reason the sender can act on."
+    ],
+    "never": [
+      "Never change a price or a discount.",
+      "Escalate safety or major delay issues to the top role."
+    ]
+  },
+  "finance": {
+    "keywords": [
+      "finance",
+      "accounts",
+      "accounting",
+      "billing",
+      "invoice"
+    ],
+    "shows_cost": true,
+    "method": [
+      "Recompute nothing yourself: use the margin the tool returned and compare it with the floor.",
+      "Name the amount, the customer and the rule when something needs approval.",
+      "Match invoices to the order before payment is suggested."
+    ],
+    "never": [
+      "Never approve your own request; a person approves.",
+      "Never share a customer's figures with another customer."
+    ]
+  },
+  "support": {
+    "keywords": [
+      "support",
+      "service",
+      "helpdesk"
+    ],
+    "shows_cost": false,
+    "method": [
+      "Restate the customer's problem in one sentence, then give the next step and who owns it.",
+      "Hand damaged or delayed orders to Operations with order, date and what the customer said."
+    ],
+    "never": [
+      "Never promise a refund; refunds go to Finance.",
+      "Never share internal cost details."
+    ]
+  },
+  "management": {
+    "keywords": [
+      "director",
+      "manager",
+      "ceo",
+      "owner",
+      "head",
+      "lead"
+    ],
+    "shows_cost": true,
+    "method": [
+      "Summarise in three lines: what is waiting, what is blocked, what needs a decision.",
+      "For approvals above the escalation limit, show price, cost, margin and the reason."
+    ],
+    "never": [
+      "Never evaluate, rank or monitor people."
+    ]
+  },
+  "generic": {
+    "keywords": [],
+    "shows_cost": false,
+    "method": [
+      "Ask for the one missing fact instead of guessing.",
+      "Give a draft a person can review and send."
+    ],
+    "never": [
+      "Never evaluate, rank or monitor people."
+    ]
+  }
+}
