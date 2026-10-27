@@ -3,11 +3,18 @@ import json
 import os
 from pathlib import Path
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
+import assistants
 import chart
+import chat
+import muse
 import rules
 import store
+
+
+def sse(event, data):
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
 def create_app(db_path=None):
@@ -67,6 +74,83 @@ def create_app(db_path=None):
                    "version": (previous or {}).get("version", 0) + 1}
         db.save_company(sandbox_id, company)
         return jsonify(company), 201
+
+    def accepted_company(sandbox_id):
+        company = db.get_company(sandbox_id)
+        if not company:
+            raise LookupError("Accept the chart first.")
+        return company
+
+    @app.errorhandler(LookupError)
+    def not_found(e):
+        return jsonify(error="not_found", message=str(e)), 404
+
+    @app.post("/api/assistants")
+    def make_assistant():
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        role_id = (request.get_json(silent=True) or {}).get("role_id")
+        role = next((r for r in company["roles"] if r["id"] == role_id), None)
+        if role is None:
+            raise LookupError("No such role.")
+        kit = assistants.build(role, company["roles"], lambda: db.try_spend_model_call(sandbox_id))
+        db.save_assistant(sandbox_id, role_id, kit)
+        return jsonify(kit)
+
+    @app.get("/api/assistants")
+    def list_assistants():
+        return jsonify(assistants=db.get_assistants(current_sandbox()))
+
+    @app.post("/api/invites")
+    def make_invite():
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        body = request.get_json(silent=True) or {}
+        role = next((r for r in company["roles"] if r["id"] == body.get("role_id")), None)
+        if role is None:
+            raise LookupError("No such role.")
+        name = str(body.get("display_name") or "").strip()[:80] or "Team member"
+        token = db.add_person(sandbox_id, role["id"], name, role["headcount"])
+        if token is None:
+            return jsonify(error="role_full", message=f"{role['title']} has no free seat."), 409
+        return jsonify(token=token, url=f"/join/{token}"), 201
+
+    @app.get("/api/invite/<token>")
+    def invite(token):
+        person = db.person_by_token(token)
+        company = db.get_company(person["sandbox_id"]) or {}
+        kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
+        role = next((r for r in company.get("roles", []) if r["id"] == person["role_id"]), None)
+        return jsonify(company=company.get("company"), role=role, assistant=kit,
+                       display_name=person["display_name"])
+
+    @app.post("/api/chat")
+    def chat_route():
+        body = request.get_json(silent=True) or {}
+        person = db.person_by_token(str(body.get("token") or ""))
+        kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
+        if kit is None:
+            raise LookupError("This role has no assistant yet.")
+        messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "")
+        allowed = db.try_spend_model_call(person["sandbox_id"])
+
+        def events():
+            yield sse("meta", {"role": kit["role_title"], "model": muse.SPARK})
+            source = muse.stream(muse.SPARK, messages) if allowed else iter(
+                [{"done": muse.demo_result(muse.SPARK, "Demo limit reached")}])
+            for item in source:
+                if "delta" in item:
+                    yield sse("delta", {"text": item["delta"]})
+                    continue
+                done = item["done"]
+                if done["demo_mode"]:
+                    yield sse("delta", {"text": "Demo mode: Muse did not answer, so there is no "
+                                                "draft. A person must write this."})
+                yield sse("done", {k: done[k] for k in
+                                   ("demo_mode", "demo_reason", "tokens_in", "tokens_out", "cost_usd")})
+
+        return Response(events(), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     @app.get("/api/company")
     def company():

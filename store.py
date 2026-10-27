@@ -15,6 +15,13 @@ CREATE TABLE IF NOT EXISTS sandboxes (
 CREATE TABLE IF NOT EXISTS companies (
     sandbox_id TEXT PRIMARY KEY REFERENCES sandboxes(id) ON DELETE CASCADE,
     data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS assistants (
+    sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY (sandbox_id, role_id));
+CREATE TABLE IF NOT EXISTS people (
+    token TEXT PRIMARY KEY,
+    sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL, display_name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active');
 """
 
 
@@ -64,6 +71,41 @@ class Store:
         row = self.db.execute("SELECT data FROM companies WHERE sandbox_id = ?",
                               (sandbox_id,)).fetchone()
         return json.loads(row[0]) if row else None
+
+    def save_assistant(self, sandbox_id, role_id, kit):
+        self.require_sandbox(sandbox_id)
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO assistants VALUES (?, ?, ?)",
+                            (sandbox_id, role_id, json.dumps(kit)))
+
+    def get_assistants(self, sandbox_id):
+        self.require_sandbox(sandbox_id)
+        rows = self.db.execute("SELECT role_id, data FROM assistants WHERE sandbox_id = ?",
+                               (sandbox_id,))
+        return {role_id: json.loads(data) for role_id, data in rows}
+
+    def add_person(self, sandbox_id, role_id, display_name, headcount):
+        """Return the invite token, or None when every seat of the role is taken."""
+        self.require_sandbox(sandbox_id)
+        held = self.db.execute(
+            "SELECT COUNT(*) FROM people WHERE sandbox_id = ? AND role_id = ? AND status = 'active'",
+            (sandbox_id, role_id)).fetchone()[0]
+        if held >= headcount:
+            return None
+        token = secrets.token_urlsafe(16)
+        with self.db:
+            self.db.execute("INSERT INTO people (token, sandbox_id, role_id, display_name) "
+                            "VALUES (?, ?, ?, ?)", (token, sandbox_id, role_id, display_name))
+        return token
+
+    def person_by_token(self, token):
+        """The token is the whole credential; an expired sandbox takes its people with it."""
+        self._purge_expired()
+        row = self.db.execute("SELECT sandbox_id, role_id, display_name FROM people "
+                              "WHERE token = ? AND status = 'active'", (token,)).fetchone()
+        if row is None:
+            raise SandboxExpired(token)
+        return {"sandbox_id": row[0], "role_id": row[1], "display_name": row[2]}
 
     def _purge_expired(self, now=None):
         cutoff = (now or time.time()) - SANDBOX_TTL

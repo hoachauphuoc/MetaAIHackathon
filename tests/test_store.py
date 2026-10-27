@@ -41,4 +41,4 @@ def test_model_call_cap(s):
 
 def test_no_table_can_hold_chat(s):
     tables = {r[0] for r in s.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    assert tables == {"sandboxes", "companies"}
+    assert tables == {"sandboxes", "companies", "assistants", "people"}

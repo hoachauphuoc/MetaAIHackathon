@@ -64,6 +64,10 @@ def _result(model, demo_mode, reason=None, text="", tool_calls=(), tokens_in=0, 
     }
 
 
+def demo_result(model, reason):
+    return _result(model, True, reason)
+
+
 def complete(model, messages, reasoning_effort="low", **kwargs):
     """One model call with one retry. Extra kwargs (tools, response_format...) pass through."""
     check_model(model)
@@ -91,3 +95,31 @@ def complete(model, messages, reasoning_effort="low", **kwargs):
 
     log.warning("model=%s failed: %s", model, error)
     return _result(model, True, error)
+
+
+def stream(model, messages, reasoning_effort="minimal", **kwargs):
+    """Yield {"delta": text} chunks, then one {"done": result}. No retry once text has started:
+    a half answer must not be followed by a second one."""
+    check_model(model)
+    if os.environ.get("FAKE_AI"):
+        yield {"done": _result(model, True, "FAKE_AI")}
+        return
+    start, started, tokens_in, tokens_out = time.time(), False, 0, 0
+    try:
+        for chunk in _client().chat.completions.create(
+                model=model, messages=messages, reasoning_effort=reasoning_effort, stream=True,
+                stream_options={"include_usage": True}, **kwargs):
+            if chunk.usage:
+                tokens_in, tokens_out = chunk.usage.prompt_tokens, chunk.usage.completion_tokens
+            if chunk.choices and chunk.choices[0].delta.content:
+                started = True
+                yield {"delta": chunk.choices[0].delta.content}
+    except Exception as e:
+        log.warning("model=%s stream failed: %s", model, type(e).__name__)
+        yield {"done": _result(model, True, type(e).__name__)}
+        return
+    out = _result(model, False, tokens_in=tokens_in, tokens_out=tokens_out,
+                  latency_ms=int((time.time() - start) * 1000))
+    log.info("model=%s in=%d out=%d cost=%.5f ms=%d streamed=%s", model, tokens_in, tokens_out,
+             out["cost_usd"], out["latency_ms"], started)
+    yield {"done": out}
