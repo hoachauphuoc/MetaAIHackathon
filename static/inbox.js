@@ -24,8 +24,9 @@ export function findingsBlock(findings) {
 // One set of fields for sending and for fixing a returned package, drawn from the company's form.
 const DEMO_DEFAULTS = { customer: 'Acme Foods', pallets: 10, price: 1800, cost: 1500 };
 
-function inputFor(prefix, field, value) {
+export function inputFor(prefix, field, value) {
   const id = `${prefix}-${field.key}`;
+  if (field.type === 'longtext') return el('textarea', { id, maxlength: '2000' }, value ?? '');
   if (field.type === 'choice') {
     return el('select', { id }, field.options.map((o) => el('option', { value: o, selected: o === value }, o)));
   }
@@ -55,10 +56,14 @@ function valueFields(prefix, schema, v = {}, due = '', demo = false) {
   return { rows, read, fill };
 }
 
-// "Label: value" for every field except the one used as the title.
+// "Label: value" for every short field except the one used as the title; long text gets its own block.
 function detailLine(schema, v) {
-  return schema.fields.filter((f) => f.key !== schema.title_field)
+  return schema.fields.filter((f) => f.key !== schema.title_field && f.type !== 'longtext')
     .map((f) => `${f.label}: ${v[f.key] ?? '-'}`).join(' · ');
+}
+function longBlocks(schema, v) {
+  return schema.fields.filter((f) => f.type === 'longtext' && v[f.key])
+    .map((f) => el('div', {}, el('strong', {}, f.label), el('p', { class: 'long' }, v[f.key])));
 }
 
 export function inboxPanel(info, token) {
@@ -113,8 +118,10 @@ export function inboxPanel(info, token) {
             `Rate card for ${s.rate_card.pallets} pallets: price USD ${s.rate_card.price}, cost USD ${s.rate_card.cost}.`) : null,
           el('p', {}, 'The rules would say: ', statusBadge(s.predicted_status)));
       } }, 'Suggest a fix');
+      // A handover is the sender's own words; there is no rule-based fix to suggest.
+      const canSuggest = p.schema.id !== 'handover';
       fix = el('details', { open: true }, el('summary', {}, 'Fix and resend'),
-        el('div', { class: 'row' }, suggest), suggestion, ...fields.rows, maskBox,
+        canSuggest ? el('div', { class: 'row' }, suggest) : null, suggestion, ...fields.rows, maskBox,
         el('div', { class: 'row' }, el('button', { class: 'primary', onclick: async () => {
           const got = await fields.read(maskBox);
           if (got) await call(`/api/handoffs/${p.id}/resend`, got);
@@ -123,6 +130,7 @@ export function inboxPanel(info, token) {
 
     return el('div', { class: 'card' },
       el('p', {}, el('strong', {}, v[p.schema.title_field] || p.schema.title), ` ${detailLine(p.schema, v)}`),
+      ...longBlocks(p.schema, v),
       el('p', {}, statusBadge(p.check_status), ' ', badge(stateLabel(p), 'info'), ' ',
         p.overdue ? badge('Overdue', 'bad') : null),
       el('p', { class: 'muted' },

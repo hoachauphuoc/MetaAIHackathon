@@ -46,7 +46,7 @@ def clean_values(raw, schema=None):
             n = number(key)
             values[key] = int(n) if n is not None else None
         else:
-            values[key] = text(key, 10 if kind == "date" else 120)
+            values[key] = text(key, {"date": 10, "longtext": 2000}.get(kind, 120))
     values["notes"] = text("notes", 1000)
     return values
 
@@ -112,13 +112,36 @@ def send(sandbox_id, sender, to_role, raw_values, due, db, kits, roles, params, 
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
     status, findings, summary = run_check(values, params, today, ask, blocked, schema)
-    package = {
+    package = new_package(sender, approval_chain(to_role, values, params, roles, schema), values,
+                          status, findings, summary, due, schema, today)
+    db.save_package(sandbox_id, package)
+    return package
+
+
+def new_package(sender, chain, values, status, findings, summary, due, schema, today):
+    return {
         "id": secrets.token_urlsafe(8), "from_role": sender["role_id"], "from_person": sender["token"],
-        "chain": approval_chain(to_role, values, params, roles, schema), "stage": 0, "state": "sent",
-        "claimed_by": None, "values": values, "check_status": status,
-        "findings": findings, "summary": summary, "due": due or None, "return_reason": None,
-        "schema": schema, "sent_on": today.isoformat(),
+        "chain": chain, "stage": 0, "state": "sent", "claimed_by": None, "values": values,
+        "check_status": status, "findings": findings, "summary": summary, "due": due or None,
+        "return_reason": None, "schema": schema, "sent_on": today.isoformat(),
     }
+
+
+def send_handover(sandbox_id, sender, raw_values, db, roles, params, today):
+    """A leaver's handover goes to their own team, or to the top role when nobody shares the role.
+    It is the person's own words, so there is no model check; maker-checker still applies."""
+    schema = rules.HANDOVER_SCHEMA
+    role = next(r for r in roles if r["id"] == sender["role_id"])
+    to_role = sender["role_id"] if role["headcount"] > 1 else top_role(roles)
+    if to_role == sender["role_id"] and role["headcount"] <= 1:
+        raise Refused(409, "Nobody else holds your role or a role above it. Give the handover to the owner directly.")
+    values = clean_values(raw_values, schema)
+    values.pop("notes")
+    missing = [k for k in required_keys(schema) if values.get(k) in (None, "")]
+    if missing:
+        raise Refused(400, "Missing: " + ", ".join(missing) + ".")
+    status, findings = rules.check_package(values, params, today, schema)
+    package = new_package(sender, [to_role], values, status, findings, "", None, schema, today)
     db.save_package(sandbox_id, package)
     return package
 
@@ -221,7 +244,12 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
         raise Refused(400, "Missing: " + ", ".join(missing) + ".")
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
-    status, findings, summary = run_check(values, params, today, ask, blocked, schema)
+    if schema["id"] == "handover":  # the person's own words, checked by the rules only, as at send
+        values.pop("notes")
+        status, findings = rules.check_package(values, params, today, schema)
+        summary = ""
+    else:
+        status, findings, summary = run_check(values, params, today, ask, blocked, schema)
 
     def shown(v):
         return f"{v:g}" if isinstance(v, float) else v

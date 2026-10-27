@@ -12,6 +12,7 @@ import chart
 import chat
 import handoff_schema
 import handoffs
+import handover
 import muse
 import onboarding
 import rules
@@ -240,7 +241,7 @@ def create_app(db_path=None):
         return jsonify(company=company.get("company"), role=role, assistant=kit,
                        display_name=person["display_name"],
                        role_titles={r["id"]: r["title"] for r in company.get("roles", [])},
-                       handoff_schema=effective_schema(company))
+                       handoff_schema=effective_schema(company), handover_form=rules.HANDOVER_SCHEMA)
 
     @app.post("/api/chat")
     def chat_route():
@@ -378,6 +379,23 @@ def create_app(db_path=None):
             body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
             company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked,
             effective_schema(company))
+        return jsonify(view_of(package, me, company)), 201
+
+    @app.post("/api/handover/draft")
+    def handover_draft():
+        """A private draft for the person leaving; it goes back to their browser only."""
+        body, me, company = me_and_context()
+        titles = {r["id"]: r["title"] for r in company["roles"]}
+        kit = db.get_assistants(me["sandbox_id"]).get(me["role_id"]) or {}
+        return jsonify(handover.draft(me["token"], titles.get(me["role_id"], me["role_id"]),
+                                      db.list_packages(me["sandbox_id"]), kit, titles, body.get("notes"),
+                                      ask, lambda: db.spend_model_call(me["sandbox_id"])))
+
+    @app.post("/api/handover")
+    def send_handover():
+        body, me, company = me_and_context()
+        package = handoffs.send_handover(me["sandbox_id"], me, body.get("values") or {}, db,
+                                         company["roles"], tools.PARAMS, datetime.date.today())
         return jsonify(view_of(package, me, company)), 201
 
     @app.post("/api/handoffs/from-photo")

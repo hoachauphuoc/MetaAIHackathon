@@ -10,7 +10,8 @@ STORED = {
     "assistants": "One brief per role: goal, allowed skills, everyday jobs, handoffs and limits.",
     "people": "An invite token, a display name and a role. No email, no activity, no metrics.",
     "packages": "Handed-off business documents (a quote package: customer, route, price, dates), "
-                "who sent and who holds it, its check result. Company records, kept for the sandbox.",
+                "who sent and who holds it, its check result. Company records, kept for the sandbox. "
+                "A handover a leaving person chose to send is one of them: their own words about open work.",
     "decisions": "Accept or return decisions on a document: the role that acted, the reason, the date.",
     "daily_cost": "Dollars spent per day across the service. No who, no what.",
 }
@@ -20,6 +21,12 @@ NEVER_STORED = [
     "Workflow orders, tool results and approvals: they stay in your browser.",
     "A suggested fix for a returned package: shown to the sender once and never saved. Only the "
     "version the sender chooses to resend is stored.",
+    "Photos of paper documents: sent to the model once to fill the form, then dropped.",
+    "The owner's morning brief: written on request from the open documents, never saved. It counts "
+    "documents by role, never by person.",
+    "A new person's first-three-days plan and their ticks: they stay in that person's browser; "
+    "nobody, including the owner, sees how far they got.",
+    "A handover draft: shown only to the person leaving until they choose to send it.",
     "Anything about how a person works: habits, speed, experience or per-person statistics.",
     "Employee data is never used to train a model: only Standard mode is used, and any model "
     "whose id ends in -contributor is refused.",
@@ -30,7 +37,10 @@ LIMITS = [
     "Sandboxes are deleted after 24 hours and may be lost earlier if the service restarts.",
     "Emails, phone numbers, card numbers and ID numbers are masked in your browser before the "
     "notes of a handoff or a chat message are sent to a model. Names cannot be detected, and the "
-    "other form fields are not masked, so keep personal names out of them.",
+    "other form fields are not masked, so keep personal names out of them. A handover is masked "
+    "field by field. Photos are not masked: cover names and phone numbers before taking one.",
+    "Reading a photo can go wrong. The values only fill the form; the person checks every field "
+    "and the rules check them again.",
     "Models make mistakes. Every handoff needs a person to press Approve, and a blocked "
     "handoff can never be approved.",
     "Numbers (prices, margins) are computed by code from the company's rate card, not by a model.",
@@ -39,7 +49,8 @@ LIMITS = [
 MODEL_USE = {
     muse.WONDER: "Designs the org chart from the survey.",
     muse.SPARK: "Writes assistant briefs, answers chat, calls tools, checks and summarises handoffs, "
-                "and suggests a fix for a returned package.",
+                "suggests a fix for a returned package, reads photos of paper documents, writes the "
+                "owner's morning brief, plans a new person's first days and drafts a leaver's handover.",
 }
 
 

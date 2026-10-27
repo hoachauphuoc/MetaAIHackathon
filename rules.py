@@ -100,7 +100,9 @@ def validate_plan(plan, roles, edges):
 # validates and applies it. Thresholds come from the owner or params, never from the model.
 SCHEMAS = json.loads((DATA / "handoff_schemas.json").read_text(encoding="utf-8"))
 DEFAULT_SCHEMA = SCHEMAS["logistics"]
-FIELD_TYPES = ("text", "integer", "number", "money", "date", "choice")
+# Sent by a person leaving a role to their own team; not a company form, so canonical() cannot claim it.
+HANDOVER_SCHEMA = json.loads((DATA / "handover_form.json").read_text(encoding="utf-8"))
+FIELD_TYPES = ("text", "longtext", "integer", "number", "money", "date", "choice")
 RULE_KINDS = ("not_below", "min_margin", "escalate_over", "date_not_past")
 NUMERIC = ("integer", "number", "money")
 KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]{1,24}$")

@@ -1,6 +1,6 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
-import { findingsBlock, inboxPanel } from '/static/inbox.js';
+import { findingsBlock, inboxPanel, inputFor } from '/static/inbox.js';
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
@@ -160,6 +160,45 @@ function firstDaysPanel() {
     el('div', { class: 'row' }, make), out);
 }
 
+// --- leaving ---------------------------------------------------------------------------
+// The draft lives on this page only. Sending makes it a company document for the person's own team.
+function handoverPanel(form) {
+  const notes = el('textarea', { id: 'handover-notes', maxlength: '2000',
+    placeholder: 'What is half done, where things are, what you wish you had known' });
+  const inputs = Object.fromEntries(form.fields.map((f) => [f.key, inputFor('handover', f, '')]));
+  const maskBox = el('div');
+  const status = el('div', { role: 'status' });
+  const draft = el('button', { onclick: async () => {
+    const typed = await confirmMask(notes.value, maskBox);
+    if (typed === null) return;
+    draft.disabled = true;
+    clear(status, el('p', { class: 'progress' }, 'Drafting from your open documents and your notes...'));
+    const res = await api('/api/handover/draft', { method: 'POST', body: { token, notes: typed } });
+    draft.disabled = false;
+    if (!res.ok) { clear(status, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+    for (const f of form.fields) inputs[f.key].value = res.data.values[f.key] ?? '';
+    clear(status, res.data.demo_mode ? demoNote(res.data.demo_reason) : badge('Drafted by Muse Spark', 'ok'),
+      el('p', { class: 'muted' }, `From ${res.data.documents} open document${res.data.documents === 1 ? '' : 's'} and your notes. Edit anything before sending.`));
+  } }, 'Draft my handover');
+  const send = el('button', { class: 'primary', onclick: async () => {
+    const values = {};
+    for (const f of form.fields) {
+      const masked = await confirmMask(inputs[f.key].value, maskBox);
+      if (masked === null) return;
+      values[f.key] = masked;
+    }
+    const res = await api('/api/handover', { method: 'POST', body: { token, values } });
+    clear(status, res.ok ? el('p', {}, badge('Sent', 'ok'), ` To the ${res.data.to_title} team. Someone there takes it; you cannot accept it yourself.`)
+      : el('p', { class: 'errors', role: 'alert' }, res.data.message));
+  } }, 'Send handover');
+  return el('details', { class: 'section' }, el('summary', {}, el('h2', {}, "I'm leaving: prepare my handover")),
+    el('p', { class: 'muted' }, 'Only you see the draft. Nothing is sent until you press Send handover. ' +
+      'It goes to your own team, or to the top role if nobody shares your role. Nothing about you is scored.'),
+    el('label', { for: notes.id }, 'Your notes (optional)'), notes, el('div', { class: 'row' }, draft),
+    form.fields.map((f) => [el('label', { for: inputs[f.key].id }, f.required ? f.label : `${f.label} (optional)`), inputs[f.key]]).flat(),
+    maskBox, el('div', { class: 'row' }, send), status);
+}
+
 // --- workflow --------------------------------------------------------------------------
 function workflowPanel(routes) {
   const box = el('section', {}, el('h2', {}, 'New order: Sales, Operations, Finance'));
@@ -264,7 +303,8 @@ function describe(result) {
       firstDaysPanel(), inboxPanel(info, token), chatPanel(info),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
       ...(info.handoff_schema.id === 'logistics'
-        ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []));
+        ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []),
+      handoverPanel(info.handover_form));
   } catch (e) {
     clear(app, el('section', {}, el('p', { class: 'errors', role: 'alert' },
       'This link has ended or was never valid. Ask the owner for a new one.')));

@@ -1,0 +1,12 @@
+{
+  "id": "handover",
+  "title": "Handover",
+  "title_field": "subject",
+  "fields": [
+    {"key": "subject", "label": "Subject", "noun": "subject", "type": "text", "required": true, "options": []},
+    {"key": "open_work", "label": "Open work", "noun": "open work", "type": "longtext", "required": true, "options": []},
+    {"key": "tips", "label": "Good to know", "noun": "tips", "type": "longtext", "required": false, "options": []},
+    {"key": "who_to_ask", "label": "Who to ask, by role", "noun": "who to ask", "type": "longtext", "required": false, "options": []}
+  ],
+  "rules": []
+}
