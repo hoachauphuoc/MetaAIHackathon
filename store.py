@@ -5,7 +5,9 @@ import datetime
 import json
 import os
 import secrets
+import functools
 import sqlite3
+import threading
 import time
 
 SANDBOX_TTL = 24 * 3600
@@ -34,12 +36,23 @@ class SandboxExpired(Exception):
     """Unknown or older than the TTL; the UI offers "Start again"."""
 
 
+def locked(method):
+    """One sqlite connection is shared by all request threads; calls must not interleave."""
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self.lock:
+            return method(self, *args, **kwargs)
+    return wrapper
+
+
 class Store:
     def __init__(self, path=":memory:"):
+        self.lock = threading.RLock()
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.execute("PRAGMA foreign_keys = ON")
         self.db.executescript(SCHEMA)
 
+    @locked
     def create_sandbox(self, now=None):
         self._purge_expired(now)
         sandbox_id = secrets.token_urlsafe(16)
@@ -48,6 +61,7 @@ class Store:
                             (sandbox_id, now or time.time()))
         return sandbox_id
 
+    @locked
     def require_sandbox(self, sandbox_id, now=None):
         # Expired rows are deleted here, on a request: Cloud Run throttles background threads.
         self._purge_expired(now)
@@ -57,6 +71,7 @@ class Store:
             raise SandboxExpired(sandbox_id)
         return {"id": sandbox_id, "model_calls": row[0]}
 
+    @locked
     def spend_model_call(self, sandbox_id):
         """None if the call may go ahead (and is counted), else the reason to answer in demo mode."""
         with self.db:
@@ -71,11 +86,13 @@ class Store:
                 (sandbox_id, MODEL_CALL_CAP))
         return None if cur.rowcount == 1 else "Demo limit reached"
 
+    @locked
     def cost_today(self):
         row = self.db.execute("SELECT usd FROM daily_cost WHERE day = ?",
                               (datetime.date.today().isoformat(),)).fetchone()
         return row[0] if row else 0.0
 
+    @locked
     def add_cost(self, usd):
         """Money only, never who or what: this is the service-wide daily ceiling."""
         with self.db:
@@ -83,35 +100,41 @@ class Store:
                             "DO UPDATE SET usd = usd + excluded.usd",
                             (datetime.date.today().isoformat(), usd))
 
+    @locked
     def set_muse_off(self, sandbox_id, off):
         self.require_sandbox(sandbox_id)
         with self.db:
             self.db.execute("UPDATE sandboxes SET muse_off = ? WHERE id = ?", (int(off), sandbox_id))
 
+    @locked
     def save_company(self, sandbox_id, company):
         self.require_sandbox(sandbox_id)
         with self.db:
             self.db.execute("INSERT OR REPLACE INTO companies (sandbox_id, data) VALUES (?, ?)",
                             (sandbox_id, json.dumps(company)))
 
+    @locked
     def get_company(self, sandbox_id):
         self.require_sandbox(sandbox_id)
         row = self.db.execute("SELECT data FROM companies WHERE sandbox_id = ?",
                               (sandbox_id,)).fetchone()
         return json.loads(row[0]) if row else None
 
+    @locked
     def save_assistant(self, sandbox_id, role_id, kit):
         self.require_sandbox(sandbox_id)
         with self.db:
             self.db.execute("INSERT OR REPLACE INTO assistants VALUES (?, ?, ?)",
                             (sandbox_id, role_id, json.dumps(kit)))
 
+    @locked
     def get_assistants(self, sandbox_id):
         self.require_sandbox(sandbox_id)
         rows = self.db.execute("SELECT role_id, data FROM assistants WHERE sandbox_id = ?",
                                (sandbox_id,))
         return {role_id: json.loads(data) for role_id, data in rows}
 
+    @locked
     def add_person(self, sandbox_id, role_id, display_name, headcount):
         """Return the invite token, or None when every seat of the role is taken."""
         self.require_sandbox(sandbox_id)
@@ -126,6 +149,7 @@ class Store:
                             "VALUES (?, ?, ?, ?)", (token, sandbox_id, role_id, display_name))
         return token
 
+    @locked
     def person_by_token(self, token):
         """The token is the whole credential; an expired sandbox takes its people with it."""
         self._purge_expired()
@@ -135,6 +159,11 @@ class Store:
             raise SandboxExpired(token)
         return {"sandbox_id": row[0], "role_id": row[1], "display_name": row[2]}
 
+    @locked
+    def table_names(self):
+        return [r[0] for r in self.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
+
+    @locked
     def _purge_expired(self, now=None):
         cutoff = (now or time.time()) - SANDBOX_TTL
         with self.db:

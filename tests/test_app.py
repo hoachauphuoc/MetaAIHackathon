@@ -75,3 +75,12 @@ def test_one_sandbox_cannot_read_another_sandboxes_accepted_chart(client):
 
 def test_chart_needs_a_sandbox(client):
     assert client.post("/api/chart", json={"answers": {}}).status_code == 410
+
+
+def test_pages_are_served_with_a_strict_csp(client):
+    for path in ("/", "/join/anything", "/trust"):
+        r = client.get(path)
+        assert r.status_code == 200 and b"<main" in r.data
+        assert "script-src 'self'" in r.headers["Content-Security-Policy"]
+        assert r.headers["Referrer-Policy"] == "no-referrer"
+    assert client.get("/static/ui.js").status_code == 200

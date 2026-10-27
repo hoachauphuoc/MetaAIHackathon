@@ -1,0 +1,200 @@
+// Employee page: chat with the role's assistant, and run a team workflow with a person approving
+// every handoff. Chat history and workflow results live only in this browser (IndexedDB).
+import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
+
+const token = location.pathname.split('/').pop();
+const app = document.getElementById('app');
+const ROUTES = ['Hanoi-Haiphong', 'Hanoi-Danang', 'Haiphong-Hochiminh', 'Danang-Hochiminh'];
+
+// --- browser-only storage ----------------------------------------------------------------
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('role-assistants', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('chat');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function loadHistory() {
+  try {
+    const db = await openDb();
+    return await new Promise((resolve) => {
+      const get = db.transaction('chat').objectStore('chat').get(token);
+      get.onsuccess = () => resolve(get.result || []);
+      get.onerror = () => resolve([]);
+    });
+  } catch { return []; }
+}
+async function saveHistory(history) {
+  try {
+    const db = await openDb();
+    db.transaction('chat', 'readwrite').objectStore('chat').put(history, token);
+  } catch { /* storage can be blocked; the chat still works for this visit */ }
+}
+
+// --- chat ------------------------------------------------------------------------------
+async function streamChat(message, history, onDelta) {
+  const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, message, history }) });
+  if (res.status === 410) throw new Expired();
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', done = null;
+  for (;;) {
+    const { value, done: finished } = await reader.read();
+    if (finished) break;
+    buffer += decoder.decode(value, { stream: true });
+    let end;
+    while ((end = buffer.indexOf('\n\n')) >= 0) {
+      const block = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      const [eventLine, dataLine] = block.split('\n');
+      const data = JSON.parse(dataLine.slice(6));
+      if (eventLine === 'event: delta') onDelta(data.text);
+      if (eventLine === 'event: done') done = data;
+    }
+  }
+  return done;
+}
+
+function chatPanel(info) {
+  const log = el('div', { class: 'chat-log', role: 'log', 'aria-live': 'polite' });
+  const input = el('textarea', { id: 'msg', placeholder: 'Ask your assistant...' });
+  const notice = el('div');
+  let history = [];
+  const draw = (turn) => log.append(el('div', { class: `msg ${turn.role}` }, turn.content));
+  loadHistory().then((saved) => { history = saved; history.forEach(draw); });
+
+  const send = el('button', { class: 'primary', onclick: async () => {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    send.disabled = true;
+    const user = { role: 'user', content: text };
+    draw(user);
+    const reply = { role: 'assistant', content: '' };
+    const bubble = el('div', { class: 'msg assistant' });
+    log.append(bubble);
+    try {
+      const done = await streamChat(text, history, (chunk) => {
+        reply.content += chunk; bubble.textContent = reply.content; log.scrollTop = log.scrollHeight; });
+      clear(notice, done && done.demo_mode ? demoNote(done.demo_reason) : null);
+      history = [...history, user, reply];
+      saveHistory(history);
+    } catch (e) { bubble.textContent = e instanceof Expired ? 'This link has ended.' : 'Something went wrong.'; }
+    send.disabled = false;
+  } }, 'Send');
+
+  const jobs = el('div', { class: 'row' }, (info.assistant?.jobs || []).map((job) =>
+    el('button', { onclick: () => { input.value = job; input.focus(); } }, job)));
+  const clearBtn = el('button', { onclick: async () => { history = []; clear(log); saveHistory([]); } },
+    'Clear my chat on this device');
+  return el('section', {}, el('h2', {}, 'Chat'), el('p', { class: 'muted' },
+    'Your messages are not stored on the server. They stay in this browser.'), jobs, log, notice,
+    el('label', { for: 'msg' }, 'Message'), input, el('div', { class: 'row' }, send, clearBtn));
+}
+
+// --- workflow --------------------------------------------------------------------------
+function workflowPanel() {
+  const box = el('section', {}, el('h2', {}, 'New order: Sales, Operations, Finance'));
+  const f = {
+    customer: el('input', { id: 'customer', value: 'Acme Foods' }),
+    route: el('select', { id: 'route' }, ROUTES.map((r) => el('option', { value: r }, r))),
+    pallets: el('input', { id: 'pallets', type: 'number', min: '1', value: '12' }),
+    delivery_date: el('input', { id: 'date', type: 'date',
+      value: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10) }),
+    notes: el('textarea', { id: 'notes' }, ''),
+  };
+  const out = el('div');
+  const start = el('button', { class: 'primary', onclick: async () => {
+    const task = Object.fromEntries(Object.entries(f).map(([k, n]) => [k, n.value]));
+    const res = await api('/api/workflow/plan', { method: 'POST', body: { token, task } });
+    if (!res.ok) {
+      clear(out, el('div', { class: 'errors', role: 'alert' }, res.data.message || res.data.errors?.join(' ')));
+      return;
+    }
+    runner(res.data, out);
+  } }, 'Plan this order');
+  box.append(el('p', { class: 'muted' }, 'Each step runs one assistant. You approve every handoff; ' +
+    'a blocked step can never be approved.'),
+  el('label', { for: 'customer' }, 'Customer'), f.customer,
+  el('label', { for: 'route' }, 'Route'), f.route,
+  el('label', { for: 'pallets' }, 'Pallets'), f.pallets,
+  el('label', { for: 'date' }, 'Delivery date'), f.delivery_date,
+  el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
+  el('div', { class: 'row' }, start), out);
+  return box;
+}
+
+function runner({ plan, signature, roles }, out) {
+  const receipts = {};
+  const items = plan.steps.map((step) => ({ step, node: el('li', { class: 'step waiting' },
+    el('strong', {}, `${step.title} `), el('span', { class: 'muted' }, roles[step.role_id] || step.role_id,
+      step.private ? ' (Private mode)' : ''))}));
+  clear(out, el('ol', { class: 'steps' }, items.map((i) => i.node)));
+  runStep(0);
+
+  async function runStep(index) {
+    if (index >= items.length) return;
+    const { step, node } = items[index];
+    node.className = 'step current';
+    const progress = el('p', { class: 'progress', role: 'status' }, 'Working... (about 10 seconds)');
+    node.append(progress);
+    const base = { token, plan, signature, step_id: step.id };
+    const res = await api('/api/workflow/step', { method: 'POST', body: { ...base, receipts } });
+    progress.remove();
+    if (!res.ok) { node.append(el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+    const { result, ticket } = res.data;
+    const approve = el('button', { class: 'primary', disabled: result.status === 'blocked' }, 'Approve and hand over');
+    const stop = el('button', {}, 'Stop here');
+    approve.addEventListener('click', async () => {
+      approve.disabled = stop.disabled = true;
+      const ok = await api('/api/workflow/approve', { method: 'POST', body: { ...base, result, ticket } });
+      if (!ok.ok) { node.append(el('p', { class: 'errors' }, ok.data.message)); return; }
+      receipts[step.id] = { result, receipt: ok.data.receipt };
+      node.className = 'step';
+      runStep(index + 1);
+    });
+    stop.addEventListener('click', () => { approve.disabled = stop.disabled = true;
+      node.append(el('p', {}, badge('Stopped by you', 'warn'))); });
+    node.append(...describe(result), el('div', { class: 'row' }, approve, stop));
+  }
+}
+
+function describe(result) {
+  const t = result.tool_result;
+  const lines = [];
+  lines.push(el('p', {}, statusBadge(result.status), ' ',
+    result.private ? badge('Private mode', 'info') : null));
+  if (result.demo_mode) lines.push(demoNote(result.demo_reason));
+  if (t.price !== undefined && t.margin_pct !== undefined)
+    lines.push(el('p', {}, `Price USD ${t.price.toLocaleString()}, cost USD ${t.cost.toLocaleString()}, margin ${t.margin_pct}% (computed by code).`));
+  else if (t.ics) lines.push(el('p', {}, `Calendar event: ${t.title} on ${t.date}. `,
+    el('a', { href: URL.createObjectURL(new Blob([t.ics], { type: 'text/calendar' })), download: 'delivery.ics' }, 'Download .ics')));
+  if (result.summary) lines.push(el('p', {}, result.summary));
+  if (result.findings.length) lines.push(el('ul', { class: 'plain' },
+    result.findings.map((x) => el('li', {}, `${x.message} `, el('span', { class: 'muted' }, `(${x.source})`)))));
+  lines.push(el('details', {}, el('summary', {}, 'Agent activity'), el('ul', { class: 'plain' },
+    result.trace.map((x) => el('li', {}, `${x.tool}: ${x.model}, ${x.ms} ms${x.demo_mode ? ', demo' : ''}`)))));
+  return lines;
+}
+
+// --- page ------------------------------------------------------------------------------
+(async () => {
+  try {
+    const res = await api(`/api/invite/${encodeURIComponent(token)}`);
+    const info = res.data;
+    document.getElementById('title').textContent = `${info.role?.title || 'Your role'} at ${info.company || 'your company'}`;
+    if (!info.assistant) {
+      clear(app, el('section', {}, el('p', {}, 'Your assistant is not ready yet. Ask the owner to build the assistants first.')));
+      return;
+    }
+    clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
+      info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
+      el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
+      chatPanel(info), workflowPanel());
+  } catch (e) {
+    clear(app, el('section', {}, el('p', { class: 'errors', role: 'alert' },
+      'This link has ended or was never valid. Ask the owner for a new one.')));
+  }
+})();

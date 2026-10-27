@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, request, send_from_directory
 
 import assistants
 import chart
@@ -35,6 +35,30 @@ def create_app(db_path=None):
         sandbox_id = request.headers.get("X-Sandbox", "")
         db.require_sandbox(sandbox_id)
         return sandbox_id
+
+    @app.after_request
+    def security_headers(response):
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
+            "frame-ancestors 'none'")
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"  # the invite token sits in the URL
+        return response
+
+    def page(name):
+        return send_from_directory(Path(__file__).parent / "static", name)
+
+    @app.get("/")
+    def index_page():
+        return page("index.html")
+
+    @app.get("/join/<token>")
+    def join_page(token):
+        return page("join.html")
+
+    @app.get("/trust")
+    def trust_html():
+        return page("trust.html")
 
     @app.get("/health")
     def health():
@@ -213,8 +237,7 @@ def create_app(db_path=None):
 
     @app.get("/api/trust")
     def trust_page():
-        names = [r[0] for r in db.db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
-        return jsonify(trust.build(names))
+        return jsonify(trust.build(db.table_names()))
 
     @app.get("/api/company")
     def company():

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "app-real",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-File", "scripts/run.ps1", "-Real"],
+      "port": 5000
+    }
+  ]
+}

@@ -60,3 +60,17 @@ def test_daily_ceiling_stops_all_sandboxes(s, monkeypatch):
     s.add_cost(0.6)
     assert s.spend_model_call(a) == "Demo limit reached"
     assert s.spend_model_call(b) == "Demo limit reached"
+
+
+def test_parallel_requests_share_one_connection_safely(s):
+    import concurrent.futures
+    sandbox = s.create_sandbox()
+
+    def work(_):
+        s.spend_model_call(sandbox)
+        s.save_assistant(sandbox, "r", {"x": 1})
+        return s.get_assistants(sandbox)
+
+    with concurrent.futures.ThreadPoolExecutor(8) as pool:
+        results = list(pool.map(work, range(200)))
+    assert all(r == {"r": {"x": 1}} for r in results)
