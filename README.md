@@ -72,6 +72,15 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    only. The owner can remove a person: their link answers 410 with `Clear-Site-Data`, their seat
    frees up, and work they held returns to the queue.
 
+8. **Handoff form:** the document people pass between teams is data, not code. After the chart,
+   the owner presses **Design the form for my company**; Spark proposes 4 to 8 fields and rules
+   from a fixed vocabulary (not below, margin floor, approval limit, date not in the past),
+   `rules.validate_handoff_schema` checks it (no field about people, known types, rules that point
+   at real fields), and the owner edits the thresholds and accepts. Thresholds are the owner's or
+   the company default, never the model's. If Spark fails, a labelled Template for the industry is
+   shown. Every package keeps the form it was sent with. The model never writes interface code:
+   the page draws inputs from the form definition and the CSP stays `script-src 'self'`.
+
 ## Meta models used
 
 | Model | Used for | Measured |
@@ -133,6 +142,10 @@ OWASP Top 10 for LLM applications, as applied here:
   in the form I tried, and voice was not tried.
 - Measured sets are synthetic and small; the model layer of the gate was not tested for
   contradictions the rules cannot see.
+- The handoff form is generic; the fixed Sales, Operations, Finance order demo and its rate card
+  exist only for the logistics form, so other trades see the inbox and chat only. Only the notes
+  field is masked for personal data in the browser; the other text fields are not, so do not type
+  personal names into them (also stated on `/trust`).
 - Not built: Shadow/Assist/Primary modes, handoffs to a named person, manager assignment, parallel
   approval, CSV import, export, document intake, voice, Day-1 guide, org advisor.
 - PII masking is pattern-based and cannot detect names (shown to the user and on `/trust`).
@@ -146,7 +159,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py [set3 set4]      # the measured sets (all, or the named ones)
+python scripts/measure.py [set1 ... set5]  # the measured sets (all, or the named ones)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

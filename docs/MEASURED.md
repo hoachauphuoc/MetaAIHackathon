@@ -75,7 +75,24 @@ patterns, so this shows the prompt carries the company's rules, not general qual
 | Plain role prompt (goal, jobs, limits) | 2 of 10 |
 | With playbook and company rules | 9 of 10 |
 
-## Set 5: personal-data masking in the browser
+## Set 5: Spark designs the handoff form
+
+`python scripts/measure.py set5`, 2026-10-27, Spark 1.3. Ten surveys in different trades (dental
+clinic, software studio, bookkeeping, cleaning, three retail, two logistics, design studio). The
+model proposes fields and rules; `rules.validate_handoff_schema` decides; thresholds are never the
+model's. Synthetic surveys, small sample. A sample result for the dental clinic: "Treatment
+Handover" with seven fields, a margin rule on patient charge versus treatment cost and a date rule.
+
+| Result | Value |
+|---|---|
+| Forms that passed the validator on the first try | 10 of 10 |
+| Fell back to a template | 0 of 10 |
+| Forms with a field about people (forbidden words) | 0 of 10 |
+| Forms with a money rule (not below, margin) | 9 of 10 |
+| Median fields per form | 7 |
+| Median latency, total cost | 10.0 s, USD 0.0748 |
+
+## Set 6: personal-data masking in the browser
 
 `node --test tests/js` on `tests/js/pii_cases.json`: 40 sentences written by the project author,
 so they test the patterns, not an independent sample.

@@ -6,7 +6,8 @@ prompt-injection note, 10 clean. Counts are raw, the data is synthetic and the s
 Set 3: the fix assistant on 10 returned packages (rules re-check what it proposes).
 Set 4: role playbook + company rules in the chat prompt versus the plain role prompt, 10 questions
 with facts that code checks by string match (no model judge).
-Usage: python scripts/measure.py [set1 set2 set3 set4]   (no argument runs all; key via META_API_KEY
+Set 5: Spark designs a handoff form for 10 companies in different trades; the rules validate it.
+Usage: python scripts/measure.py [set1 ... set5]   (no argument runs all; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures
@@ -21,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import chart  # noqa: E402
 import chat  # noqa: E402
+import handoff_schema  # noqa: E402
 import handoffs  # noqa: E402
 import muse  # noqa: E402
 import rules  # noqa: E402
@@ -208,8 +210,39 @@ def set4():
             "playbook_prompt_passed": sum(r[1] for r in rows)}
 
 
+SURVEYS = [
+    ("services", "A dental clinic with two sites"), ("services", "A software studio building mobile apps"),
+    ("services", "A bookkeeping and payroll agency"), ("services", "A cleaning company for offices"),
+    ("retail", "A chain of three hardware shops"), ("retail", "An online tea shop"),
+    ("retail", "A furniture showroom"), ("logistics", "Cold-chain delivery"),
+    ("logistics", "Customs brokerage and trucking"), ("services", "A two-team design studio")]
+
+
+def set5():
+    def one(survey):
+        started = time.time()
+        out = handoff_schema.generate(
+            {"company_name": "Test Co", "industry": survey[0], "main_work": survey[1],
+             "departments": "Sales, Operations, Finance"},
+            [{"title": "Sales"}, {"title": "Operations"}, {"title": "Finance"}], lambda: None)
+        return out, time.time() - started
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        rows = list(pool.map(one, SURVEYS))
+    own = [r for r, _ in rows if r["source"] == "muse"]
+    return {"companies": len(rows), "form_passed_validator_first_try": len(own),
+            "fell_back_to_template": len(rows) - len(own),
+            "forms_with_a_field_about_people": sum(
+                any(w in json.dumps(r["schema"]).lower() for w in rules.FORBIDDEN_FIELD_WORDS) for r in own),
+            "forms_with_a_money_rule": sum(any(x["kind"] in ("not_below", "min_margin") for x in r["schema"]["rules"])
+                                           for r in own),
+            "median_fields": sorted(len(r["schema"]["fields"]) for r in own)[len(own) // 2] if own else 0,
+            "median_latency_s": round(sorted(t for _, t in rows)[len(rows) // 2], 1),
+            "cost_usd": round(sum(r.get("cost_usd", 0) for r in own), 4)}
+
+
 SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
-        "set3": ("set3_fix_assistant", set3), "set4": ("set4_playbook", set4)}
+        "set3": ("set3_fix_assistant", set3), "set4": ("set4_playbook", set4),
+        "set5": ("set5_handoff_form", set5)}
 
 if __name__ == "__main__":
     out = {"date": datetime.date.today().isoformat(), "models": [muse.WONDER, muse.SPARK]}

@@ -28,8 +28,9 @@ NEVER_STORED = [
 LIMITS = [
     "Demo only: an invite link is the whole credential, there are no passwords.",
     "Sandboxes are deleted after 24 hours and may be lost earlier if the service restarts.",
-    "Emails, phone numbers, card numbers and ID numbers are masked in your browser before text "
-    "is sent to a model. Names cannot be detected, so remove them yourself.",
+    "Emails, phone numbers, card numbers and ID numbers are masked in your browser before the "
+    "notes of a handoff or a chat message are sent to a model. Names cannot be detected, and the "
+    "other form fields are not masked, so keep personal names out of them.",
     "Models make mistakes. Every handoff needs a person to press Approve, and a blocked "
     "handoff can never be approved.",
     "Numbers (prices, margins) are computed by code from the company's rate card, not by a model.",
