@@ -294,3 +294,26 @@ def test_empty_optional_notes_are_not_reported_by_the_model(monkeypatch):
         "model": "m", "latency_ms": 1, "demo_mode": False, "text": json.dumps(reply)})
     verdict, _ = workflow.soft_check({"id": "s", "title": "t"}, {}, "clear", muse.complete, lambda: None, [])
     assert verdict["findings"] == ["Delivery date looks odd"]
+
+
+def test_summary_is_stored_from_the_model_and_empty_in_demo_mode(client, team, monkeypatch):
+    import json
+    pid = send(client, team["sales"]).json["id"]
+    assert inbox(client, team["ops"])["packages"][0]["summary"] == ""  # FAKE_AI: nothing invented
+    reply = {"status": "clear", "findings": [], "summary": "Ten pallets for Acme at a healthy margin."}
+    monkeypatch.setattr(muse, "complete", lambda *a, **k: {
+        "model": "m", "latency_ms": 1, "demo_mode": False, "text": json.dumps(reply)})
+    pid2 = send(client, team["sales"]).json["id"]
+    got = {p["id"]: p for p in inbox(client, team["ops"])["packages"]}
+    assert got[pid2]["summary"] == "Ten pallets for Acme at a healthy margin." and got[pid]["summary"] == ""
+
+
+def test_inbox_order_is_waiting_first_then_overdue_then_worst_status(client, team):
+    clear_id = send(client, team["sales"]).json["id"]
+    blocked_id = send(client, team["sales"], values={"price": 1000, "cost": 1500}).json["id"]
+    ids = [p["id"] for p in inbox(client, team["ops"])["packages"]]
+    assert ids == [blocked_id, clear_id]
+    claim(client, team["ops"], clear_id)
+    decide(client, team["ops"], clear_id, "accept")
+    ids = [p["id"] for p in inbox(client, team["ops"])["packages"]]
+    assert ids == [blocked_id, clear_id]  # accepted work sinks below what is still open

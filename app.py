@@ -301,7 +301,7 @@ def create_app(db_path=None):
         """Private pre-check: nothing is stored."""
         body, me, company = me_and_context()
         today = datetime.date.today()
-        status, findings = handoffs.run_check(
+        status, findings, _ = handoffs.run_check(
             handoffs.clean_values(body.get("values") or {}), tools.PARAMS, today,
             ask, lambda: db.spend_model_call(me["sandbox_id"]))
         problem = handoffs.due_problem(body.get("due"), today)
@@ -318,6 +318,7 @@ def create_app(db_path=None):
         # A returned package is the sender's to fix; the receiving team has nothing to do with it.
         mine = [p for p in packages if p["from_person"] == me["token"]
                 or (p["state"] != "returned" and handoffs.current_role(p) == me["role_id"])]
+        mine.sort(key=lambda p: handoffs.sort_key(p, me, today))
         return jsonify(today=handoffs.today_summary(packages, me, today),
                        packages=[view_of(p, me, company) for p in mine])
 

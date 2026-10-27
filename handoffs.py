@@ -56,7 +56,8 @@ def approval_chain(to_role, values, params, roles):
 
 
 def run_check(values, params, today, ask, blocked):
-    """Two layers: rules set the floor, the model may only raise it. Returns (status, findings)."""
+    """Two layers: rules set the floor, the model may only raise it. Returns (status, findings,
+    summary); the summary is empty when the model did not answer, never invented."""
     floor, findings = rules.check_package(values, params, today)
     trace = []
     verdict, why = workflow.soft_check({"id": "handoff", "title": "Handoff check"}, values, floor,
@@ -64,11 +65,11 @@ def run_check(values, params, today, ask, blocked):
     if verdict is None:
         findings.append({"status": "needs_human_check", "source": "model", "message":
                          "The assistant's check did not finish. A person must check this package."})
-        return rules.combine_status(floor, "needs_human_check"), findings
+        return rules.combine_status(floor, "needs_human_check"), findings, ""
     # The model is shown the rules result for context; a finding that only repeats it is noise.
     findings += [{"status": verdict["status"], "source": "model", "message": m}
                  for m in verdict["findings"] if "rule check" not in m.lower()]
-    return rules.combine_status(floor, verdict["status"]), findings
+    return rules.combine_status(floor, verdict["status"]), findings, verdict["summary"]
 
 
 def due_problem(due, today):
@@ -92,12 +93,12 @@ def send(sandbox_id, sender, to_role, raw_values, due, db, kits, roles, params, 
         raise Refused(400, "Missing: " + ", ".join(missing) + ".")
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
-    status, findings = run_check(values, params, today, ask, blocked)
+    status, findings, summary = run_check(values, params, today, ask, blocked)
     package = {
         "id": secrets.token_urlsafe(8), "from_role": sender["role_id"], "from_person": sender["token"],
         "chain": approval_chain(to_role, values, params, roles), "stage": 0, "state": "sent",
         "claimed_by": None, "values": values, "check_status": status,
-        "findings": findings, "due": due or None, "return_reason": None,
+        "findings": findings, "summary": summary, "due": due or None, "return_reason": None,
     }
     db.save_package(sandbox_id, package)
     return package
@@ -129,6 +130,7 @@ def view(package, me, today, roles_by_id):
         "held_by_teammate": holder(package) is not None and not mine and open_to_my_role,
         "stage": package["stage"], "state": package["state"], "values": package["values"],
         "check_status": package["check_status"], "findings": package["findings"],
+        "summary": package.get("summary", ""),
         "due": package["due"], "overdue": overdue(package, today),
         "return_reason": package["return_reason"], "history": package.get("history", []),
         "i_sent_it": package["from_person"] == me["token"], "i_hold_it": mine,
@@ -194,7 +196,8 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
         raise Refused(400, "Missing: " + ", ".join(missing) + ".")
     if due_problem(due, today):
         raise Refused(400, due_problem(due, today))
-    status, findings = run_check(values, params, today, ask, blocked)
+    status, findings, summary = run_check(values, params, today, ask, blocked)
+
     def shown(v):
         return f"{v:g}" if isinstance(v, float) else v
     changes = [f"{k}: {shown(package['values'].get(k))} -> {shown(values[k])}" for k in FIELDS
@@ -202,9 +205,17 @@ def resend(package, me, raw_values, due, params, today, ask, blocked, roles):
     # The next reviewer must see why it came back and what was fixed; this is about the document only.
     package["history"] = package.get("history", []) + [
         {"reason": package["return_reason"], "changes": changes}]
-    package.update(values=values, check_status=status, findings=findings, state="sent",
-                   stage=0, claimed_by=None, return_reason=None, due=due or None,
+    package.update(values=values, check_status=status, findings=findings, summary=summary,
+                   state="sent", stage=0, claimed_by=None, return_reason=None, due=due or None,
                    chain=approval_chain(package["chain"][0], values, params, roles))
+
+
+def sort_key(package, me, today):
+    """Queue order, rules only: what is waiting for me, then overdue, then the worst status."""
+    waiting_for_me = package["state"] == "sent" and current_role(package) == me["role_id"]
+    group = (0 if waiting_for_me else 1 if package["state"] == "returned"
+             else 2 if package["state"] == "sent" else 3)
+    return (group, not overdue(package, today), -rules.RANK[package["check_status"]])
 
 
 def today_summary(packages, me, today):
