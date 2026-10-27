@@ -165,7 +165,7 @@ async function showAssistants() {
     clear(cards[role.id], el('h3', {}, role.title),
       kit.demo_mode ? demoNote(kit.demo_reason) : badge('Written by Muse Spark', 'ok'),
       el('p', {}, kit.goal),
-      el('h3', {}, 'Skills'), el('ul', { class: 'plain' }, kit.skills.map((s) => el('li', {}, s))),
+      el('h3', {}, 'Skills'), el('ul', { class: 'plain' }, kit.skills.map((s) => el('li', {}, s.replaceAll('_', ' ')))),
       kit.removed_skills.length ? el('p', { class: 'errors' }, 'Removed by the rules: ', kit.removed_skills.join(', ')) : null,
       el('h3', {}, 'Hands work to'), el('ul', { class: 'plain' }, kit.handoffs.length
         ? kit.handoffs.map((h) => el('li', {}, `${roles.find((r) => r.id === h.to_role)?.title || h.to_role}: ${h.what}`)) : el('li', {}, 'Nobody')),
