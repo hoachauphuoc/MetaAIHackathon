@@ -48,7 +48,10 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    roles that exist.
 4. **Invite links:** one per person, tied to a role. A role with no free seat refuses.
 5. **Chat:** streamed from Spark; the browser keeps the history (IndexedDB) and sends it with each
-   message. The server stores nothing. Before anything is sent, emails, phone numbers, card
+   message. The server stores nothing. The assistant's prompt carries a hand-written playbook for
+   the role (`data/playbooks.json`) and the company's real rules from `data/params.json` (margin
+   floor, approval limit, rate card; cost only for roles that may see it). Measured: 9 of 10
+   rule-based questions answered correctly against 2 of 10 with the plain prompt. Before anything is sent, emails, phone numbers, card
    numbers, ID numbers and IBANs are masked in the browser, with a preview. **Compare with generic
    AI** asks the same question of the role assistant and of a plain assistant, side by side.
 6. **Team workflow (Sales, Operations, Finance):** each step lets the model choose a tool's
@@ -62,7 +65,9 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    queue, one person takes it, then accepts or returns it with a reason; a blocked package cannot
    be accepted; a returned package goes back to the sender only, who edits it and sends it again,
    and the next reviewer sees why it came back and what changed; the sender can never decide on
-   their own package; above USD 50,000 the top role
+   their own package; the card carries the assistant's two-sentence summary and the queue is
+   ordered by rules (waiting for me, overdue, worst status first); on a returned package **Suggest a
+   fix** asks Spark for the smallest edit, the rules re-check it and the sender decides; above USD 50,000 the top role
    signs after the receiver; overdue is a property of the package. **Today** counts documents
    only. The owner can remove a person: their link answers 410 with `Clear-Site-Data`, their seat
    frees up, and work they held returns to the queue.
@@ -72,7 +77,7 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
 | Model | Used for | Measured |
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
-| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output) | Brief about USD 0.005; chat answer USD 0.0015 |
+| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output) | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package |
 | Open-weights Muse Spark Open (Private mode) | Finance-step tool call and check, through a configurable provider | **Not enabled in this build**, see Limits |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
@@ -141,7 +146,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py                  # the measured sets
+python scripts/measure.py [set3 set4]      # the measured sets (all, or the named ones)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

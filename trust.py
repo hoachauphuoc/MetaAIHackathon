@@ -17,6 +17,8 @@ STORED = {
 NEVER_STORED = [
     "Chat messages and chat history: they stay in your browser and are sent for each answer only.",
     "Workflow orders, tool results and approvals: they stay in your browser.",
+    "A suggested fix for a returned package: shown to the sender once and never saved. Only the "
+    "version the sender chooses to resend is stored.",
     "Anything about how a person works: habits, speed, experience or per-person statistics.",
     "Employee data is never used to train a model: only Standard mode is used, and any model "
     "whose id ends in -contributor is refused.",
@@ -34,7 +36,8 @@ LIMITS = [
 
 MODEL_USE = {
     muse.WONDER: "Designs the org chart from the survey.",
-    muse.SPARK: "Writes assistant briefs, answers chat, calls tools and checks handoffs.",
+    muse.SPARK: "Writes assistant briefs, answers chat, calls tools, checks and summarises handoffs, "
+                "and suggests a fix for a returned package.",
 }
 
 

@@ -48,7 +48,34 @@ one model, 8 times.
 
 Reasoning tokens are included in the output token count and billed as output.
 
-## Set 3: personal-data masking in the browser
+## Set 3: the fix assistant for returned packages
+
+`python scripts/measure.py set3`, 2026-10-27, Spark 1.3. Ten returned packages (3 price below cost,
+2 thin margin, 1 missing price, 2 route typos, 2 past dates). The model proposes an edit; the rules
+re-check it; a person still decides. Synthetic data, small sample.
+
+| Result | Value |
+|---|---|
+| Suggestions returned | 9 of 10 (one call did not finish and was labelled demo mode) |
+| Not blocked by the rules after the suggestion | 9 of 9 |
+| Clear after the suggestion | 7 of 9 |
+| Customer or notes changed | 0 of 9 |
+| Median latency | 3.2 s |
+
+## Set 4: role playbook and company rules in the chat prompt
+
+`python scripts/measure.py set4`, 2026-10-27. Ten questions (sales, finance, operations, support)
+with facts the code checks by string match, no model judge: the margin floor (12%), the escalation
+limit (USD 50,000), rate card quotes, not giving cost to a customer, who handles refunds. Same
+model, same question, only the system prompt differs. The author wrote both the questions and the
+patterns, so this shows the prompt carries the company's rules, not general quality.
+
+| Prompt | Questions passed |
+|---|---|
+| Plain role prompt (goal, jobs, limits) | 2 of 10 |
+| With playbook and company rules | 9 of 10 |
+
+## Set 5: personal-data masking in the browser
 
 `node --test tests/js` on `tests/js/pii_cases.json`: 40 sentences written by the project author,
 so they test the patterns, not an independent sample.
