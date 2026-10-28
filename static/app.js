@@ -130,10 +130,17 @@ function showChart() {
 async function showAssistants() {
   const roles = state.chart.roles;
   const grid = el('div', { class: 'grid' });
+  // Cards already written keep their text; this banner is the visible proof that the switch took effect,
+  // including when the page runs without a model and every card already says Demo mode.
+  const offNote = el('p', { class: 'demo-note', role: 'status', hidden: true },
+    'Muse is switched off for this sandbox. From now on every model answer here is labelled Demo mode ' +
+    'and a person must write it.');
   const switchBox = el('input', { id: 'muse-off', type: 'checkbox', onchange: guard(async (e) => {
-    await api('/api/sandbox/muse', { method: 'POST', sandbox, body: { off: e.target.checked } });
+    const res = await api('/api/sandbox/muse', { method: 'POST', sandbox, body: { off: e.target.checked } });
+    if (res.ok) offNote.hidden = !e.target.checked;
   }) });
   clear(app, el('section', {}, el('h2', {}, '3. One assistant per role'),
+    offNote,
     el('p', { class: 'progress', role: 'status' }, 'Muse Spark is writing every role brief in parallel...'),
     grid,
     el('div', { class: 'row' }, switchBox,

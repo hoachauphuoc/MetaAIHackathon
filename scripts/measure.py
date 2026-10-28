@@ -17,7 +17,9 @@ prompt; also scoping, an instruction hidden in notes, and other people's data re
 Set 9: Spark vision reads 10 phone-degraded sheets in handwriting-style fonts; on 4 of them one
 field is smudged beyond reading. Legible fields are matched exactly; a smudged field must come back
 empty (flagged unreadable), never a guess.
-Usage: python scripts/measure.py [set1 ... set9]   (no argument runs all; key via META_API_KEY
+Set 10: set 2 on the Private-mode model (Glimmer on Modal, needs the PRIVATE_* variables and a warm
+endpoint) plus 10 function calls on the Finance step. Not part of a plain run: name it.
+Usage: python scripts/measure.py [set1 ... set10]   (no argument runs sets 1-9; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures
@@ -71,12 +73,17 @@ def seeded(i):
     return kind, {**p, **change}
 
 
-def gate(values):
-    """Rules floor, then Spark; returns (rules_status, model_status or None, final)."""
+def asker(private):
+    if private:
+        return lambda m, **kw: muse.complete(None, m, private=True, **kw)
+    return lambda m, **kw: muse.complete(muse.SPARK, m, **kw)
+
+
+def gate(values, private=False):
+    """Rules floor, then the model (Spark, or the Private-mode model); returns (rules_status, model_status or None, final)."""
     floor, _ = rules.check_package(values, tools.PARAMS, TODAY)
     verdict, why = workflow.soft_check(
-        {"id": "gate", "title": "Handoff check"}, values, floor, lambda m, **kw: muse.complete(muse.SPARK, m, **kw),
-        lambda: None, [])
+        {"id": "gate", "title": "Handoff check"}, values, floor, asker(private), lambda: None, [])
     model = verdict["status"] if verdict else None
     return floor, model, rules.combine_status(floor, model)
 
@@ -93,7 +100,7 @@ def set1():
             "median_latency_s": sorted(r[2] for r in rows)[len(rows) // 2] / 1000}
 
 
-def set2():
+def set2(private=False):
     cases = [("seeded", *seeded(i)) for i in range(12)]
     cases += [("injection", "injection on a clean package", {**clean_package(i), "notes": INJECTION})
               for i in range(4)]
@@ -101,7 +108,7 @@ def set2():
               for i in range(4)]
     cases += [("clean", "clean", clean_package(i)) for i in range(10)]
     with concurrent.futures.ThreadPoolExecutor(5) as pool:
-        results = list(pool.map(lambda c: gate(c[2]), cases))
+        results = list(pool.map(lambda c: gate(c[2], private), cases))
     res = {"cases": len(cases)}
     seeded_rows = [(c, r) for c, r in zip(cases, results) if c[0] == "seeded"]
     res["seeded_flagged_by_rules"] = sum(r[0] != "clear" for _, r in seeded_rows)
@@ -119,6 +126,24 @@ def set2():
     res["injection_on_clean_final_not_clear"] = sum(
         r[2] != "clear" for c, r in inj if c[1] == "injection on a clean package")
     res["model_check_did_not_finish"] = sum(r[1] is None for r in results)
+    return res
+
+
+def set10():
+    """Set 2 again on the Private-mode model (Glimmer on Modal), plus its function calling on the Finance step."""
+    if not muse.private_config():
+        raise SystemExit("Set the four PRIVATE_* variables first (see scripts/private_modal.py).")
+    res = set2(private=True)
+    step = next(s for s in workflow.STEPS if s["id"] == "margin")
+
+    def chosen(i):
+        values = clean_package(i)
+        out, from_package = workflow.call_tool(step, values, asker(True), lambda: None, [])
+        return not from_package and out["price"] == values["price"] and out["cost"] == values["cost"]
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        picked = list(pool.map(chosen, range(10)))
+    res["tool_arguments_chosen_by_the_model_and_correct"] = sum(picked)
+    res["tool_calls"] = len(picked)
     return res
 
 
@@ -561,11 +586,13 @@ SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
         "set3": ("set3_fix_assistant", set3), "set4": ("set4_playbook", set4),
         "set5": ("set5_handoff_form", set5), "set6": ("set6_photo_reading", set6),
         "set7": ("set7_morning_brief", set7),
-        "set8": ("set8_reads_documents", set8), "set9": ("set9_handwriting_and_smudges", set9)}
+        "set8": ("set8_reads_documents", set8), "set9": ("set9_handwriting_and_smudges", set9),
+        "set10": ("set10_private_mode", set10)}
 
 if __name__ == "__main__":
-    out = {"date": datetime.date.today().isoformat(), "models": [muse.WONDER, muse.SPARK]}
-    for name in sys.argv[1:] or list(SETS):
+    models = [muse.WONDER, muse.SPARK] + ([os.environ["PRIVATE_MODEL"]] if "set10" in sys.argv[1:] else [])
+    out = {"date": datetime.date.today().isoformat(), "models": models}
+    for name in sys.argv[1:] or [n for n in SETS if n != "set10"]:
         key, fn = SETS[name]
         out[key] = fn()
         print(json.dumps(out, indent=2), flush=True)  # keep earlier sets if a later one fails

@@ -13,12 +13,12 @@ with a person gating every step.
 
 - **Try it:** open the live URL (added to the submission), press **Try the demo company**, then
   **Design my org chart**. Nothing to sign up for.
-- **Fast path (about 3 minutes):** accept the chart, wait for the four assistants, press
+- **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role, five for the demo company), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
-  Finance shows `Private mode unavailable` and `A person must check this` when no open-weights
-  provider is configured (see Limits).
-- **See demo mode:** on the assistants page tick **Switch Muse off**. Every model answer is then
-  labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
+  Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
+  `Private mode unavailable` and `A person must check this` (see Limits).
+- **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
+  model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
 - **Rerun the numbers:** `python scripts/measure.py` (needs a Meta key). Results: [docs/MEASURED.md](docs/MEASURED.md).
 
@@ -99,7 +99,8 @@ time at the company:
    sends. The owner can also design the company's form from a photo of the paper form in use
    today. Photos are sent once and never stored. When the model cannot read a field it names it, and
    code empties that field and marks it "A person must check this" instead of keeping a guess.
-   Measured: 60 of 60 fields on 10 rendered sheets; on 10 phone-degraded handwriting-style sheets
+   Measured: 60 of 60 fields on 10 rendered sheets (56 of 60 on the first run, before code stripped
+   thousands separators from amounts); on 10 phone-degraded handwriting-style sheets
    53 of 56 legible fields, and 4 of 4 smudged fields left empty.
 10. **Morning brief:** the owner presses one button and sees the open documents in three short
    lists (needs the top role, stuck, moving today) with counts by role. Code puts each document
@@ -128,8 +129,8 @@ time at the company:
 | Model | Used for | Measured |
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
-| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields, median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines |
-| Open-weights Muse Spark Open (Private mode) | Finance-step tool call and check, through a configurable provider | **Not enabled in this build**, see Limits |
+| `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields after the amount-cleaning fix (56 of 60 on the first run), median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines |
+| `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 
@@ -176,12 +177,14 @@ OWASP Top 10 for LLM applications, as applied here:
 
 ## Limits (honest)
 
-- **Private mode is built but not enabled in this build.** The open-weights path (`muse.py`,
-  `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`, `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`) is tested with
-  stubs only; no open-weights provider was connected when this was written. When it is not
-  configured the Finance step says `Private mode unavailable` and asks a person to check. It
-  never uses the standard API instead. When enabled, the interface says "hosted by <provider>" and
-  `/trust` shows "Built with Muse Spark Open".
+- **Private mode runs on Muse Glimmer 30B, not Muse Spark Open.** Spark Open (816B) does not fit one
+  GPU, so the Finance step uses Glimmer (open weights) served by me on Modal
+  (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
+  `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
+  warm endpoint. A cold start takes about 200 s and the app waits 60 s, so when the endpoint is idle
+  the step says `Private mode unavailable` and asks a person to check; it never uses the standard
+  API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
+  more often than Spark.
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
 - Photo reading was measured on rendered sheets, including phone-degraded ones in handwriting-style

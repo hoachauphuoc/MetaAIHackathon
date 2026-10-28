@@ -76,10 +76,10 @@ def build(table_names):
         "models": [{"id": m, "use": u} for m, u in MODEL_USE.items()],
         "private": ({"available": True, "provider": private["provider"], "model": private["model"],
                      "label": f"Open-weights model, hosted by {private['provider']}.",
-                     "attribution": "Built with Muse Spark Open"}
+                     "attribution": f"Model: {private['model']}"}
                     if private else
                     {"available": False, "label": "Private mode unavailable.",
-                     "attribution": "Built with Muse Spark Open"}),
+                     "attribution": "No open-weights model is connected."}),
         "private_note": "Finance handoffs run in Private mode. If it is unavailable they are "
                         "marked 'A person must check this', never sent to the standard model.",
         "skills": {"allowed": [s["id"] for s in rules.SKILLS["allowed"]],

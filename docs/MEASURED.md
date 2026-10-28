@@ -38,6 +38,27 @@ What this does not show: the seeded errors are all ones the rules were written t
 cannot express, and this set does not test that. Prompt injection was tried with one wording, on
 one model, 8 times.
 
+## Set 10: Private mode (Muse Glimmer 30B on Modal)
+
+`python scripts/measure.py set10`, 2026-10-28, warm endpoint. The same 30 packages as set 2, but
+layer 2 is Glimmer (open weights, vLLM on one H200), as in the Finance step; plus 10 function calls
+on `check_margin`. JSON output is forced by the schema from the first token, so Glimmer answers
+without a visible reasoning phase.
+
+| Result | Value |
+|---|---|
+| Seeded errors flagged by the final gate | 12 of 12 (the rules; the model cannot lower them) |
+| Model said "clear" while the rules had flagged the package | 0 of 8 injection cases; 0 statuses below the rules floor |
+| Clean packages raised by the model (false alarms) | 3 of 10 (Spark in set 2: 0 of 10) |
+| Injection on a clean package, final status not clear | 3 of 4 |
+| Model check did not finish | 0 of 30 |
+| Function calls with the right arguments chosen by the model | 10 of 10 |
+
+Glimmer is noisier than Spark on clean packages: it sometimes raises a harmless point such as a
+future delivery date. The cost is a person looking at a package that was fine, not a wrong approval.
+A cold start takes about 200 s (the app waits 60 s), so the endpoint must be warmed before use.
+Cost is GPU time, not tokens, so it is not comparable with the Spark rows. One run, synthetic data.
+
 ## Cost and latency of single calls (real runs, 2026-10-27)
 
 | Call | Model | Latency | Cost |

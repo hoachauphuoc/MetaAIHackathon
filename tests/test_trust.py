@@ -48,6 +48,7 @@ def test_private_mode_says_unavailable_until_a_provider_is_configured(client, mo
     monkeypatch.setenv("PRIVATE_API_KEY_FILE", "key.txt")
     private = client.get("/api/trust").json["private"]
     assert private["available"] is True and "hosted by baseten" in private["label"]
+    assert private["attribution"] == "Model: meta-models/muse-spark-open"
 
 
 def test_real_model_answers_feed_the_daily_cost(client, monkeypatch):

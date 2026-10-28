@@ -75,6 +75,23 @@ def test_a_photo_fills_the_form_and_the_rules_check_the_reading(client, team, mo
     assert seen[0][0]["content"][1]["image_url"]["url"] == PNG
 
 
+def test_a_photo_is_never_stored_or_logged_by_either_photo_route(client, team, monkeypatch, caplog):
+    marker = b"UNIQUE-PHOTO-MARKER"
+    photo = "data:image/png;base64," + base64.b64encode(b"\x89PNG\r\n\x1a\n" + marker * 4).decode()
+    needles = {marker.decode(), photo.split(",", 1)[1][12:60]}
+    caplog.set_level("DEBUG")
+    fake(monkeypatch, reading({"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "5",
+                               "price": "1550", "cost": "1500", "delivery_date": NEXT_WEEK}))
+    assert client.post("/api/handoffs/from-photo", json={"token": team["sales"], "image": photo}).status_code == 200
+    fake(monkeypatch, {"title": "x"})
+    client.post("/api/handoff-schema/from-photo", json={"image": photo}, headers=team["h"])
+    db = client.application.config["STORE"].db
+    stored = " ".join(str(v) for t in client.application.config["STORE"].table_names()
+                      for row in db.execute(f"SELECT * FROM {t}") for v in row)
+    assert not any(n in stored for n in needles)
+    assert not any(n in caplog.text for n in needles)
+
+
 def test_amounts_written_with_currency_and_separators_are_read_as_numbers(client, team, monkeypatch):
     fake(monkeypatch, reading({"customer": "Song Hong", "route": "Hanoi-Danang", "pallets": "24 pallets",
                                "price": "USD 7,200", "cost": "$6,100.50", "delivery_date": NEXT_WEEK}))
