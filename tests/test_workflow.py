@@ -257,3 +257,15 @@ def test_http_muse_switch_gives_labelled_demo_result(client):
         "step_id": "quote"}).json["result"]
     assert out["demo_mode"] is True and out["demo_reason"] == "Muse switched off"
     assert out["status"] == "needs_human_check"
+
+
+def test_a_starting_private_mode_tells_the_person_to_retry(monkeypatch):
+    def fake(model, messages, private=False, **kw):
+        if private:
+            return reply(model="private", demo_mode=True, demo_reason=muse.PRIVATE_STARTING)
+        return FakeMuse()(model, messages, private=False, **kw)
+
+    monkeypatch.setattr(muse, "complete", fake)
+    plan = plan_for()
+    out = run(plan, "margin", approve_all(plan, 2))["result"]
+    assert any("starting" in f["message"] and "retry" in f["message"] for f in out["findings"])

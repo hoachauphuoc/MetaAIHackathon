@@ -187,6 +187,70 @@ def rule_threshold(schema, kind, params):
         params["margin_floor_pct"] if kind == "min_margin" else params["escalation_usd"])
 
 
+# Level rules: a child unit may only tighten what its parent set. "up" means a larger number is
+# stricter (margin floor), "down" a smaller one (approval limit).
+LEVEL_RULES = {
+    "margin_floor_pct": {"stricter": "up", "label": "margin floor", "unit": "%", "low": 1, "high": 50},
+    "escalation_usd": {"stricter": "down", "label": "approval limit", "unit": " USD", "low": 1, "high": 10_000_000},
+}
+LEVEL_IDS = ("group", "subsidiary")  # a unit's parent is the one before it
+
+
+def level_value_errors(values):
+    errors = []
+    for rule, spec in LEVEL_RULES.items():
+        v = values.get(rule)
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not spec["low"] <= v <= spec["high"]:
+            errors.append({"rule": rule, "message":
+                           f"The {spec['label']} must be a number between {spec['low']:,} and {spec['high']:,}."})
+    return errors
+
+
+def validate_child_rules(parent, child, parent_name="the parent"):
+    """Every rule where the child is looser than the parent, naming the rule and the parent's value."""
+    errors = []
+    for rule, spec in LEVEL_RULES.items():
+        p, c = parent[rule], child[rule]
+        if (c < p) if spec["stricter"] == "up" else (c > p):
+            way = "at least" if spec["stricter"] == "up" else "at most"
+            errors.append({"rule": rule, "parent_value": p, "message":
+                           f"{parent_name} sets the {spec['label']} at {p:,g}{spec['unit']}: "
+                           f"a unit below it may set {way} that, not {c:,g}{spec['unit']}."})
+    return errors
+
+
+def provenance(levels, params):
+    """For each rule, the binding number and the unit that set it (the first unit on ties), so the
+    owner sees where a lock comes from. Names of units and rule ids only, never a person."""
+    out = {}
+    for rule, spec in LEVEL_RULES.items():
+        value, by = params[rule], "Company default"
+        for unit in levels or []:
+            if (unit[rule] > value) if spec["stricter"] == "up" else (unit[rule] < value):
+                value, by = unit[rule], unit["name"]
+        out[rule] = {"value": value, "set_by": by}
+    return out
+
+
+def bind_levels(levels, params, schema):
+    """The binding numbers: the strictest value on any level over the company's own, so a parent
+    that tightens later still wins. Returns (params, schema) with those numbers in place."""
+    if not levels:
+        return params, schema  # a one-level company sees nothing change
+    floor, limit = params["margin_floor_pct"], params["escalation_usd"]
+    for unit in levels:
+        floor, limit = max(floor, unit["margin_floor_pct"]), min(limit, unit["escalation_usd"])
+    bound = []
+    for r in schema["rules"]:
+        # An unset number is the company's own, so it takes the bound one too (chat reads it from here).
+        if r["kind"] == "min_margin":
+            r = {**r, "percent": max(r.get("percent") or 0, floor)}
+        elif r["kind"] == "escalate_over":
+            r = {**r, "usd": min(r.get("usd") or limit, limit)}
+        bound.append(r)
+    return ({**params, "margin_floor_pct": floor, "escalation_usd": limit}, {**schema, "rules": bound})
+
+
 def check_package(values, params, today, schema=None):
     """Hard checks on a handoff package. Returns (status, findings); findings carry source=rules."""
     schema = schema or DEFAULT_SCHEMA

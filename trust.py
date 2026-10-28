@@ -6,9 +6,12 @@ import rules
 STORED = {
     "sandboxes": "A sandbox id, when it was created, how many model calls it made (a count, no content).",
     "companies": "The accepted org chart (role titles, reporting lines, headcounts) and the handoff form the "
-                 "owner chose: field names and rules about documents, never about people.",
+                 "owner chose: field names and rules about documents, never about people. If the company uses "
+                 "levels, each unit's margin floor and approval limit: company rules, nothing about a person.",
     "assistants": "One brief per role: goal, allowed skills, everyday jobs, handoffs and limits.",
     "people": "An invite token, a display name and a role. No email, no activity, no metrics.",
+    "personal_rules": "Private rules a person sets for their own assistant: readable only with that person's "
+                      "invite link, never shown to the owner, a unit or anyone else, never counted or summarised.",
     "packages": "Handed-off business documents (a quote package: customer, route, price, dates), "
                 "who sent and who holds it, its check result. Company records, kept for the sandbox. "
                 "A handover a leaving person chose to send is one of them: their own words about open work.",

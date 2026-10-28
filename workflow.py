@@ -169,7 +169,9 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     floor, findings = rules.check_package(values, params, today)
     verdict, why_not = soft_check(step, values, floor, ask, blocked, trace)
     if verdict is None:
-        label = "Private mode unavailable. " if why_not == "Private mode unavailable" else ""
+        label = {"Private mode unavailable": "Private mode unavailable. ",
+                 muse.PRIVATE_STARTING: "Private mode is starting, which takes about 3 minutes: press retry. "
+                 }.get(why_not, "")
         findings.append({"status": "needs_human_check", "source": "model", "message":
                          f"{label}The assistant's check did not finish. A person must check "
                          "this package."})

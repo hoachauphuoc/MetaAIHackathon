@@ -89,3 +89,19 @@ def test_logs_never_contain_message_text(real_path, monkeypatch, caplog):
         muse.complete("muse-spark-1.3", [{"role": "user", "content": "SECRET-PROMPT"}])
     assert "SECRET" not in caplog.text
     assert "in=100 out=50" in caplog.text
+
+
+class APITimeoutError(Exception):
+    """Named like the OpenAI SDK's error: muse.complete reads the class name."""
+
+
+def test_a_cold_private_container_is_labelled_starting_and_never_uses_the_meta_api(real_path, monkeypatch):
+    for key, value in (("PRIVATE_PROVIDER", "modal"), ("PRIVATE_BASE_URL", "https://x"),
+                       ("PRIVATE_MODEL", "glimmer"), ("PRIVATE_API_KEY_FILE", "k")):
+        monkeypatch.setenv(key, value)
+    seen = []
+    monkeypatch.setattr(muse, "_client", lambda cfg=None: seen.append(cfg) or FakeClient(
+        [APITimeoutError(), APITimeoutError()]))
+    out = muse.complete(None, [], private=True)
+    assert out["demo_mode"] and out["demo_reason"] == muse.PRIVATE_STARTING
+    assert seen and all(cfg is not None for cfg in seen)

@@ -37,6 +37,9 @@ def check_model(model, private=False):
         raise Refused(f"{model}: not on the allow-list")
 
 
+PRIVATE_STARTING = "Private mode starting"
+
+
 def private_config():
     """Private mode runs an open-weights Muse model on a provider chosen by PRIVATE_PROVIDER
     (baseten | fireworks | modal). Nothing is configured by default."""
@@ -121,6 +124,8 @@ def complete(model, messages, reasoning_effort="low", private=False, **kwargs):
         return out
 
     log.warning("model=%s failed: %s", model, error)
+    if cfg and error in ("APITimeoutError", "APIConnectionError"):
+        error = PRIVATE_STARTING  # a cold open-weights container answers after about 3 minutes; never the Meta API
     return _result(model, True, error)
 
 

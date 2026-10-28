@@ -22,13 +22,18 @@ def test_new_sandbox_can_read_its_company(client):
 
 
 def test_unknown_sandbox_gets_410_sandbox_expired(client):
-    r = client.get("/api/company", headers={"X-Sandbox": "nope"})
+    r = client.get("/api/handoff-schema", headers={"X-Sandbox": "nope"})
     assert r.status_code == 410
     assert r.json["error"] == "sandbox_expired"
 
 
-def test_missing_sandbox_header_gets_410(client):
-    assert client.get("/api/company").status_code == 410
+def test_the_landing_check_for_a_gone_sandbox_is_a_200_not_a_console_error(client):
+    assert client.get("/api/company", headers={"X-Sandbox": "nope"}).json == {"company": None, "expired": True}
+    assert client.get("/api/company").json == {"company": None, "expired": True}
+
+
+def test_missing_sandbox_header_gets_410_on_other_routes(client):
+    assert client.get("/api/handoff-schema").status_code == 410
 
 
 def sandbox_headers(client):

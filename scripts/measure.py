@@ -19,7 +19,14 @@ field is smudged beyond reading. Legible fields are matched exactly; a smudged f
 empty (flagged unreadable), never a guess.
 Set 10: set 2 on the Private-mode model (Glimmer on Modal, needs the PRIVATE_* variables and a warm
 endpoint) plus 10 function calls on the Finance step. Not part of a plain run: name it.
-Usage: python scripts/measure.py [set1 ... set10]   (no argument runs sets 1-9; key via META_API_KEY
+Set 11: contradictions the rules cannot see. 10 packages that pass every rule but whose notes
+contradict a structured field (date, pallets, route, customer, price, cancellation...), and 10
+consistent packages. Reports how often the model layer flags the contradictions apart from the
+rules, and how often it raises a false alarm. Spark by default; `set11p` runs the same cases on
+the Private-mode model (Glimmer on Modal, warm endpoint).
+Set 12: reasoning effort. The 20 packages of set 11 through the model layer at "minimal" (what the
+app uses) and at "high" with the app's 600-token budget and with 3000: contradictions flagged, false alarms, median latency and cost of each.
+Usage: python scripts/measure.py [set1 ... set12]   (no argument runs sets 1-9; set11 and set12 are named; set10 and set11p need the PRIVATE_* variables; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures
@@ -126,6 +133,74 @@ def set2(private=False):
     res["injection_on_clean_final_not_clear"] = sum(
         r[2] != "clear" for c, r in inj if c[1] == "injection on a clean package")
     res["model_check_did_not_finish"] = sum(r[1] is None for r in results)
+    return res
+
+
+def contradiction_cases():
+    """Notes that contradict the structured fields, on packages every rule passes."""
+    routes = list(tools.PARAMS["rate_card"])
+    notes = [
+        "Customer asked for delivery on 2026-12-15, not the date above.",
+        "Customer confirmed 30 pallets by phone.",
+        f"Goods go to the {routes[-1]} route, not the route above.",
+        "This order is really for Customer 999, not the customer named above.",
+        "Customer was promised a price USD 1,000 lower than shown.",
+        "Customer cancelled this order yesterday; do not deliver.",
+        "Goods need refrigeration, the quote assumes ambient freight.",
+        "Customer refuses this price and expects 15 percent off.",
+        "Receiving warehouse is closed until 2026-12-01.",
+        "The pallets are oversize: every pallet counts as two.",
+    ]
+    consistent = [
+        "Regular customer.", "Call the warehouse before arrival.", "Customer asked for a morning slot.",
+        "Same terms as the last order.", "Stack no higher than two pallets.", "Deliver to the side door.",
+        "Invoice goes to the head office.", "Customer will sign on receipt.", "Pallets are standard size.",
+        "Send the proof of delivery by email."]
+    return ([("contradiction", {**clean_package(i), "notes": n}) for i, n in enumerate(notes)]
+            + [("consistent", {**clean_package(i), "notes": n}) for i, n in enumerate(consistent)])
+
+
+def set11(private=False):
+    cases = contradiction_cases()
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        results = list(pool.map(lambda c: gate(c[1], private), cases))
+    bad = [r for c, r in zip(cases, results) if c[0] == "contradiction"]
+    good = [r for c, r in zip(cases, results) if c[0] == "consistent"]
+    return {"contradiction_cases": len(bad), "consistent_cases": len(good),
+            "rules_flagged_a_contradiction": sum(r[0] != "clear" for r in bad),
+            "model_layer_flagged": sum(r[1] not in (None, "clear") for r in bad),
+            "model_layer_did_not_finish": sum(r[1] is None for r in results),
+            "final_gate_flagged": sum(r[2] != "clear" for r in bad),
+            "false_alarms_model_layer": sum(r[1] not in (None, "clear") for r in good),
+            "false_alarms_final": sum(r[2] != "clear" for r in good)}
+
+
+def set12():
+    cases = contradiction_cases()
+    res = {}
+    for effort, budget in (("minimal", 600), ("high", 600), ("high", 3000)):
+        calls = []
+
+        def ask(messages, effort=effort, budget=budget, calls=calls, **kw):
+            call = muse.complete(muse.SPARK, messages, **{**kw, "reasoning_effort": effort, "max_tokens": budget})
+            calls.append(call)
+            return call
+
+        def one(c, ask=ask):
+            floor, _ = rules.check_package(c[1], tools.PARAMS, TODAY)
+            verdict, _ = workflow.soft_check({"id": "gate", "title": "Handoff check"}, c[1], floor, ask,
+                                             lambda: None, [])
+            return c[0], verdict["status"] if verdict else None
+        with concurrent.futures.ThreadPoolExecutor(5) as pool:
+            rows = list(pool.map(one, cases))
+        times = sorted(c["latency_ms"] for c in calls)
+        res[f"{effort}_max_tokens_{budget}"] = {
+            "contradictions_flagged": sum(k == "contradiction" and s not in (None, "clear") for k, s in rows),
+            "false_alarms": sum(k == "consistent" and s not in (None, "clear") for k, s in rows),
+            "did_not_finish": sum(s is None for _, s in rows),
+            "why_not_finished": sorted({c["demo_reason"] for c in calls if c["demo_mode"]}),
+            "median_latency_s": times[len(times) // 2] / 1000,
+            "cost_usd": round(sum(c["cost_usd"] for c in calls), 4)}
     return res
 
 
@@ -587,12 +662,14 @@ SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
         "set5": ("set5_handoff_form", set5), "set6": ("set6_photo_reading", set6),
         "set7": ("set7_morning_brief", set7),
         "set8": ("set8_reads_documents", set8), "set9": ("set9_handwriting_and_smudges", set9),
-        "set10": ("set10_private_mode", set10)}
+        "set10": ("set10_private_mode", set10), "set11": ("set11_contradictions", set11),
+        "set11p": ("set11_contradictions_private", lambda: set11(private=True)),
+        "set12": ("set12_reasoning_effort", set12)}
 
 if __name__ == "__main__":
-    models = [muse.WONDER, muse.SPARK] + ([os.environ["PRIVATE_MODEL"]] if "set10" in sys.argv[1:] else [])
+    models = [muse.WONDER, muse.SPARK] + ([os.environ["PRIVATE_MODEL"]] if {"set10", "set11p"} & set(sys.argv[1:]) else [])
     out = {"date": datetime.date.today().isoformat(), "models": models}
-    for name in sys.argv[1:] or [n for n in SETS if n != "set10"]:
+    for name in sys.argv[1:] or [n for n in SETS if n not in ("set10", "set11", "set11p", "set12")]:
         key, fn = SETS[name]
         out[key] = fn()
         print(json.dumps(out, indent=2), flush=True)  # keep earlier sets if a later one fails

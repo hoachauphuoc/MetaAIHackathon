@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS people (
     token TEXT PRIMARY KEY,
     sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
     role_id TEXT NOT NULL, display_name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active');
+CREATE TABLE IF NOT EXISTS personal_rules (
+    token TEXT PRIMARY KEY REFERENCES people(token) ON DELETE CASCADE,
+    data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS packages (
     id TEXT PRIMARY KEY,
     sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
@@ -209,6 +212,7 @@ class Store:
             return False
         with self.db:
             self.db.execute("UPDATE people SET status = 'left' WHERE token = ?", (row[0],))
+            self.db.execute("DELETE FROM personal_rules WHERE token = ?", (row[0],))
         for package in self.list_packages(sandbox_id):
             if package["claimed_by"] == row[0]:
                 package["claimed_by"] = None
@@ -226,6 +230,17 @@ class Store:
         if row[3] != "active":
             raise PersonLeft(token)
         return {"sandbox_id": row[0], "role_id": row[1], "display_name": row[2]}
+
+    @locked
+    def save_personal_rules(self, token, values):
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO personal_rules (token, data) VALUES (?, ?)",
+                            (token, json.dumps(values)))
+
+    @locked
+    def get_personal_rules(self, token):
+        row = self.db.execute("SELECT data FROM personal_rules WHERE token = ?", (token,)).fetchone()
+        return json.loads(row[0]) if row else None
 
     @locked
     def table_names(self):

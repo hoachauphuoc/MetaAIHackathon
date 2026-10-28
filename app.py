@@ -123,6 +123,8 @@ def create_app(db_path=None):
                    "version": (previous or {}).get("version", 0) + 1}
         if (previous or {}).get("handoff_schema"):
             company["handoff_schema"] = previous["handoff_schema"]
+        if (previous or {}).get("levels"):
+            company["levels"] = previous["levels"]
         db.save_company(sandbox_id, company)
         return jsonify(company), 201
 
@@ -156,6 +158,13 @@ def create_app(db_path=None):
         errors = rules.validate_handoff_schema(schema)
         if errors:
             return jsonify(error="invalid_form", errors=errors), 400
+        if company.get("levels"):
+            above = effective_params(company)
+            mine = {"margin_floor_pct": rules.rule_threshold(schema, "min_margin", above) or above["margin_floor_pct"],
+                    "escalation_usd": rules.rule_threshold(schema, "escalate_over", above) or above["escalation_usd"]}
+            errors = rules.validate_child_rules(above, mine, "The levels above")
+            if errors:
+                return jsonify(error="loosens_parent", errors=errors), 422
         company["handoff_schema"] = handoff_schema.canonical(schema)
         company["version"] = company.get("version", 0) + 1
         db.save_company(sandbox_id, company)
@@ -252,7 +261,7 @@ def create_app(db_path=None):
         if kit is None:
             raise LookupError("This role has no assistant yet.")
         messages = chat.messages_for(person, kit, body.get("history"), body.get("message") or "",
-                                     effective_schema(db.get_company(person["sandbox_id"]) or {}))
+                                     personal_schema(db.get_company(person["sandbox_id"]) or {}, body.get("token")))
         blocked = db.spend_model_call(person["sandbox_id"])
         company = db.get_company(person["sandbox_id"]) or {"roles": []}
         reader = workspace.Reader(db.list_packages(person["sandbox_id"]),
@@ -315,7 +324,7 @@ def create_app(db_path=None):
             workflow.verify_plan(plan, body.get("signature"))
             out = workflow.run_step(
                 plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
-                tools.PARAMS, lambda: db.spend_model_call(person["sandbox_id"]))
+                effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]))
         except PermissionError as e:
             return jsonify(error="not_approved", message=str(e)), 409
         except (StopIteration, KeyError):
@@ -357,7 +366,7 @@ def create_app(db_path=None):
             raise LookupError("This role has no assistant yet.")
         return jsonify(chat.compare(kit, body.get("message") or "",
                                     lambda: db.spend_model_call(person["sandbox_id"]),
-                                    effective_schema(db.get_company(person["sandbox_id"]) or {})))
+                                    personal_schema(db.get_company(person["sandbox_id"]) or {}, body.get("token"))))
 
     def me_and_context():
         body = request.get_json(silent=True) or {}
@@ -380,7 +389,71 @@ def create_app(db_path=None):
         return jsonify(error="refused", message=e.message), e.status
 
     def effective_schema(company):
-        return company.get("handoff_schema") or rules.DEFAULT_SCHEMA
+        schema = company.get("handoff_schema") or rules.DEFAULT_SCHEMA
+        return rules.bind_levels(company.get("levels"), tools.PARAMS, schema)[1]
+
+    def effective_params(company):
+        return rules.bind_levels(company.get("levels"), tools.PARAMS, rules.DEFAULT_SCHEMA)[0]
+
+    def personal_schema(company, token):
+        """The company's form with this person's own, only tighter, numbers in place; for their chat only."""
+        mine = db.get_personal_rules(str(token or ""))
+        schema = effective_schema(company)
+        return rules.bind_levels([mine], effective_params(company), schema)[1] if mine else schema
+
+    @app.route("/api/personal-rules", methods=["GET", "PUT"])
+    def personal_rules():
+        """Private to the person: no owner or unit route reads this table."""
+        body, me, company = me_and_context()
+        if request.method == "GET":
+            return jsonify(rules=db.get_personal_rules(me["token"]), company=effective_params(company))
+        above = effective_params(company)
+        values = {rule: body.get(rule) for rule in rules.LEVEL_RULES}
+        errors = rules.level_value_errors(values) or rules.validate_child_rules(above, values, "The company")
+        if errors:
+            return jsonify(error="loosens_parent", errors=errors), 422
+        db.save_personal_rules(me["token"], values)
+        return jsonify(rules=values)
+
+    @app.get("/api/levels")
+    def get_levels():
+        company = accepted_company(current_sandbox())
+        levels = company.get("levels")
+        return jsonify(levels=levels, rules=rules.LEVEL_RULES,
+                       effective=rules.provenance(levels, tools.PARAMS) if levels else None)
+
+    @app.post("/api/levels/enable")
+    def enable_levels():
+        """Two units of this one company, both starting at the company's own numbers."""
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        if not company.get("levels"):
+            start = {"margin_floor_pct": tools.PARAMS["margin_floor_pct"],
+                     "escalation_usd": tools.PARAMS["escalation_usd"]}
+            company["levels"] = [{"id": "group", "name": "Group", **start},
+                                 {"id": "subsidiary", "name": "Subsidiary", **start}]
+            db.save_company(sandbox_id, company)
+        return jsonify(levels=company["levels"]), 201
+
+    @app.put("/api/levels/<unit_id>")
+    def set_level(unit_id):
+        """The one write route for a unit's rules: a child may only tighten its parent's."""
+        sandbox_id = current_sandbox()
+        company = accepted_company(sandbox_id)
+        levels = company.get("levels") or []
+        index = next((i for i, u in enumerate(levels) if u["id"] == unit_id), None)
+        if index is None:
+            return jsonify(error="no_such_unit", message="No such unit in this company."), 404
+        body = request.get_json(silent=True) or {}
+        values = {rule: body.get(rule) for rule in rules.LEVEL_RULES}
+        errors = rules.level_value_errors(values)
+        if not errors and index > 0:
+            errors = rules.validate_child_rules(levels[index - 1], values, levels[index - 1]["name"])
+        if errors:
+            return jsonify(error="loosens_parent", errors=errors), 422
+        levels[index] = {**levels[index], **values}
+        db.save_company(sandbox_id, company)
+        return jsonify(levels=levels)
 
     def view_of(package, me, company):
         titles = {r["id"]: r["title"] for r in company["roles"]}
@@ -393,7 +466,7 @@ def create_app(db_path=None):
         package = handoffs.send(
             me["sandbox_id"], {**me, "token": me["token"]}, body.get("to_role"),
             body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
-            company["roles"], tools.PARAMS, datetime.date.today(), ask, blocked,
+            company["roles"], effective_params(company), datetime.date.today(), ask, blocked,
             effective_schema(company))
         return jsonify(view_of(package, me, company)), 201
 
@@ -411,14 +484,14 @@ def create_app(db_path=None):
     def send_handover():
         body, me, company = me_and_context()
         package = handoffs.send_handover(me["sandbox_id"], me, body.get("values") or {}, db,
-                                         company["roles"], tools.PARAMS, datetime.date.today())
+                                         company["roles"], effective_params(company), datetime.date.today())
         return jsonify(view_of(package, me, company)), 201
 
     @app.post("/api/handoffs/from-photo")
     def handoff_from_photo():
         """Read a paper document into the company's form. Nothing is stored: the person checks and sends."""
         body, me, company = me_and_context()
-        return jsonify(vision.read_values(body.get("image"), effective_schema(company), tools.PARAMS,
+        return jsonify(vision.read_values(body.get("image"), effective_schema(company), effective_params(company),
                                           datetime.date.today(), lambda: db.spend_model_call(me["sandbox_id"])))
 
     @app.post("/api/precheck")
@@ -428,7 +501,7 @@ def create_app(db_path=None):
         today = datetime.date.today()
         schema = effective_schema(company)
         status, findings, _ = handoffs.run_check(
-            handoffs.clean_values(body.get("values") or {}, schema), tools.PARAMS, today,
+            handoffs.clean_values(body.get("values") or {}, schema), effective_params(company), today,
             ask, lambda: db.spend_model_call(me["sandbox_id"]), schema)
         problem = handoffs.due_problem(body.get("due"), today)
         if problem:  # "Check first" must agree with "Send", which refuses this
@@ -475,7 +548,7 @@ def create_app(db_path=None):
     def resend_package(package_id):
         body, me, company = me_and_context()
         package = package_for(me, package_id)
-        handoffs.resend(package, me, body.get("values") or {}, body.get("due"), tools.PARAMS,
+        handoffs.resend(package, me, body.get("values") or {}, body.get("due"), effective_params(company),
                         datetime.date.today(), ask, lambda: db.spend_model_call(me["sandbox_id"]),
                         company["roles"])
         db.save_package(me["sandbox_id"], package)
@@ -486,7 +559,7 @@ def create_app(db_path=None):
         body, me, company = me_and_context()
         package = package_for(me, package_id)
         return jsonify(handoffs.suggest_fix(
-            package, me, datetime.date.today(), tools.PARAMS, ask,
+            package, me, datetime.date.today(), effective_params(company), ask,
             lambda: db.spend_model_call(me["sandbox_id"])))
 
     @app.get("/api/trust")
@@ -495,7 +568,12 @@ def create_app(db_path=None):
 
     @app.get("/api/company")
     def company():
-        return jsonify(company=db.get_company(request.headers.get("X-Sandbox", "")))
+        """The landing page asks this first. A gone sandbox is the normal answer for a returning
+        visitor, so it is a 200 with expired=true: a 410 here would show as a red console line."""
+        try:
+            return jsonify(company=db.get_company(request.headers.get("X-Sandbox", "")))
+        except store.SandboxExpired:
+            return jsonify(company=None, expired=True)
 
     return app
 

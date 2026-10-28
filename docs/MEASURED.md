@@ -59,6 +59,44 @@ future delivery date. The cost is a person looking at a package that was fine, n
 A cold start takes about 200 s (the app waits 60 s), so the endpoint must be warmed before use.
 Cost is GPU time, not tokens, so it is not comparable with the Spark rows. One run, synthetic data.
 
+## Set 11: contradictions the rules cannot see (Spark leg)
+
+`python scripts/measure.py set11`, 2026-10-28, Spark 1.3. Ten packages that pass every rule but whose
+notes contradict a field (delivery date, pallet count, route, customer, price, a cancellation,
+refrigeration, a refused price, a closed warehouse, oversize pallets), and ten consistent packages
+as controls. The author wrote all twenty; a test (`tests/test_measure_set11.py`) checks that the
+rules alone pass every one of them, so the catch below is the model layer's, not the rules'.
+
+| Result | Value |
+|---|---|
+| Contradiction cases flagged by the rules | 0 of 10 |
+| Contradiction cases flagged by the model layer | 10 of 10 |
+| Model check did not finish | 0 of 20 |
+| False alarms on the consistent packages (model layer, and final gate) | 1 of 10 |
+
+One run, small and synthetic, Spark only; the Glimmer leg (`set11p`) has not been run. A person
+still decides every handoff: the model layer raises a flag, it never clears a package the rules
+blocked.
+
+## Set 12: reasoning effort on the model check
+
+`python scripts/measure.py set12`, 2026-10-28, Spark 1.3. The 20 packages of set 11 (10 with a
+contradiction in the notes, 10 consistent) through the model layer at three settings. Same
+author-written cases; one run each, so a difference of one case is within run-to-run variation (the
+minimal setting showed 2 false alarms in an earlier run of the same code).
+
+| Setting | Contradictions flagged | False alarms | Did not finish | Median latency | Cost for 20 calls |
+|---|---|---|---|---|---|
+| minimal, 600 tokens (the app) | 10 of 10 | 1 of 10 | 0 | 2.9 s | USD 0.034 |
+| high, 600 tokens | 0 of 10 | 0 of 10 | 20 of 20 | 3.5 s | USD 0.058 |
+| high, 3000 tokens | 8 of 10 | 1 of 10 | 1 of 20 | 10.3 s | USD 0.167 |
+
+At the app's 600-token budget, high effort returned no usable answer: the API accepted the call and
+charged for it, but nothing readable came back (the reply was empty or cut off; the cause was not
+inspected). With 3000 tokens it answered, but it was 3.6 times slower, 4.9 times dearer and flagged
+no more than minimal. So the checks, short chat answers and reading steps stay on `minimal`, and
+structured generation (the chart, role briefs, forms) stays on `low`. Low was not measured in this set.
+
 ## Cost and latency of single calls (real runs, 2026-10-27)
 
 | Call | Model | Latency | Cost |

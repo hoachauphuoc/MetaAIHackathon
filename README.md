@@ -7,6 +7,16 @@ handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, fo
 statement **Build for Your World**: the domain is the small company the author knows firsthand, and
 the time freed is the owner's and each employee's.
 
+**Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
+(Private mode). **Layered rules:** a company can split into units (Group, Subsidiary); a unit may
+only tighten its parent's margin floor and approval limit, and the server refuses a looser number,
+naming the rule and the parent's value. A one-level company sees no difference.
+
+**Measured, rerunnable:** with the role playbook and company rules in the prompt the assistant passed
+9 of 10 rule questions, against 2 of 10 with a plain role prompt (set 4, string-match checks written by
+the author; [docs/MEASURED.md](docs/MEASURED.md)). What is and is never stored: `/trust` and the
+[privacy table](#privacy-and-safety-design-each-line-has-a-test).
+
 **Live:** https://role-assistants-662084666675.us-central1.run.app
 
 This is an agent pipeline, not a chatbot: survey, then Wonder (design), then rules (validate),
@@ -20,7 +30,7 @@ with a person gating every step.
 - **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
-  `Private mode unavailable` and `A person must check this` (see Limits).
+  `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits).
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -169,7 +179,7 @@ OWASP Top 10 for LLM applications, as applied here:
 | LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; signed receipts |
 | LLM10 Unbounded consumption | 80 model calls per sandbox, a daily cost ceiling, 24-hour sandboxes |
 
-## Built during the hackathon
+## Building period (built during the hackathon)
 
 - Repository history starts on **2026-10-27 11:09 (UTC+7)**, inside the Oct 27 to Nov 4 building
   period. All code, tests and data in this repository were written from that point.
@@ -179,15 +189,54 @@ OWASP Top 10 for LLM applications, as applied here:
 - AI-assisted development: the code was written with Claude Code; the product itself runs on Meta
   Muse models.
 
+## What it costs a company per month (assumptions labelled)
+
+The per-call prices are measured ([docs/MEASURED.md](docs/MEASURED.md)). The usage counts are
+**assumptions** for a 10-person company with 5 roles and 22 working days a month, in three
+scenarios anchored on published figures. **The busy one is our headline: about USD 21 a month for a
+10-person company.**
+
+- **Light:** 4 chat answers per person per day. ChatGPT's 18 billion messages a week from 700
+  million weekly users is about 3.7 a day per user, most of it not about work ([NBER paper by OpenAI, 2025](https://cdn.openai.com/pdf/a253471f-8260-40c6-a2cc-aa93fe9f142e/economic-research-chatgpt-usage-paper.pdf)).
+  5 orders a day through the team workflow.
+- **Busy:** 24 chat answers per person per day, 6 times the light figure: OpenAI reports its heaviest
+  workers send 6 times the median ([State of Enterprise AI, Dec 2025](https://cdn.openai.com/pdf/7ef17d82-96bf-4dd1-9df2-228f7f377a29/the-state-of-enterprise-ai_2025-report.pdf)).
+  20 orders a day.
+- **All day:** 80 answers per person per day, one every 6 minutes over an 8-hour day (our assumption, no
+  published figure). 50 orders a day: suppliers put a manual purchase order at 8 to 12 minutes
+  ([Hobson & Company, via TradeCentric](https://tradecentric.com/blog/manual-order-processing-cost)), so
+  50 is about 8 hours of handling for the team.
+
+| | Light | Busy | All day |
+|---|---|---|---|
+| Setup, once (1 chart USD 0.038 + 5 briefs USD 0.0047 each) | USD 0.06 | USD 0.06 | USD 0.06 |
+| Chat answers, USD 0.0015 each | USD 1.32 | USD 7.92 | USD 26.40 |
+| Workflow steps, 3 per order, under USD 0.01 each (upper bound used) | up to USD 3.30 | up to USD 13.20 | up to USD 33.00 |
+| **Total per month (Muse Wonder and Spark)** | **about USD 5** | **about USD 21** | **about USD 59, at most** |
+
+Private mode (Glimmer on Modal) is billed per warm GPU hour, not per call, and is not in this
+table. Photos, morning briefs and fix suggestions cost about USD 0.002 to 0.02 each and are left out.
+The 80-call cap and the daily cost ceiling protect the public demo; they are not a company's bill.
+
+## Reasoning effort per call
+
+Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
+
+| Effort | Calls | Why |
+|---|---|---|
+| `minimal` | chat answers, workflow tool calls and the model check, fix suggestions, reading a paper document, the morning brief, reading the person's own documents | Short answers and checks; measured in set 12: `high` was 3.6 times slower, 4.9 times dearer and flagged no more contradictions |
+| `low` | the org chart (Wonder), role briefs, handoff forms, handover draft, first-days plan | Structured output that must follow a schema; a little reasoning helps and the cost stays small |
+
 ## Limits (honest)
 
 - **Private mode runs on Muse Glimmer 30B, not Muse Spark Open.** Spark Open (816B) does not fit one
   GPU, so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start takes about 200 s and the app waits 60 s, so when the endpoint is idle
-  the step says `Private mode unavailable` and asks a person to check; it never uses the standard
-  API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
+  warm endpoint. A cold start takes about 200 s and the app waits 60 s a try, so when the endpoint is
+  idle the step says `Private mode is starting, which takes about 3 minutes: press retry` and asks a
+  person to check; when Private mode is not configured it says `Private mode unavailable`. It never
+  uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
   more often than Spark.
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
@@ -217,7 +266,7 @@ $env:META_API_KEY_FILE = "path\to\your\key.txt"
 powershell -File scripts/run.ps1 -Real     # http://localhost:5000
 powershell -File scripts/check.ps1         # tests, no model calls
 python scripts/smoke.py                    # real API access check
-python scripts/measure.py [set1 ... set9]  # the measured sets (all, or the named ones)
+python scripts/measure.py [set1 ... set10]  # the measured sets (no argument runs sets 1 to 9; set10 needs Private mode)
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 

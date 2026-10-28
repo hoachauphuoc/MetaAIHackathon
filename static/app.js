@@ -165,7 +165,7 @@ async function showAssistants() {
         drawPeople();
       }) }, 'Remove'))));
   }
-  app.append(handoffFormSection(), briefSection());
+  app.append(handoffFormSection(), levelsSection(), briefSection());
   await Promise.all(roles.map(guard(async (role) => {
     const res = await api('/api/assistants', { method: 'POST', sandbox, body: { role_id: role.id } });
     if (!res.ok) { clear(cards[role.id], el('h3', {}, role.title), el('p', { class: 'errors' }, res.data.message)); return; }
@@ -293,9 +293,48 @@ function handoffFormSection() {
   return el('section', {}, el('h2', {}, '4. Handoff form'), body);
 }
 
+// Units of one company: a unit may only tighten its parent; the server refuses anything looser.
+function levelsSection() {
+  const body = el('div');
+  const names = { margin_floor_pct: 'Margin floor (percent)', escalation_usd: 'Approval limit (USD)' };
+
+  async function load() {
+    const res = await api('/api/levels', { sandbox });
+    if (!res.data.levels) {
+      clear(body, el('p', { class: 'muted' }, 'This company has one level. Add a Group and a Subsidiary to set rules ' +
+        'that a unit below can only tighten.'), el('button', { onclick: guard(async () => {
+        await api('/api/levels/enable', { method: 'POST', sandbox });
+        await load();
+      }) }, 'Split into Group and Subsidiary'));
+      return;
+    }
+    const message = el('div', { role: 'alert' });
+    const rows = res.data.levels.map((unit) => {
+      const inputs = Object.keys(names).map((rule) => el('input', { id: `lv-${unit.id}-${rule}`, type: 'number',
+        value: unit[rule], 'aria-label': `${unit.name}: ${names[rule]}` }));
+      const save = guard(async () => {
+        const values = Object.fromEntries(Object.keys(names).map((rule, i) => [rule, Number(inputs[i].value)]));
+        const put = await api(`/api/levels/${unit.id}`, { method: 'PUT', sandbox, body: values });
+        if (put.ok) { await load(); return; }
+        clear(message, el('div', { class: 'errors' }, put.data.errors.map((e) => e.message).join(' ')));
+      });
+      return el('div', { class: 'row' }, el('strong', {}, unit.name),
+        ...Object.keys(names).flatMap((rule, i) => [el('label', { for: inputs[i].id }, names[rule]), inputs[i]]),
+        el('button', { onclick: save }, 'Save'));
+    });
+    const eff = res.data.effective;
+    clear(body, ...rows, message, el('h3', {}, 'Rules in force'),
+      el('ul', { class: 'plain' }, Object.keys(names).map((rule) => el('li', {},
+        `${names[rule]}: ${eff[rule].value.toLocaleString('en-US')}, set by ${eff[rule].set_by}`))));
+  }
+  guard(load)();
+  return el('section', {}, el('h2', {}, '5. Levels'), body);
+}
+
 if (sandbox) {
   guard(async () => {
     const res = await api('/api/company', { sandbox });
+    if (res.data.expired) { startAgain(); return; }
     if (res.data.company) {
       state.chart = { ...res.data.company, errors: [], demo_mode: false, source: 'saved' };
       state.accepted = true;
