@@ -494,6 +494,16 @@ def create_app(db_path=None):
         return jsonify(vision.read_values(body.get("image"), effective_schema(company), effective_params(company),
                                           datetime.date.today(), lambda: db.spend_model_call(me["sandbox_id"])))
 
+    @app.post("/api/handoffs/from-text")
+    def handoff_from_text():
+        """Read a pasted customer message into the company's form. Nothing is stored: the person checks and sends."""
+        body, me, company = me_and_context()
+        try:
+            return jsonify(vision.read_text(body.get("text"), effective_schema(company), effective_params(company),
+                                            datetime.date.today(), lambda: db.spend_model_call(me["sandbox_id"])))
+        except ValueError as e:
+            return jsonify(error="bad_text", message=str(e)), 400
+
     @app.post("/api/precheck")
     def precheck():
         """Private pre-check: nothing is stored."""
@@ -525,6 +535,13 @@ def create_app(db_path=None):
         action(package, me)
         db.save_package(me["sandbox_id"], package)
         return jsonify(view_of(package, me, company))
+
+    @app.post("/api/handoffs/<package_id>/again")
+    def start_again(package_id):
+        """A new draft from one of my own handoffs. Nothing is stored until the person sends it."""
+        _, me, company = me_and_context()
+        package = package_for(me, package_id)
+        return jsonify(handoffs.start_again(package, me, handoffs.package_schema(package)))
 
     @app.post("/api/handoffs/<package_id>/claim")
     def claim_package(package_id):

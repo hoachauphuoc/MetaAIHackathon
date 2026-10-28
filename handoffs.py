@@ -164,6 +164,11 @@ def overdue(package, today):
                 and datetime.date.fromisoformat(package["due"]) < today)
 
 
+def age_days(package, today):
+    sent = package.get("sent_on")
+    return (today - datetime.date.fromisoformat(sent)).days if sent else None
+
+
 def view(package, me, today, roles_by_id):
     """What one viewer may see. Never includes anyone's token."""
     here = current_role(package)
@@ -179,6 +184,9 @@ def view(package, me, today, roles_by_id):
         "check_status": package["check_status"], "findings": package["findings"],
         "summary": package.get("summary", ""), "schema": package_schema(package),
         "due": package["due"], "overdue": overdue(package, today),
+        "sent_on": package.get("sent_on"), "age_days": age_days(package, today),
+        # Only whether someone took it, never who: the sender may chase a team, not a person.
+        "taken": holder(package) is not None,
         "return_reason": package["return_reason"], "history": package.get("history", []),
         "i_sent_it": package["from_person"] == me["token"], "i_hold_it": mine,
         "can_claim": open_to_my_role and holder(package) is None
@@ -326,6 +334,28 @@ def suggest_fix(package, me, today, params, ask, blocked):
     status, _ = rules.check_package(merged, params, today, schema)
     return {**fixed, "values": merged, "explanation": answer["explanation"],
             "predicted_status": status}
+
+
+def start_again(package, me, schema):
+    """A new draft from one of my own earlier handoffs: what repeats stays, what goes stale is cleared
+    (dates, notes) and the rate-card figures are recomputed by code, with every change listed."""
+    if package["from_person"] != me["token"]:
+        raise Refused(403, "You can only start again from a handoff you sent.")
+    old = package["values"]
+    values = {f["key"]: old.get(f["key"]) for f in schema["fields"]}
+    changes = []
+    for f in schema["fields"]:
+        if f["type"] == "date" and values[f["key"]]:
+            values[f["key"]] = ""
+            changes.append(f"{f['label']} cleared: choose the new date.")
+    keys = {"route", "pallets", "price", "cost"}
+    if keys <= set(values) and values["route"] in tools.PARAMS["rate_card"] and isinstance(values["pallets"], int):
+        quote = tools.quote_price(values["route"], values["pallets"])
+        for key in ("price", "cost"):
+            if values[key] != quote[key]:
+                changes.append(f"{key.capitalize()} recomputed from the rate card: {values[key]} to {quote[key]}.")
+            values[key] = quote[key]
+    return {"values": values, "changes": changes}
 
 
 def sort_key(package, me, today):

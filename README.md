@@ -145,6 +145,15 @@ time at the company:
    inbox exported as JSON or CSV. Import only fills the form (free-text notes are left out so they
    still pass the masking step), a person checks and sends it, and exported cells that start like
    a spreadsheet formula get a leading quote. No connector, key or outbound call is involved.
+16. **What is stuck and where:** the sender's inbox lists what they sent that still waits for another
+   team, with its age and whether someone took it (never who), and a reminder draft per row. The
+   draft is built by code from the package's own fields and is only copied; nothing is sent.
+17. **Customer message to form:** paste a customer's message and Spark fills the company's form.
+   Emails and phone numbers are masked in the browser first, the message is treated as data, a
+   field the model could not read is emptied by code, the rules check the result, and the person
+   checks and sends. Nothing is stored.
+18. **Start from a past quote:** a new draft from one of the sender's own handoffs. Dates are
+   cleared, rate-card figures are recomputed by code, and every change is listed.
 
 ## Meta models used
 

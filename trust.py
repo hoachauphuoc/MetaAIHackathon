@@ -25,6 +25,8 @@ NEVER_STORED = [
     "A suggested fix for a returned package: shown to the sender once and never saved. Only the "
     "version the sender chooses to resend is stored.",
     "Photos of paper documents: sent to the model once to fill the form, then dropped.",
+    "A customer message pasted to fill a form: emails and phone numbers are masked in your browser first, "
+    "the rest is sent to the model once to fill the form, then dropped. Nothing is kept; you check every field.",
     "What the chat assistant read to answer you: it can only read your own documents, nothing "
     "it reads is kept, and it cannot claim, accept, return or send anything.",
     "The owner's morning brief: written on request from the open documents, never saved. It counts "

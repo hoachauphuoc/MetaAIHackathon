@@ -2,6 +2,7 @@
 import { confirmMask } from '/static/mask.js';
 import { download, readRecord, toCsv, toJson } from '/static/exchange.js';
 import { photoPicker } from '/static/photo.js';
+import { reminderText, stuckLine, stuckRows } from '/static/stuck.js';
 import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -75,6 +76,7 @@ function longBlocks(schema, v) {
 
 export function inboxPanel(info, token) {
   const list = el('div');
+  const stuckBox = el('div');
   const todayBox = el('div', { class: 'row' });
   const msg = el('p', { role: 'status', class: 'muted' });
   const titles = info.role_titles || {};
@@ -102,6 +104,18 @@ export function inboxPanel(info, token) {
     }
     const why = p.can_decide && p.check_status === 'blocked'
       ? (p.findings.find((f) => f.status === 'blocked')?.message || 'The check found a problem.') : null;
+
+    // A new draft from one I sent: the form below fills in, with a list of what changed.
+    const again = p.i_sent_it && p.schema.id === schema.id
+      ? el('button', { onclick: async () => {
+        const res = await api(`/api/handoffs/${p.id}/again`, { method: 'POST', body: { token } });
+        if (!res.ok) { clear(msg, res.data.message); return; }
+        fields.fill(res.data.values);
+        clear(againResult, el('p', {}, el('strong', {}, 'Started from an earlier handoff. Check every field. ')),
+          res.data.changes.length ? el('ul', { class: 'plain' }, res.data.changes.map((c) => el('li', {}, c))) : null);
+        document.getElementById('send-to-role')?.scrollIntoView();
+      } }, 'Start a new one from this') : null;
+    if (again) actions.push(again);
 
     let fix = null;
     if (p.can_resend) {
@@ -163,6 +177,21 @@ export function inboxPanel(info, token) {
       badge(`${t.in_team_queue} in your team queue`, 'info'),
       badge(`${t.handled_by_teammates} being handled by teammates`, 'info'),
       badge(`${t.overdue_for_my_role} overdue`, t.overdue_for_my_role ? 'bad' : 'info'));
+    const stuck = stuckRows(res.data.packages);
+    clear(stuckBox, stuck.length ? el('details', { class: 'section', open: true },
+      el('summary', {}, el('h3', {}, `Stuck: ${stuck.length} you sent`)),
+      stuck.map((p) => {
+        const draft = el('pre', { class: 'reminder' }, reminderText(p));
+        draft.hidden = true;
+        const copied = el('span', { class: 'muted', role: 'status' });
+        return el('div', { class: 'card' }, el('p', {}, stuckLine(p)),
+          el('div', { class: 'row' },
+            el('button', { onclick: () => { draft.hidden = !draft.hidden; } }, 'Reminder draft'),
+            el('button', { onclick: async () => {
+              try { await navigator.clipboard.writeText(draft.textContent); copied.textContent = 'Copied. Send it yourself.'; }
+              catch { copied.textContent = 'Select the text and copy it.'; draft.hidden = false; }
+            } }, 'Copy'), copied), draft);
+      })) : null);
     clear(list, res.data.packages.length ? res.data.packages.map(card) : el('p', { class: 'muted' }, 'Nothing here yet.'));
   }
 
@@ -188,6 +217,27 @@ export function inboxPanel(info, token) {
       ...findingsBlock(res.data.findings));
   });
 
+  const emailBox = el('textarea', { id: 'send-email', maxlength: '4000', placeholder: "Paste the customer's message here" });
+  const emailMask = el('div');
+  const emailResult = el('div', { role: 'status' });
+  const emailBtn = el('button', { onclick: async () => {
+    // Masked in the browser first, like notes: the model never sees an email address or a phone number.
+    const text = await confirmMask(emailBox.value, emailMask);
+    if (text === null || !text.trim()) return;
+    clear(emailResult, el('p', { class: 'progress' }, 'The assistant is reading the message...'));
+    const res = await api('/api/handoffs/from-text', { method: 'POST', body: { token, text } });
+    if (!res.ok) { clear(emailResult, el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+    if (res.data.demo_mode) { clear(emailResult, demoNote(res.data.demo_reason)); return; }
+    fields.fill(res.data.values, res.data.unreadable);
+    const unclear = schema.fields.filter((f) => res.data.unreadable.includes(f.key)).map((f) => f.label);
+    clear(emailResult, el('p', {}, el('strong', {}, 'Read by the assistant. Check every field. '),
+      'The rules would say: ', statusBadge(res.data.predicted_status)),
+      unclear.length ? el('p', { class: 'errors', role: 'status' },
+        `A person must check this: ${unclear.join(', ')}. The message was not clear there, so the field is empty.`) : null,
+      ...findingsBlock(res.data.findings));
+  } }, 'Fill the form from this message');
+
+  const againResult = el('div', { role: 'status' });
   const importResult = el('p', { role: 'status', class: 'muted' });
   const importInput = el('input', { id: 'send-import', type: 'file', accept: '.json,.csv,application/json,text/csv' });
   importInput.addEventListener('change', async () => {
@@ -234,10 +284,12 @@ export function inboxPanel(info, token) {
   }
 
   refresh();
-  return el('section', {}, el('h2', {}, 'Inbox'), todayBox, msg, list, exportRow,
+  return el('section', {}, el('h2', {}, 'Inbox'), todayBox, msg, stuckBox, list, exportRow,
     el('h3', {}, 'Send a handoff'),
     el('p', { class: 'muted' }, 'It goes to the whole receiving team. Someone there takes it and decides. Nobody can decide on their own package.'),
-    el('label', { for: 'to-role' }, 'To'), toRole, photo, photoResult,
+    el('label', { for: 'to-role', id: 'send-to-role' }, 'To'), toRole, againResult, photo, photoResult,
+    el('label', { for: 'send-email' }, "Fill from the customer's message (optional)"), emailBox, emailMask,
+    el('div', { class: 'row' }, emailBtn), emailResult,
     el('label', { for: 'send-import' }, 'Fill from a JSON or CSV file (optional)'), importInput, importResult, ...fields.rows, maskBox,
     el('div', { class: 'row' }, check, sendBtn), result);
 }

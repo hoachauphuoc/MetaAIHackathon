@@ -4,6 +4,7 @@ import pytest
 
 import app as app_module
 import muse
+import tools
 
 ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 2},
@@ -367,3 +368,33 @@ def test_fix_suggestion_in_demo_mode_is_labelled_and_changes_nothing(client, tea
     pid = returned_package(client, team)
     r = suggest(client, team["sales"], pid)
     assert r.json["demo_mode"] is True and r.json["values"] is None
+
+
+def test_the_sender_sees_age_and_whether_it_was_taken_but_never_by_whom(client, team):
+    pid = send(client, team["sales"]).json["id"]
+    mine = inbox(client, team["sales"])["packages"][0]
+    assert mine["i_sent_it"] and mine["sent_on"] == datetime.date.today().isoformat()
+    assert mine["age_days"] == 0 and mine["taken"] is False
+    claim(client, team["ops"], pid)
+    seen = inbox(client, team["sales"])["packages"][0]
+    assert seen["taken"] is True
+    assert team["ops"] not in str(seen) and "claimed_by" not in seen
+
+
+def test_start_again_clears_stale_dates_and_recomputes_the_rate_card_and_lists_every_change(client, team):
+    pid = send(client, team["sales"], values={"price": 1, "cost": 1, "pallets": 10}).json["id"]
+    got = client.post(f"/api/handoffs/{pid}/again", json={"token": team["sales"]}).json
+    assert got["values"]["delivery_date"] == "" and got["values"]["customer"] == "Acme"
+    rate = tools.quote_price("Hanoi-Haiphong", 10)
+    assert got["values"]["price"] == rate["price"] and got["values"]["cost"] == rate["cost"]
+    assert any("Delivery date cleared" in c for c in got["changes"])
+    assert any("Price recomputed" in c for c in got["changes"])
+    assert not any(team["sales"] in c for c in got["changes"])
+
+
+def test_start_again_works_only_from_my_own_handoff_and_stores_nothing(client, team):
+    pid = send(client, team["sales"]).json["id"]
+    before = client.get("/api/inbox", query_string={"token": team["sales"]}).json
+    assert client.post(f"/api/handoffs/{pid}/again", json={"token": team["ops"]}).status_code == 403
+    client.post(f"/api/handoffs/{pid}/again", json={"token": team["sales"]})
+    assert client.get("/api/inbox", query_string={"token": team["sales"]}).json == before
