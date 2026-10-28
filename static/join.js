@@ -291,6 +291,47 @@ function describe(result) {
   return lines;
 }
 
+// --- my private rules ------------------------------------------------------------------
+// Tighten-only: the server refuses a number looser than the company's and the form says which one.
+// What is saved here is read back only with this invite link; the owner has no route to it.
+const RULE_LABELS = {
+  margin_floor_pct: ['Margin floor (%)', 'At least', 'The company allows nothing below'],
+  escalation_usd: ['Approval limit (USD)', 'At most', 'The company escalates above'],
+};
+function personalRulesPanel() {
+  const out = el('div');
+  const status = el('p', { class: 'progress', role: 'status' });
+  const errors = el('div', { role: 'alert' });
+  const inputs = {};
+  const body = el('details', { class: 'section' }, el('summary', {}, el('h2', {}, 'My private rules')),
+    el('p', { class: 'muted' }, 'Stricter limits for your own assistant only. Only you can read them: ' +
+      'not the owner, not your unit. They can never be looser than the company limits.'), out);
+  const load = async () => {
+    const res = await api(`/api/personal-rules?token=${encodeURIComponent(token)}`);
+    const above = res.data.company || {}, mine = res.data.rules || {};
+    clear(out);
+    for (const rule of Object.keys(RULE_LABELS)) {
+      const [label, direction, note] = RULE_LABELS[rule];
+      inputs[rule] = el('input', { id: `pr-${rule}`, type: 'number', inputmode: 'decimal', value: mine[rule] ?? above[rule] ?? '' });
+      out.append(el('label', { for: `pr-${rule}` }, label),
+        el('p', { class: 'muted' }, `${direction} ${above[rule]} for you. ${note} ${above[rule]}.`), inputs[rule]);
+    }
+    out.append(el('div', { class: 'row' }, el('button', { class: 'primary', onclick: save }, 'Save my rules')), errors, status);
+  };
+  const save = async () => {
+    const values = {};
+    for (const rule in inputs) values[rule] = inputs[rule].value === '' ? null : Number(inputs[rule].value);
+    const res = await api('/api/personal-rules', { method: 'PUT', body: { token, ...values } });
+    clear(errors);
+    if (res.ok) { status.textContent = 'Saved. Only your assistant uses these.'; return; }
+    status.textContent = '';
+    errors.append(el('div', { class: 'errors' }, el('ul', {}, (res.data.errors || [{ message: res.data.message || 'Could not save.' }])
+      .map((e) => el('li', {}, e.message)))));
+  };
+  load();
+  return body;
+}
+
 // --- page ------------------------------------------------------------------------------
 (async () => {
   try {
@@ -304,7 +345,7 @@ function describe(result) {
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
       info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
-      firstDaysPanel(), inboxPanel(info, token), chatPanel(info),
+      firstDaysPanel(), inboxPanel(info, token), chatPanel(info), personalRulesPanel(),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
       ...(info.handoff_schema.id === 'logistics'
         ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []),

@@ -1,5 +1,6 @@
 // Inbox and Today: documents waiting between roles. Everything shown is about packages, never people.
 import { confirmMask } from '/static/mask.js';
+import { download, readRecord, toCsv, toJson } from '/static/exchange.js';
 import { photoPicker } from '/static/photo.js';
 import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
@@ -148,7 +149,8 @@ export function inboxPanel(info, token) {
       p.history.map((h) => el('p', { class: 'muted' },
         `Returned before: ${h.reason}. ` + (h.changes.length ? `Then changed ${h.changes.join('; ')}.` : 'Sent again unchanged.'))),
       ...findingsBlock(p.findings),
-      why ? el('p', { class: 'errors', role: 'status' }, `You cannot accept this: ${why} Return it with a reason.`) : null,
+      why ? el('div', { class: 'block-banner', role: 'alert' }, el('strong', {}, '⛔ Blocked: no one can accept this'),
+        el('p', {}, `${why} Return it with a reason.`)) : null,
       el('div', { class: 'row' }, actions), fix);
   }
 
@@ -186,6 +188,19 @@ export function inboxPanel(info, token) {
       ...findingsBlock(res.data.findings));
   });
 
+  const importResult = el('p', { role: 'status', class: 'muted' });
+  const importInput = el('input', { id: 'send-import', type: 'file', accept: '.json,.csv,application/json,text/csv' });
+  importInput.addEventListener('change', async () => {
+    const file = importInput.files[0];
+    if (!file) return;
+    try {
+      const values = readRecord(await file.text(), schema);
+      fields.fill(values);
+      clear(importResult, `Filled ${Object.keys(values).length} fields from ${file.name}. Nothing was sent: check every field, then send.`);
+    } catch (e) { clear(importResult, el('span', { class: 'errors', role: 'alert' }, e.message)); }
+    importInput.value = '';
+  });
+
   const check = el('button', { onclick: async () => {
     const got = await fields.read(maskBox);
     if (!got) return;
@@ -208,10 +223,21 @@ export function inboxPanel(info, token) {
     refresh();
   } }, 'Send handoff');
 
+  const exportRow = el('div', { class: 'row' },
+    el('button', { onclick: async () => exportAs('json') }, 'Export JSON'),
+    el('button', { onclick: async () => exportAs('csv') }, 'Export CSV'));
+  async function exportAs(kind) {
+    const res = await api(`/api/inbox?token=${encodeURIComponent(token)}`);
+    const packages = res.data.packages.filter((p) => p.schema.id === schema.id);
+    if (kind === 'json') download('handoffs.json', toJson(packages), 'application/json');
+    else download('handoffs.csv', toCsv(packages, schema), 'text/csv');
+  }
+
   refresh();
-  return el('section', {}, el('h2', {}, 'Inbox'), todayBox, msg, list,
+  return el('section', {}, el('h2', {}, 'Inbox'), todayBox, msg, list, exportRow,
     el('h3', {}, 'Send a handoff'),
     el('p', { class: 'muted' }, 'It goes to the whole receiving team. Someone there takes it and decides. Nobody can decide on their own package.'),
-    el('label', { for: 'to-role' }, 'To'), toRole, photo, photoResult, ...fields.rows, maskBox,
+    el('label', { for: 'to-role' }, 'To'), toRole, photo, photoResult,
+    el('label', { for: 'send-import' }, 'Fill from a JSON or CSV file (optional)'), importInput, importResult, ...fields.rows, maskBox,
     el('div', { class: 'row' }, check, sendBtn), result);
 }
