@@ -156,9 +156,16 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     step, trace = steps[index], []
     values = package_values(plan["task"], results)
 
+    starting = []
+
     def ask(messages, **kw):
         if step["private"]:
-            return muse.complete(None, messages, private=True, **kw)
+            if starting:  # the container is cold: a second wait would run past the request limit
+                return muse.demo_result("private", muse.PRIVATE_STARTING)
+            out = muse.complete(None, messages, private=True, **kw)
+            if out["demo_reason"] == muse.PRIVATE_STARTING:
+                starting.append(True)
+            return out
         return muse.complete(muse.SPARK, messages, **kw)
 
     tool_result, args_from_package = call_tool(step, values, ask, blocked, trace)

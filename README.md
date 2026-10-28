@@ -137,6 +137,14 @@ time at the company:
    nothing is stored. Measured: 11 of 11 questions on a seeded inbox, 0 leaks, 0 followed
    injections; equal to pasting the inbox into the prompt on accuracy and slightly dearer at this
    size (MEASURED.md, set 8).
+14. **My private rules:** on their own link a person sets a stricter margin floor or approval limit
+   for their own assistant. The server refuses anything looser than the company's number and says
+   which one; what is saved is readable only with that link, never by the owner or a unit. The
+   numbers come from code, the model only uses them in that person's chat.
+15. **Plug into what you already run:** a handoff can be filled from a JSON or CSV file and the
+   inbox exported as JSON or CSV. Import only fills the form (free-text notes are left out so they
+   still pass the masking step), a person checks and sends it, and exported cells that start like
+   a spreadsheet formula get a leading quote. No connector, key or outbound call is involved.
 
 ## Meta models used
 

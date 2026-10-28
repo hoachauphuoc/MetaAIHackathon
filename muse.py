@@ -38,6 +38,9 @@ def check_model(model, private=False):
 
 
 PRIVATE_STARTING = "Private mode starting"
+# A cold container needs about 3 minutes, so waiting longer cannot help: answer "starting" well inside the
+# 120 s the host allows a request, or the person sees a 504 and no label.
+PRIVATE_TIMEOUT = 35
 
 
 def private_config():
@@ -68,7 +71,7 @@ def _client(private=None):
     if private:
         with open(private["key_file"], encoding="utf-8") as f:
             return OpenAI(api_key=f.read().strip(), base_url=private["base_url"], max_retries=0,
-                          timeout=60)
+                          timeout=PRIVATE_TIMEOUT)
     key = _api_key()
     if not key:
         raise RuntimeError("no Meta API key configured")
@@ -110,6 +113,8 @@ def complete(model, messages, reasoning_effort="low", private=False, **kwargs):
                 model=model, messages=messages, reasoning_effort=reasoning_effort, **kwargs)
         except Exception as e:  # any failure, including a missing key, becomes a labelled fallback
             error = type(e).__name__
+            if cfg and error in ("APITimeoutError", "APIConnectionError"):
+                break  # a second try would only wait out the same cold start
             continue
         msg = r.choices[0].message
         calls = [{"name": c.function.name, "arguments": c.function.arguments}

@@ -105,3 +105,4 @@ def test_a_cold_private_container_is_labelled_starting_and_never_uses_the_meta_a
     out = muse.complete(None, [], private=True)
     assert out["demo_mode"] and out["demo_reason"] == muse.PRIVATE_STARTING
     assert seen and all(cfg is not None for cfg in seen)
+    assert len(seen) == 1, "a cold start is not retried: two waits would pass the 120 s request limit"

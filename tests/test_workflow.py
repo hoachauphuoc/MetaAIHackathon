@@ -269,3 +269,18 @@ def test_a_starting_private_mode_tells_the_person_to_retry(monkeypatch):
     plan = plan_for()
     out = run(plan, "margin", approve_all(plan, 2))["result"]
     assert any("starting" in f["message"] and "retry" in f["message"] for f in out["findings"])
+
+
+def test_a_cold_private_step_waits_once_not_per_call(monkeypatch):
+    calls = []
+
+    def fake(model, messages, private=False, **kw):
+        if private:
+            calls.append(1)
+            return reply(model="private", demo_mode=True, demo_reason=muse.PRIVATE_STARTING)
+        return FakeMuse()(model, messages, private=False, **kw)
+
+    monkeypatch.setattr(muse, "complete", fake)
+    plan = plan_for()
+    out = run(plan, "margin", approve_all(plan, 2))["result"]
+    assert len(calls) == 1 and out["demo_reason"] == muse.PRIVATE_STARTING
