@@ -23,7 +23,7 @@ Reply to the user in Vietnamese; every produced file is English.
 - Public repository; a **3-minute** demo video that shows only what was built during the hackathon; every contributor listed; submit on the Cerebral Valley platform by 2026-11-04 9:00 PM EST.
 - **New work only (Indie may not build on existing code):** the Participant Guide gives the building period as Oct 27 – Nov 4, 2026 (kickoff Oct 26, 12:00 PM ET). Use the window recorded in `C:/Users/phuochoa/MetaAI_design_pre_event/PROGRESS.md` Decisions, and disclose anything built before it. README needs a "Built during the hackathon" section with that window, citing `git log --reverse --format="%h %ad %s" --date=short`, and a short "Not built during the hackathon" list: development tooling copied from earlier projects (`.claude/skills_archive/`), the libraries in `requirements.txt`. Failing to separate these risks disqualification.
 - Avoid the anti-project framing: describe the agent pipeline (survey → Wonder org design → rule check → parallel Spark assistant builds → private open-weights mode), never "a chatbot" or "RAG".
-- Bonus prizes to flag in the submission: Best Build on Meta Open Weight Models (Private mode on Muse Spark Open / Glimmer, name the provider), Best Agentic Use-Case, Most Viral (X post link; produce a ≤ 280-character post text plus the 45-second clip plan), Community Vote.
+- Bonus prizes to flag in the submission: Best Build on Meta Open Weight Models (Private mode on Muse Spark Open / Glimmer, name the provider), Best Agentic Use-Case, Best Creative Build (Muse Wonder designs the org chart), Most Viral (X post link; produce a ≤ 280-character post text plus the 45-second clip plan), Community Vote.
 
 ## Rules
 

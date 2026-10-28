@@ -3,7 +3,11 @@
 A small company answers ten questions. Meta Muse Wonder designs its org chart, code rules check
 the chart, and Muse Spark writes an AI assistant brief for every role. Employees open their own
 link, chat with their role's assistant and run a team workflow in which one person approves every
-handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo.
+handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, for the problem
+statement **Build for Your World**: the domain is the small company the author knows firsthand, and
+the time freed is the owner's and each employee's.
+
+**Live:** https://role-assistants-662084666675.us-central1.run.app
 
 This is an agent pipeline, not a chatbot: survey, then Wonder (design), then rules (validate),
 then Spark in parallel (assistants), then the assistants hand work to each other along the chart
@@ -11,7 +15,7 @@ with a person gating every step.
 
 ## For judges
 
-- **Try it:** open the live URL (added to the submission), press **Try the demo company**, then
+- **Try it:** open https://role-assistants-662084666675.us-central1.run.app, press **Try the demo company**, then
   **Design my org chart**. Nothing to sign up for.
 - **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
@@ -220,3 +224,7 @@ python scripts/record_demo.py              # records the golden path as a captio
 Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager).
 
 Models are called through the OpenAI SDK pointed at `https://api.meta.ai/v1`.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
