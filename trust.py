@@ -24,7 +24,12 @@ NEVER_STORED = [
     "Workflow orders, tool results and approvals: they stay in your browser.",
     "A suggested fix for a returned package: shown to the sender once and never saved. Only the "
     "version the sender chooses to resend is stored.",
-    "Photos of paper documents: sent to the model once to fill the form, then dropped.",
+    "Photos of paper documents: sent to the model once to fill the form, then dropped. If you ask to cover "
+    "something first, the photo also goes once to SAM 3.1 with Meta's storage switched off; only boxes come back "
+    "and the covering is painted in your browser.",
+    "A spoken job note: the recording is turned into text by the speech model once and dropped; only the text "
+    "reaches the message box, where you read and fix it before anything else happens. The text is then masked "
+    "in your browser like a pasted message. Nothing is kept.",
     "A customer message pasted to fill a form: emails and phone numbers are masked in your browser first, "
     "the rest is sent to the model once to fill the form, then dropped. Nothing is kept; you check every field.",
     "What the chat assistant read to answer you: it can only read your own documents, nothing "

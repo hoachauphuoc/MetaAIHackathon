@@ -10,7 +10,9 @@ the time freed is the owner's and each employee's.
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
 (Private mode). **Layered rules:** a company can split into units (Group, Subsidiary); a unit may
 only tighten its parent's margin floor and approval limit, and the server refuses a looser number,
-naming the rule and the parent's value. A one-level company sees no difference.
+naming the rule and the parent's value. A one-level company sees no difference. **Catches what rules
+cannot:** a package whose notes contradict its fields passes every rule, and the model layer flags it
+(set 11, Spark leg: 10 of 10 caught, 1 false alarm in 10 clean ones; the author wrote the cases).
 
 **Measured, rerunnable:** with the role playbook and company rules in the prompt the assistant passed
 9 of 10 rule questions, against 2 of 10 with a plain role prompt (set 4, string-match checks written by
@@ -154,6 +156,18 @@ time at the company:
    checks and sends. Nothing is stored.
 18. **Start from a past quote:** a new draft from one of the sender's own handoffs. Dates are
    cleared, rate-card figures are recomputed by code, and every change is listed.
+19. **Speak the job:** a push-to-talk button (up to 60 seconds) turns a spoken job note into text with
+   Muse Voice Transcribe. The browser converts the recording to 16 kHz mono WAV, the server checks it
+   by code (format, length) and sends it once; only the text comes back, into the message box of
+   item 17, so the same masking, the same model reading and the same person checks apply. The
+   recording is never stored. Measured once with a real microphone (a Vietnamese sentence came out
+   right); not yet measured on noisy speech or on a full order (see Limits).
+20. **Cover before reading:** on a photo, the person names what to hide (for example `signature`),
+   SAM 3.1 outlines it, and the browser paints those boxes black on its own copy before Spark reads the
+   photo. Only boxes come back (code parses and clips them), the request sets `store: false`, and the
+   screen says SAM can miss things: the person looks at the preview before sending. Checked in a hidden
+   browser against the real endpoint on a synthetic page (a red rectangle became black); not measured
+   on real documents.
 
 ## Meta models used
 
@@ -161,6 +175,8 @@ time at the company:
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
 | `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields after the amount-cleaning fix (56 of 60 on the first run), median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines; model layer of the handoff check flagged 10 of 10 contradictions the rules cannot see, 1 false alarm in 10 (set 11, Spark only) |
+| `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not yet run against the real endpoint; list price USD 0.18 per audio hour, so a 30 second note is about USD 0.0015 |
+| `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | One real call on a synthetic page returned the exact box; price not published on the docs page, so no cost is claimed |
 | `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
@@ -224,6 +240,11 @@ scenarios anchored on published figures. **The busy one is our headline: about U
   ([Hobson & Company, via TradeCentric](https://tradecentric.com/blog/manual-order-processing-cost)), so
   50 is about 8 hours of handling for the team.
 
+Setup time, measured on 2026-10-28 with the real models in a hidden browser run of the demo company
+(5 roles): the chart took 6.0 s and the five assistant briefs 4.7 to 6.3 s each, one after another, 31.9 s
+in all. That is the app's side only: typing the ten answers and reading the result are not counted, and
+the same job by hand was not timed. Details in [docs/MEASURED.md](docs/MEASURED.md) (setup time).
+
 | | Light | Busy | All day |
 |---|---|---|---|
 | Setup, once (1 chart USD 0.038 + 5 briefs USD 0.0047 each) | USD 0.06 | USD 0.06 | USD 0.06 |
@@ -250,28 +271,30 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   GPU, so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start takes about 200 s and the app waits 60 s a try, so when the endpoint is
-  idle the step says `Private mode is starting, which takes about 3 minutes: press retry` and asks a
-  person to check; when Private mode is not configured it says `Private mode unavailable`. It never
+  warm endpoint. A cold start takes about 200 s and the app waits 35 s a try, so when the endpoint is
+  idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
+  person to press retry; when Private mode is not configured it says `Private mode unavailable`. It never
   uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
   more often than Spark.
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
   24 hours and are lost on restart.
 - Photo reading was measured on rendered sheets, including phone-degraded ones in handwriting-style
-  fonts (set 9), not phone photos of real, creased or handwritten paper; expect misreads there. Photos are not masked for personal data. Voice and
-  web search are not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried,
-  and voice was not tried.
+  fonts (set 9), not phone photos of real, creased or handwritten paper; expect misreads there. Photos are not masked for personal data. Web search
+  is not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried. Voice input
+  (item 19) is built and tested with fake recordings and a stubbed model; a real-model
+  word-error rate on noisy speech has not been measured.
 - The morning brief, first-days plan and handover draft were each run against the real model
   only a few times (see MEASURED); the handover is worded by the model from the person's own
   notes, which the person must read before sending.
-- Measured sets are synthetic and small; the model layer of the gate was not tested for
-  contradictions the rules cannot see.
+- Measured sets are synthetic and small. The model layer of the gate was tested for contradictions the
+  rules cannot see in set 11 (Spark leg only: 10 of 10 caught, 1 false alarm in 10 consistent
+  packages, written by the author); the Glimmer leg (`set11p`) has not been run.
 - The handoff form is generic; the fixed Sales, Operations, Finance order demo and its rate card
   exist only for the logistics form, so other trades see the inbox and chat only. Only the notes
   field is masked for personal data in the browser; the other text fields are not, so do not type
   personal names into them (also stated on `/trust`).
 - Not built: Shadow/Assist/Primary modes, handoffs to a named person, manager assignment, parallel
-  approval, CSV import, export, voice, org advisor.
+  approval, org advisor. (Handoff JSON/CSV import and export are built; see "How it works".)
 - PII masking is pattern-based and cannot detect names (shown to the user and on `/trust`).
 
 ## Run it

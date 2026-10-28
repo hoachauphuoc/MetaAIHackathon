@@ -16,10 +16,12 @@ import handover
 import muse
 import onboarding
 import rules
+import sam
 import store
 import tools
 import trust
 import vision
+import voice
 import workflow
 import workspace
 
@@ -493,6 +495,25 @@ def create_app(db_path=None):
         body, me, company = me_and_context()
         return jsonify(vision.read_values(body.get("image"), effective_schema(company), effective_params(company),
                                           datetime.date.today(), lambda: db.spend_model_call(me["sandbox_id"])))
+
+    @app.post("/api/transcribe")
+    def transcribe():
+        """Turn a short spoken job note into text for the message box. Nothing is stored."""
+        body, me, company = me_and_context()
+        try:
+            return jsonify(voice.transcribe(body.get("audio"), lambda: db.spend_model_call(me["sandbox_id"])))
+        except voice.BadAudio as e:
+            return jsonify(error="bad_audio", message=str(e)), 400
+
+    @app.post("/api/photo/regions")
+    def photo_regions():
+        """Outline what a short phrase names in a photo so the browser can cover it. Nothing is stored."""
+        body, me, company = me_and_context()
+        try:
+            return jsonify(sam.find_regions(body.get("image"), body.get("phrase"),
+                                            lambda: db.spend_model_call(me["sandbox_id"])))
+        except (vision.BadImage, ValueError) as e:
+            return jsonify(error="bad_request", message=str(e)), 400
 
     @app.post("/api/handoffs/from-text")
     def handoff_from_text():

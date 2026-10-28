@@ -2,6 +2,7 @@
 import { confirmMask } from '/static/mask.js';
 import { download, readRecord, toCsv, toJson } from '/static/exchange.js';
 import { photoPicker } from '/static/photo.js';
+import { MAX_SECONDS, recordingToWav, toDataUrl } from '/static/wav.js';
 import { reminderText, stuckLine, stuckRows } from '/static/stuck.js';
 import { api, badge, clear, demoNote, el, statusBadge } from '/static/ui.js';
 
@@ -215,10 +216,40 @@ export function inboxPanel(info, token) {
       unclear.length ? el('p', { class: 'errors', role: 'status' },
         `A person must check this: ${unclear.join(', ')}. The photo was not clear there, so the field is empty.`) : null,
       ...findingsBlock(res.data.findings));
-  });
+  }, (phrase, image) => api('/api/photo/regions', { method: 'POST', body: { token, image, phrase } }));
 
   const emailBox = el('textarea', { id: 'send-email', maxlength: '4000', placeholder: "Paste the customer's message here" });
   const emailMask = el('div');
+  const voiceResult = el('p', { role: 'status', class: 'muted' });
+  let recorder = null;
+  const voiceBtn = el('button', { id: 'send-voice', onclick: async () => {
+    if (recorder) { recorder.stop(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      const timer = setTimeout(() => recorder && recorder.stop(), MAX_SECONDS * 1000);
+      recorder.onstop = async () => {
+        clearTimeout(timer);
+        stream.getTracks().forEach((t) => t.stop()); // the microphone is released as soon as the note ends
+        recorder = null;
+        voiceBtn.textContent = 'Speak the job';
+        clear(voiceResult, 'Writing down what you said...');
+        try {
+          const audio = toDataUrl(await recordingToWav(new Blob(chunks)));
+          const res = await api('/api/transcribe', { method: 'POST', body: { token, audio } });
+          if (!res.ok) { clear(voiceResult, el('span', { class: 'errors', role: 'alert' }, res.data.message)); return; }
+          if (res.data.demo_mode) { clear(voiceResult, demoNote(res.data.demo_reason)); return; }
+          emailBox.value = res.data.text;
+          clear(voiceResult, 'Read your words into the box below. Fix anything wrong, then fill the form. The recording was not kept.');
+        } catch (e) { clear(voiceResult, el('span', { class: 'errors', role: 'alert' }, 'The recording could not be used. Type the job instead.')); }
+      };
+      recorder.start();
+      voiceBtn.textContent = `Stop (up to ${MAX_SECONDS} s)`;
+      clear(voiceResult, 'Listening...');
+    } catch (e) { clear(voiceResult, el('span', { class: 'errors', role: 'alert' }, 'The microphone is not available. Type the job instead.')); }
+  } }, 'Speak the job');
   const emailResult = el('div', { role: 'status' });
   const emailBtn = el('button', { onclick: async () => {
     // Masked in the browser first, like notes: the model never sees an email address or a phone number.
@@ -289,7 +320,7 @@ export function inboxPanel(info, token) {
     el('p', { class: 'muted' }, 'It goes to the whole receiving team. Someone there takes it and decides. Nobody can decide on their own package.'),
     el('label', { for: 'to-role', id: 'send-to-role' }, 'To'), toRole, againResult, photo, photoResult,
     el('label', { for: 'send-email' }, "Fill from the customer's message (optional)"), emailBox, emailMask,
-    el('div', { class: 'row' }, emailBtn), emailResult,
+    el('div', { class: 'row' }, voiceBtn, emailBtn), voiceResult, emailResult,
     el('label', { for: 'send-import' }, 'Fill from a JSON or CSV file (optional)'), importInput, importResult, ...fields.rows, maskBox,
     el('div', { class: 'row' }, check, sendBtn), result);
 }

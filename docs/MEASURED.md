@@ -262,3 +262,17 @@ so they test the patterns, not an independent sample.
 | Detectable personal items (emails, phones, cards with a valid checksum, SSN, 12-digit IDs, IBAN) found with the right type | 24 of 24 |
 | Names (not detectable by patterns) | 0 of 4 found, by design, stated on `/trust` |
 | Ordinary business numbers (prices, order numbers, dates, plates) wrongly masked | 0 of 12 |
+
+## Setup time (app side, one real run)
+
+`2026-10-28`, real Spark and Wonder, demo survey, the five-role company, API calls made one after another from
+a hidden browser run of the app.
+
+| Step | Seconds |
+|---|---|
+| Chart (Wonder, rules check included) | 6.0 |
+| Accept the chart | 0.0 |
+| Brief for md / sales / ops / finance / support (Spark) | 6.3 / 5.3 / 4.8 / 4.8 / 4.7 |
+| Total | 31.9 |
+
+One run. It excludes the owner typing the survey and reading the result, and no hand-made equivalent was timed.

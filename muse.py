@@ -3,9 +3,12 @@
 A failed call never returns made-up model text: the result carries demo_mode=True so the
 UI can label it (principle 3). Logs hold model, tokens, cost and latency, never messages.
 """
+import json
 import logging
 import os
 import time
+import urllib.request
+import uuid
 
 from openai import OpenAI
 
@@ -162,3 +165,81 @@ def stream(model, messages, reasoning_effort="minimal", **kwargs):
     if cost_listener:
         cost_listener(out["cost_usd"])
     yield {"done": out}
+
+
+TRANSCRIBE = "muse-voice-transcribe-1.0"
+TRANSCRIBE_USD_PER_HOUR = 0.18  # billed by audio length, not tokens
+ASR_URL = BASE_URL + "/asr/transcribe"
+
+
+def _multipart(edge, settings, wav):
+    """The two parts the speech endpoint wants: the JSON settings and the audio file."""
+    crlf = bytes((13, 10))
+
+    def head(disposition, kind):
+        return f"--{edge}".encode() + crlf + disposition.encode() + crlf + f"Content-Type: {kind}".encode() + crlf + crlf
+
+    return (head('Content-Disposition: form-data; name="request"', "application/json") + settings + crlf
+            + head('Content-Disposition: form-data; name="audio"; filename="note.wav"', "audio/wav") + wav + crlf
+            + f"--{edge}--".encode() + crlf)
+
+
+def transcribe(wav, timeout=60):
+    """Speech to text for one short recording (16-bit mono WAV, checked by the caller). The audio is sent once
+    and dropped; the result is labelled demo_mode on any failure, like complete()."""
+    if os.environ.get("FAKE_AI"):
+        return {**_result(TRANSCRIBE, True, "FAKE_AI"), "audio_ms": 0}
+    start = time.time()
+    try:
+        key = _api_key()
+        if not key:
+            raise RuntimeError("no Meta API key configured")
+        edge = "----role-assistants-" + uuid.uuid4().hex  # stdlib multipart: no HTTP library to depend on
+        settings = json.dumps({"mode": "ENDPOINTING", "model": TRANSCRIBE, "audioEncoding": "WAV"}).encode()
+        body = _multipart(edge, settings, wav)
+        req = urllib.request.Request(ASR_URL, data=body, method="POST", headers={
+            "Authorization": f"Bearer {key}", "Content-Type": f"multipart/form-data; boundary={edge}"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            reply = json.loads(r.read())
+        audio_ms = int(reply.get("audioDurationMs") or 0)
+        out = {**_result(TRANSCRIBE, False, text=str(reply.get("transcript") or ""),
+                         latency_ms=int((time.time() - start) * 1000)), "audio_ms": audio_ms}
+    except Exception as e:
+        log.warning("model=%s failed: %s", TRANSCRIBE, type(e).__name__)
+        return {**_result(TRANSCRIBE, True, type(e).__name__), "audio_ms": 0}
+    out["cost_usd"] = out["audio_ms"] / 3_600_000 * TRANSCRIBE_USD_PER_HOUR
+    log.info("model=%s audio_ms=%d cost=%.6f ms=%d", TRANSCRIBE, out["audio_ms"], out["cost_usd"], out["latency_ms"])
+    if cost_listener:
+        cost_listener(out["cost_usd"])
+    return out
+
+
+SEGMENT = "sam-3.1"
+RESPONSES_URL = BASE_URL + "/responses"
+
+
+def segment(phrase, data_url, timeout=60):
+    """Ask SAM 3.1 to outline what a short phrase names in one image. Returns its token text. store=false: Meta keeps
+    no copy of the request. SAM's price is not on the pricing page, so the cost is recorded as 0 and the call is
+    counted by the daily ceiling instead."""
+    if os.environ.get("FAKE_AI"):
+        return _result(SEGMENT, True, "FAKE_AI")
+    start = time.time()
+    try:
+        key = _api_key()
+        if not key:
+            raise RuntimeError("no Meta API key configured")
+        body = {"model": SEGMENT, "store": False, "metadata": {"include_confidence": "true"}, "input": [{
+            "type": "message", "role": "user", "content": [
+                {"type": "input_text", "text": phrase}, {"type": "input_image", "image_url": data_url}]}]}
+        req = urllib.request.Request(RESPONSES_URL, data=json.dumps(body).encode(), method="POST", headers={
+            "Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            reply = json.loads(r.read())
+        text = "".join(part.get("text", "") for item in reply.get("output", []) for part in item.get("content", [])
+                       if part.get("type") == "output_text")
+    except Exception as e:
+        log.warning("model=%s failed: %s", SEGMENT, type(e).__name__)
+        return _result(SEGMENT, True, type(e).__name__)
+    log.info("model=%s ms=%d", SEGMENT, int((time.time() - start) * 1000))
+    return _result(SEGMENT, False, text=text, latency_ms=int((time.time() - start) * 1000))
