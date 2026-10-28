@@ -5,6 +5,8 @@
 Run the app with `scripts/run.ps1 -Real` first. With FAKE_AI the video would show the demo
 label everywhere, so use it only to rehearse. One browser page is used for every role so the
 recording stays a single file; the person switches by opening the invite links in turn.
+Warm the Private-mode endpoint first (`modal run scripts/private_modal.py`, a few minutes before):
+a cold Glimmer takes about 200 s, the app waits 60 s, and the take would show "Private mode unavailable".
 """
 import argparse
 import re
@@ -130,8 +132,8 @@ def run(base, out):
         approve = page.locator("button:not([disabled])", has_text="Approve and hand over")
         lines = ["Sales quotes the order. The margin is computed by code, not by the model.",
                  "Operations schedules the delivery. Nothing moves until you approve.",
-                 "Finance's step says 'Private mode unavailable' and asks a person to check. "
-                 "It never falls back to the standard API."]
+                 "Finance runs on an open-weights Muse model in Private mode, hosted on Modal. "
+                 "If it is unreachable the step says so and a person must check; it never falls back to the standard API."]
         for line in lines:
             approve.last.wait_for()
             look(approve.last)

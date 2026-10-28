@@ -144,7 +144,7 @@ async function showAssistants() {
     el('p', { class: 'progress', role: 'status' }, 'Muse Spark is writing every role brief in parallel...'),
     grid,
     el('div', { class: 'row' }, switchBox,
-      el('label', { for: 'muse-off', style: 'margin:0;font-weight:400' },
+      el('label', { for: 'muse-off', class: 'inline-label' },
         'Switch Muse off for this sandbox (to see the labelled demo mode)'))));
   const cards = Object.fromEntries(roles.map((r) => {
     const card = el('div', { class: 'card' }, el('h3', {}, r.title), el('p', { class: 'progress' }, 'Writing...'));

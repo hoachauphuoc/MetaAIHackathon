@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import app as app_module
@@ -84,3 +86,10 @@ def test_pages_are_served_with_a_strict_csp(client):
         assert "script-src 'self'" in r.headers["Content-Security-Policy"]
         assert r.headers["Referrer-Policy"] == "no-referrer"
     assert client.get("/static/ui.js").status_code == 200
+
+
+def test_no_script_sets_an_inline_style():
+    # The CSP is style-src 'self': an inline style attribute is blocked and logs a console error.
+    offenders = [f.name for f in (Path(__file__).parent.parent / "static").glob("*.js")
+                 if "style:" in f.read_text(encoding="utf-8") or ".style.cssText" in f.read_text(encoding="utf-8")]
+    assert offenders == []

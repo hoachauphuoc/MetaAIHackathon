@@ -13,7 +13,7 @@ with a person gating every step.
 
 - **Try it:** open the live URL (added to the submission), press **Try the demo company**, then
   **Design my org chart**. Nothing to sign up for.
-- **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role, five for the demo company), press
+- **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode unavailable` and `A person must check this` (see Limits).
