@@ -107,6 +107,28 @@ def set1():
             "median_latency_s": sorted(r[2] for r in rows)[len(rows) // 2] / 1000}
 
 
+CLINIC_AND_SOFTWARE = [
+    ("clinic", 9, "Dental check-ups, fillings and treatment plans"), ("clinic", 14, "A family medical practice"),
+    ("clinic", 6, "A physiotherapy clinic"), ("clinic", 20, "A veterinary clinic with a small pharmacy"),
+    ("clinic", 11, "An eye-care clinic selling glasses"),
+    ("software", 12, "Custom software for small shops"), ("software", 7, "A mobile app studio"),
+    ("software", 25, "A DevOps consultancy"), ("software", 5, "A two-team web agency"),
+    ("software", 16, "A data engineering contractor")]
+
+
+def set13():
+    """Set 1 again for the two industries added later: the chart must still pass the rules without the template."""
+    def one(c):
+        out = chart.generate({"company_name": "Test Co", "industry": c[0], "headcount": c[1],
+                              "main_work": c[2], "departments": "Operations, Finance"})
+        return out["source"] == "wonder", out.get("cost_usd", 0), out.get("latency_ms", 0)
+    with concurrent.futures.ThreadPoolExecutor(5) as pool:
+        rows = list(pool.map(one, CLINIC_AND_SOFTWARE))
+    return {"passed_first_try": sum(r[0] for r in rows), "of": len(rows),
+            "cost_usd": round(sum(r[1] for r in rows), 4),
+            "median_latency_s": sorted(r[2] for r in rows)[len(rows) // 2] / 1000}
+
+
 def set2(private=False):
     cases = [("seeded", *seeded(i)) for i in range(12)]
     cases += [("injection", "injection on a clean package", {**clean_package(i), "notes": INJECTION})
@@ -664,12 +686,12 @@ SETS = {"set1": ("set1_chart", set1), "set2": ("set2_gate", set2),
         "set8": ("set8_reads_documents", set8), "set9": ("set9_handwriting_and_smudges", set9),
         "set10": ("set10_private_mode", set10), "set11": ("set11_contradictions", set11),
         "set11p": ("set11_contradictions_private", lambda: set11(private=True)),
-        "set12": ("set12_reasoning_effort", set12)}
+        "set12": ("set12_reasoning_effort", set12), "set13": ("set13_clinic_software_charts", set13)}
 
 if __name__ == "__main__":
     models = [muse.WONDER, muse.SPARK] + ([os.environ["PRIVATE_MODEL"]] if {"set10", "set11p"} & set(sys.argv[1:]) else [])
     out = {"date": datetime.date.today().isoformat(), "models": models}
-    for name in sys.argv[1:] or [n for n in SETS if n not in ("set10", "set11", "set11p", "set12")]:
+    for name in sys.argv[1:] or [n for n in SETS if n not in ("set10", "set11", "set11p", "set12", "set13")]:
         key, fn = SETS[name]
         out[key] = fn()
         print(json.dumps(out, indent=2), flush=True)  # keep earlier sets if a later one fails

@@ -19,6 +19,20 @@ than the company has) with no repair.
 On the demo survey run alone through the UI, one chart took 18 s and cost USD 0.038. Latency
 varies, so the UI shows a progress line and a labelled Template stands in if Wonder fails.
 
+## Set 13: Wonder's chart for the clinic and software industries
+
+`python scripts/measure.py set13`, 2026-10-29, Wonder. Set 1 again with 5 synthetic clinics and 5 synthetic
+software companies (5 to 25 people), asked for through the same function, so a result counts only if Wonder
+answered and the chart passed the rules with no repair.
+
+| Result | Value |
+|---|---|
+| Passed the rules on the first try | 10 of 10 |
+| Total cost of the 10 charts | USD 0.171 |
+| Median latency (5 in parallel) | 11.3 s |
+
+Synthetic companies, one run, small sample; slower than set 1 (5.9 s) in this run.
+
 ## Set 2: the two-layer handoff gate
 
 30 synthetic quote packages. Layer 1 is code (`rules.check_package`). Layer 2 is Spark reading the
