@@ -102,6 +102,16 @@ def create_app(db_path=None):
     def make_chart():
         sandbox_id = current_sandbox()
         answers = (request.get_json(silent=True) or {}).get("answers") or {}
+        if request.args.get("stream") == "1":
+            def events():
+                try:
+                    for kind, value in chart.generate_steps(answers, lambda: db.spend_model_call(sandbox_id)):
+                        yield sse(kind, {"text": value} if kind == "stage" else value)
+                except ValueError as e:
+                    yield sse("error", {"message": str(e)})
+
+            return Response(events(), mimetype="text/event-stream",
+                            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
         try:
             return jsonify(chart.generate(answers, lambda: db.spend_model_call(sandbox_id)))
         except ValueError as e:

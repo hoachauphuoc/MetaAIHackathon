@@ -98,3 +98,12 @@ def test_no_script_sets_an_inline_style():
     offenders = [f.name for f in (Path(__file__).parent.parent / "static").glob("*.js")
                  if "style:" in f.read_text(encoding="utf-8") or ".style.cssText" in f.read_text(encoding="utf-8")]
     assert offenders == []
+
+
+def test_the_chart_can_be_streamed_as_stages_then_the_chart(client):
+    h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
+    r = client.post("/api/chart?stream=1", json={"answers": {"company_name": "Acme", "industry": "logistics", "headcount": 14}}, headers=h)
+    assert r.mimetype == "text/event-stream"
+    events = [b.split("\n")[0] for b in r.get_data(as_text=True).strip().split("\n\n")]
+    assert events[0] == "event: stage" and events[-1] == "event: done"
+    assert client.post("/api/chart?stream=1", json={"answers": {}}).status_code == 410

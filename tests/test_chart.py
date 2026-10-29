@@ -67,3 +67,18 @@ def test_bad_headcount_is_refused():
 
 def test_invisible_characters_are_stripped_from_answers():
     assert chart.clean_answers({"headcount": 3, "tools": "a​b‮c"})["tools"] == "abc"
+
+
+def test_the_steps_come_in_the_real_order_and_the_last_one_is_the_chart(monkeypatch):
+    wonder_returns(monkeypatch, json.dumps(good_chart()))
+    steps = list(chart.generate_steps(ANSWERS))
+    assert [k for k, _ in steps] == ["stage", "stage", "stage", "done"]
+    assert steps[1][1].startswith("Asking Muse Wonder") and steps[2][1].startswith("Checking")
+    assert steps[-1][1]["source"] == "wonder" and chart.generate(ANSWERS) == steps[-1][1]
+
+
+def test_a_failed_wonder_call_skips_the_rules_step_and_is_labelled(monkeypatch):
+    wonder_returns(monkeypatch, "", demo=True)
+    steps = list(chart.generate_steps(ANSWERS))
+    assert [k for k, _ in steps] == ["stage", "stage", "done"]
+    assert steps[-1][1]["demo_mode"] is True and steps[-1][1]["source"] == "template"

@@ -1,7 +1,7 @@
 // Owner flow: survey -> org chart -> edit and accept -> assistants -> invite links.
 import { photoPicker } from '/static/photo.js';
 import { timeTile } from '/static/tile.js';
-import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
+import { api, badge, clear, demoNote, el, Expired, statusBadge, streamEvents } from '/static/ui.js';
 
 const app = document.getElementById('app');
 const FIELDS = [
@@ -61,14 +61,24 @@ function showSurvey() {
   const button = el('button', { class: 'primary', onclick: guard(async () => {
     for (const key in inputs) state.answers[key] = inputs[key].value;
     button.disabled = true;
-    status.textContent = 'Muse Wonder is designing your chart (about 20 seconds)...';
-    const res = await api('/api/chart', { method: 'POST', sandbox, body: { answers: state.answers } });
-    if (!res.ok) {
+    // Each line is a step the server really reached; the seconds are the real time since the step began.
+    let step = 0, began = Date.now(), line = '';
+    const draw = () => { status.textContent = `${line} (${Math.round((Date.now() - began) / 1000)} s)`; };
+    const ticker = setInterval(draw, 1000);
+    let result;
+    try {
+      result = await streamEvents('/api/chart?stream=1', { sandbox, body: { answers: state.answers },
+        onEvent: (name, data) => {
+          if (name !== 'stage') return;
+          step += 1; began = Date.now(); line = `Step ${step} of 3: ${data.text}`; draw();
+        } });
+    } finally { clearInterval(ticker); }
+    if (!result || result.error) {
       button.disabled = false;
-      status.textContent = res.data.message || 'Something went wrong.';
+      status.textContent = result?.error || 'Something went wrong.';
       return;
     }
-    state.chart = res.data;
+    state.chart = result;
     state.accepted = false;
     showChart();
   }) }, 'Design my org chart');

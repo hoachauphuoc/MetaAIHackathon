@@ -70,6 +70,17 @@ def template_chart(industry, size):
 
 def generate(answers, blocked=lambda: None):
     """Return {company, roles, errors, model, demo_mode, source, demo_reason}."""
+    result = None
+    for kind, value in generate_steps(answers, blocked):
+        if kind == "done":
+            result = value
+    return result
+
+
+def generate_steps(answers, blocked=lambda: None):
+    """The same work as generate, as ("stage", text) as each step really begins, then ("done", result).
+    The page shows these lines, so the wait is the real sequence, never a made-up progress bar."""
+    yield "stage", "Reading your survey answers"
     a = clean_answers(answers)
     size = a["headcount"]
     base = {"company": a.get("company_name", ""), "size": size}
@@ -82,22 +93,28 @@ def generate(answers, blocked=lambda: None):
 
     reason = blocked()
     if reason:
-        return fallback(reason)
+        yield "done", fallback(reason)
+        return
     prompt = "Survey answers:\n" + "\n".join(f"- {k}: {v}" for k, v in a.items())
+    yield "stage", "Asking Muse Wonder to design the chart"
     call = muse.complete(
         muse.WONDER, [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
         reasoning_effort="low", max_tokens=3000,
         response_format={"type": "json_schema",
                          "json_schema": {"name": "chart", "strict": True, "schema": CHART_SCHEMA}})
     if call["demo_mode"]:
-        return fallback(call["demo_reason"], call)
+        yield "done", fallback(call["demo_reason"], call)
+        return
+    yield "stage", "Checking the chart against the rules"
     try:
         roles = json.loads(call["text"])["roles"]
     except (ValueError, KeyError, TypeError):
-        return fallback("Muse returned an unreadable chart", call)
+        yield "done", fallback("Muse returned an unreadable chart", call)
+        return
     errors = rules.validate_chart(roles, size)
     if errors:
-        return fallback("Muse's chart broke a rule", call)
-    return {**base, "roles": roles, "errors": [], "model": call["model"], "source": "wonder",
-            "demo_mode": False, "demo_reason": None, "cost_usd": call["cost_usd"],
-            "latency_ms": call["latency_ms"]}
+        yield "done", fallback("Muse's chart broke a rule", call)
+        return
+    yield "done", {**base, "roles": roles, "errors": [], "model": call["model"], "source": "wonder",
+                   "demo_mode": False, "demo_reason": None, "cost_usd": call["cost_usd"],
+                   "latency_ms": call["latency_ms"]}

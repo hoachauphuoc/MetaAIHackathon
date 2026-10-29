@@ -31,6 +31,34 @@ export async function api(path, { method = 'GET', body, sandbox } = {}) {
   return { status: res.status, ok: res.ok, data };
 }
 
+// POST and read a server-sent-event answer: onEvent(name, data) runs as each event really arrives.
+// Returns the data of the "done" event, or { error } for an "error" event.
+export async function streamEvents(path, { body, sandbox, onEvent }) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (sandbox) headers['X-Sandbox'] = sandbox;
+  const res = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body) });
+  if (res.status === 410) throw new Expired('This sandbox has ended.');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', last = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let end;
+    while ((end = buffer.indexOf('\n\n')) >= 0) {
+      const [eventLine, dataLine] = buffer.slice(0, end).split('\n');
+      buffer = buffer.slice(end + 2);
+      const name = eventLine.slice(7);
+      const data = JSON.parse(dataLine.slice(6));
+      onEvent?.(name, data);
+      if (name === 'done') last = data;
+      if (name === 'error') last = { error: data.message };
+    }
+  }
+  return last;
+}
+
 export function badge(text, kind = 'info') {
   return el('span', { class: `badge badge-${kind}` }, text);
 }
