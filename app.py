@@ -203,6 +203,8 @@ def create_app(db_path=None):
         if role is None:
             raise LookupError("No such role.")
         kit = assistants.build(role, company["roles"], lambda: db.spend_model_call(sandbox_id))
+        kept, removed = rules.filter_skills(kit["skills"], rules.ban_provenance(company.get("levels")))
+        kit = {**kit, "skills": kept, "removed_skills": [*kit.get("removed_skills", []), *removed]}
         db.save_assistant(sandbox_id, role_id, kit)
         return jsonify(kit)
 
@@ -421,8 +423,9 @@ def create_app(db_path=None):
     def get_levels():
         company = accepted_company(current_sandbox())
         levels = company.get("levels")
-        return jsonify(levels=levels, rules=rules.LEVEL_RULES,
-                       effective=rules.provenance(levels, tools.PARAMS) if levels else None)
+        return jsonify(levels=levels, rules=rules.LEVEL_RULES, skills=rules.skill_labels(),
+                       effective=rules.provenance(levels, tools.PARAMS) if levels else None,
+                       bans=rules.ban_provenance(levels))
 
     @app.post("/api/levels/enable")
     def enable_levels():
@@ -431,7 +434,7 @@ def create_app(db_path=None):
         company = accepted_company(sandbox_id)
         if not company.get("levels"):
             start = {"margin_floor_pct": tools.PARAMS["margin_floor_pct"],
-                     "escalation_usd": tools.PARAMS["escalation_usd"]}
+                     "escalation_usd": tools.PARAMS["escalation_usd"], rules.BANNED: []}
             company["levels"] = [{"id": "group", "name": "Group", **start},
                                  {"id": "subsidiary", "name": "Subsidiary", **start}]
             db.save_company(sandbox_id, company)
@@ -448,6 +451,7 @@ def create_app(db_path=None):
             return jsonify(error="no_such_unit", message="No such unit in this company."), 404
         body = request.get_json(silent=True) or {}
         values = {rule: body.get(rule) for rule in rules.LEVEL_RULES}
+        values[rules.BANNED] = body.get(rules.BANNED, levels[index].get(rules.BANNED, []))
         errors = rules.level_value_errors(values)
         if not errors and index > 0:
             errors = rules.validate_child_rules(levels[index - 1], values, levels[index - 1]["name"])
@@ -455,6 +459,12 @@ def create_app(db_path=None):
             return jsonify(error="loosens_parent", errors=errors), 422
         levels[index] = {**levels[index], **values}
         db.save_company(sandbox_id, company)
+        banned = rules.ban_provenance(levels)
+        for role_id, kit in db.get_assistants(sandbox_id).items():  # a ban reaches assistants already made
+            kept, removed = rules.filter_skills(kit["skills"], banned)
+            if removed:
+                db.save_assistant(sandbox_id, role_id, {**kit, "skills": kept,
+                                                        "removed_skills": [*kit.get("removed_skills", []), *removed]})
         return jsonify(levels=levels)
 
     def view_of(package, me, company):

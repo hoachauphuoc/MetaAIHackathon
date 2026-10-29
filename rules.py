@@ -59,11 +59,12 @@ def validate_chart(roles, company_size, people_by_role=None):
     return errors
 
 
-def filter_skills(requested):
-    """Return (kept, removed). Unknown or forbidden ids never reach an assistant."""
+def filter_skills(requested, banned=()):
+    """Return (kept, removed). Unknown or forbidden ids never reach an assistant, nor does a skill a level bans."""
     kept, removed = [], []
     for skill in requested:
-        (kept if skill in ALLOWED_SKILLS and skill not in FORBIDDEN_SKILLS else removed).append(skill)
+        (kept if skill in ALLOWED_SKILLS and skill not in FORBIDDEN_SKILLS and skill not in banned
+         else removed).append(skill)
     return kept, removed
 
 
@@ -194,6 +195,11 @@ LEVEL_RULES = {
     "escalation_usd": {"stricter": "down", "label": "approval limit", "unit": " USD", "low": 1, "high": 10_000_000},
 }
 LEVEL_IDS = ("group", "subsidiary")  # a unit's parent is the one before it
+BANNED = "banned_skills"  # a list of catalog skill ids; a unit below keeps every ban above it and may add more
+
+
+def skill_labels():
+    return {s["id"]: s["label"] for s in SKILLS["allowed"]}
 
 
 def level_value_errors(values):
@@ -203,6 +209,9 @@ def level_value_errors(values):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not spec["low"] <= v <= spec["high"]:
             errors.append({"rule": rule, "message":
                            f"The {spec['label']} must be a number between {spec['low']:,} and {spec['high']:,}."})
+    banned = values.get(BANNED, [])
+    if not isinstance(banned, list) or any(s not in ALLOWED_SKILLS for s in banned) or len(set(banned)) != len(banned):
+        errors.append({"rule": BANNED, "message": "Banned skills must be a list of skills from the catalog, each once."})
     return errors
 
 
@@ -216,6 +225,11 @@ def validate_child_rules(parent, child, parent_name="the parent"):
             errors.append({"rule": rule, "parent_value": p, "message":
                            f"{parent_name} sets the {spec['label']} at {p:,g}{spec['unit']}: "
                            f"a unit below it may set {way} that, not {c:,g}{spec['unit']}."})
+    labels = skill_labels()
+    for skill in parent.get(BANNED, []):
+        if skill not in child.get(BANNED, []):
+            errors.append({"rule": BANNED, "parent_value": skill, "message":
+                           f"{parent_name} bans \"{labels.get(skill, skill)}\": a unit below it must keep that ban."})
     return errors
 
 
@@ -229,6 +243,15 @@ def provenance(levels, params):
             if (unit[rule] > value) if spec["stricter"] == "up" else (unit[rule] < value):
                 value, by = unit[rule], unit["name"]
         out[rule] = {"value": value, "set_by": by}
+    return out
+
+
+def ban_provenance(levels):
+    """Each banned skill with the first unit that bans it: ids and unit names only, never a person."""
+    out = {}
+    for unit in levels or []:
+        for skill in unit.get(BANNED, []):
+            out.setdefault(skill, unit["name"])
     return out
 
 

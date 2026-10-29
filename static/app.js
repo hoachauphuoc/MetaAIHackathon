@@ -312,20 +312,26 @@ function levelsSection() {
     const rows = res.data.levels.map((unit) => {
       const inputs = Object.keys(names).map((rule) => el('input', { id: `lv-${unit.id}-${rule}`, type: 'number',
         value: unit[rule], 'aria-label': `${unit.name}: ${names[rule]}` }));
+      const bans = Object.entries(res.data.skills).map(([id, label]) => el('input', { type: 'checkbox', id: `lv-${unit.id}-ban-${id}`,
+        checked: (unit.banned_skills || []).includes(id), 'aria-label': `${unit.name}: ban ${label}` }));
       const save = guard(async () => {
         const values = Object.fromEntries(Object.keys(names).map((rule, i) => [rule, Number(inputs[i].value)]));
+        values.banned_skills = Object.keys(res.data.skills).filter((id, i) => bans[i].checked);
         const put = await api(`/api/levels/${unit.id}`, { method: 'PUT', sandbox, body: values });
         if (put.ok) { await load(); return; }
         clear(message, el('div', { class: 'errors' }, put.data.errors.map((e) => e.message).join(' ')));
       });
+      const banList = el('details', {}, el('summary', {}, `${unit.name}: skills banned (${(unit.banned_skills || []).length})`),
+        ...Object.entries(res.data.skills).map(([id, label], i) => el('label', { for: bans[i].id, class: 'check' }, bans[i], ` ${label}`)));
       return el('div', { class: 'row' }, el('strong', {}, unit.name),
         ...Object.keys(names).flatMap((rule, i) => [el('label', { for: inputs[i].id }, names[rule]), inputs[i]]),
-        el('button', { onclick: save }, 'Save'));
+        el('button', { onclick: save }, 'Save'), banList);
     });
     const eff = res.data.effective;
     clear(body, ...rows, message, el('h3', {}, 'Rules in force'),
       el('ul', { class: 'plain' }, Object.keys(names).map((rule) => el('li', {},
-        `${names[rule]}: ${eff[rule].value.toLocaleString('en-US')}, set by ${eff[rule].set_by}`))));
+        `${names[rule]}: ${eff[rule].value.toLocaleString('en-US')}, set by ${eff[rule].set_by}`)),
+        ...Object.entries(res.data.bans).map(([id, by]) => el('li', {}, `Skill banned: ${res.data.skills[id]}, set by ${by}`))));
   }
   guard(load)();
   return el('section', {}, el('h2', {}, '5. Levels'), body);

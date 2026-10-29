@@ -9,8 +9,8 @@ the time freed is the owner's and each employee's.
 
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
 (Private mode). **Layered rules:** a company can split into units (Group, Subsidiary); a unit may
-only tighten its parent's margin floor and approval limit, and the server refuses a looser number,
-naming the rule and the parent's value. A one-level company sees no difference. **Catches what rules
+only tighten its parent's margin floor and approval limit and must keep every skill its parent bans, and the server
+refuses anything looser, naming the rule and the parent's value. A one-level company sees no difference. **Catches what rules
 cannot:** a package whose notes contradict its fields passes every rule, and the model layer flags it
 (set 11, Spark leg: 10 of 10 caught, 1 false alarm in 10 clean ones; the author wrote the cases).
 
@@ -29,7 +29,7 @@ with a person gating every step.
 
 - **Try it:** open https://role-assistants-662084666675.us-central1.run.app, press **Try the demo company**, then
   **Design my org chart**. Nothing to sign up for.
-- **Fast path (about 3 minutes):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
+- **Fast path (a short click path; the app's own setup took 31.9 s in one measured run, the rest is your clicking):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits).
@@ -227,7 +227,7 @@ OWASP Top 10 for LLM applications, as applied here:
 The per-call prices are measured ([docs/MEASURED.md](docs/MEASURED.md)). The usage counts are
 **assumptions** for a 10-person company with 5 roles and 22 working days a month, in three
 scenarios anchored on published figures. **The busy one is our headline: about USD 21 a month for a
-10-person company.**
+10-person company under these assumed counts. It is an estimate, not measured usage.**
 
 - **Light:** 4 chat answers per person per day. ChatGPT's 18 billion messages a week from 700
   million weekly users is about 3.7 a day per user, most of it not about work ([NBER paper by OpenAI, 2025](https://cdn.openai.com/pdf/a253471f-8260-40c6-a2cc-aa93fe9f142e/economic-research-chatgpt-usage-paper.pdf)).

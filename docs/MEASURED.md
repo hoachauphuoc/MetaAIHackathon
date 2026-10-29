@@ -56,7 +56,7 @@ without a visible reasoning phase.
 
 Glimmer is noisier than Spark on clean packages: it sometimes raises a harmless point such as a
 future delivery date. The cost is a person looking at a package that was fine, not a wrong approval.
-A cold start takes about 200 s (the app waits 60 s), so the endpoint must be warmed before use.
+A cold start takes about 200 s (the app waits 35 s a try), so the endpoint must be warmed before use.
 Cost is GPU time, not tokens, so it is not comparable with the Spark rows. One run, synthetic data.
 
 ## Set 11: contradictions the rules cannot see (Spark leg)

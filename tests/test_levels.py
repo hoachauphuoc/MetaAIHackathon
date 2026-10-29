@@ -159,8 +159,58 @@ def test_the_owner_sees_which_unit_set_each_number_and_no_person(client):
                    "escalation_usd": {"value": 30000, "set_by": "Subsidiary"}}
     client.put("/api/levels/group", json={**GROUP, "escalation_usd": 20000}, headers=h)
     assert client.get("/api/levels", headers=h).json["effective"]["escalation_usd"]["set_by"] == "Group"
-    assert set(client.get("/api/levels", headers=h).json) == {"levels", "rules", "effective"}
+    assert set(client.get("/api/levels", headers=h).json) == {"levels", "rules", "effective", "skills", "bans"}
 
 
 def test_a_one_level_company_has_no_provenance(client):
     assert client.get("/api/levels", headers=company(client)).json["effective"] is None
+
+
+BAN = "draft_message"
+
+
+def test_a_unit_below_must_keep_every_skill_ban_above_it(client):
+    h = leveled(client)
+    assert client.put("/api/levels/group", json={**GROUP, "banned_skills": [BAN]}, headers=h).status_code == 200
+    got = client.put("/api/levels/subsidiary", json={**GROUP, "banned_skills": []}, headers=h)
+    assert got.status_code == 422
+    error = got.json["errors"][0]
+    assert error["rule"] == "banned_skills" and error["parent_value"] == BAN and "Group" in error["message"]
+    assert client.put("/api/levels/subsidiary", json={**GROUP, "banned_skills": [BAN, "plan_schedule"]},
+                      headers=h).status_code == 200
+
+
+def test_every_dropped_ban_is_caught_whatever_the_parent_bans():
+    ids = sorted(rules.ALLOWED_SKILLS)
+    for n in range(1, len(ids) + 1):
+        parent = {**GROUP, "banned_skills": ids[:n]}
+        for dropped in ids[:n]:
+            child = {**GROUP, "banned_skills": [s for s in ids[:n] if s != dropped]}
+            assert [e["parent_value"] for e in rules.validate_child_rules(parent, child)] == [dropped]
+        assert rules.validate_child_rules(parent, {**GROUP, "banned_skills": ids}) == []
+
+
+@pytest.mark.parametrize("bad", [["evaluate_person"], ["no_such_skill"], [BAN, BAN], "draft_message"])
+def test_only_catalog_skills_can_be_banned_each_once(client, bad):
+    h = leveled(client)
+    got = client.put("/api/levels/group", json={**GROUP, "banned_skills": bad}, headers=h)
+    assert got.status_code == 422 and got.json["errors"][0]["rule"] == "banned_skills"
+
+
+def test_a_ban_reaches_assistants_already_made_and_ones_made_later(client):
+    h = leveled(client)
+    client.post("/api/assistants", json={"role_id": "ops"}, headers=h)
+    assert BAN in client.get("/api/assistants", headers=h).json["assistants"]["ops"]["skills"]
+    client.put("/api/levels/group", json={**GROUP, "banned_skills": [BAN]}, headers=h)
+    kit = client.get("/api/assistants", headers=h).json["assistants"]["ops"]
+    assert BAN not in kit["skills"] and BAN in kit["removed_skills"]
+    client.post("/api/assistants", json={"role_id": "md"}, headers=h)
+    assert BAN not in client.get("/api/assistants", headers=h).json["assistants"]["md"]["skills"]
+    assert client.get("/api/levels", headers=h).json["bans"] == {BAN: "Group"}
+
+
+def test_a_level_saved_without_bans_keeps_the_ones_it_had(client):
+    h = leveled(client)
+    client.put("/api/levels/group", json={**GROUP, "banned_skills": [BAN]}, headers=h)
+    client.put("/api/levels/group", json={**GROUP, "margin_floor_pct": 21}, headers=h)
+    assert client.get("/api/levels", headers=h).json["bans"] == {BAN: "Group"}
