@@ -18,6 +18,7 @@ import onboarding
 import rules
 import sam
 import store
+import timed
 import tools
 import trust
 import vision
@@ -616,6 +617,10 @@ def create_app(db_path=None):
         return jsonify(handoffs.suggest_fix(
             package, me, datetime.date.today(), effective_params(company), ask,
             lambda: db.spend_model_call(me["sandbox_id"])))
+
+    @app.get("/api/timed-runs")
+    def timed_runs():
+        return jsonify(runs=timed.load())
 
     @app.get("/api/trust")
     def trust_page():

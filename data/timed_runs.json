@@ -1,0 +1,12 @@
+{
+ "runs": [
+  {
+   "task": "Set up a company: survey to chart to five assistants",
+   "app_seconds": 31.9,
+   "hand_seconds": null,
+   "source": "docs/MEASURED.md, Setup time",
+   "date": "2026-10-28",
+   "note": "App side only, one real run; no by-hand time yet."
+  }
+ ]
+}

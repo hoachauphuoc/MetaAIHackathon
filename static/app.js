@@ -1,5 +1,6 @@
 // Owner flow: survey -> org chart -> edit and accept -> assistants -> invite links.
 import { photoPicker } from '/static/photo.js';
+import { timeTile } from '/static/tile.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
 const app = document.getElementById('app');
@@ -29,6 +30,7 @@ function startAgain(message) {
     el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
       el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
       el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo'))));
+  timeTile().then((tile) => { if (tile && app.querySelector('h2')?.textContent === 'Welcome') app.append(tile); });
 }
 
 async function tryDemo(industry) {
