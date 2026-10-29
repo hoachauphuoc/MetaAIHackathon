@@ -1,5 +1,6 @@
 import datetime
 import json
+from pathlib import Path
 
 import pytest
 
@@ -73,9 +74,18 @@ def muse_stub(monkeypatch):
 
 
 def test_plan_follows_declared_handoffs_only():
-    kits = {"sales": {"handoffs": [{"to_role": "ops"}]}, "ops": {"handoffs": []}}
+    kits = {"sales": {"handoffs": [{"to_role": "ops"}]}, "ops": {"handoffs": []}, "finance": {"handoffs": []}}
     _, errors = workflow.make_plan(TASK, ROLES, kits)
     assert errors == ["There is no handoff from ops to finance."]
+
+
+def test_a_plan_before_every_brief_is_written_names_the_missing_assistant():
+    kits = {"sales": {"handoffs": [{"to_role": "ops"}]}}
+    _, errors = workflow.make_plan(TASK, ROLES, kits)
+    assert len(errors) == 1 and "still being written" in errors[0] and "press Plan this order again" in errors[0]
+    # the invite links on the owner page open only after every brief is done
+    page = (Path(__file__).parent.parent / "static" / "app.js").read_text(encoding="utf-8")
+    assert "disabled: true, onclick" in page and "inviteButtons.forEach((b) => { b.disabled = false; })" in page
 
 
 def test_step_two_is_refused_until_step_one_is_approved():
@@ -242,10 +252,10 @@ def test_http_forged_plan_is_refused(client):
     assert r.status_code == 409
 
 
-def test_http_plan_without_declared_handoffs_is_422(client):
+def test_http_plan_before_the_briefs_are_written_is_422_and_says_so(client):
     _, token = sales_token(client, kits=False)
     r = client.post("/api/workflow/plan", json={"token": token, "task": TASK})
-    assert r.status_code == 422 and "no handoff" in r.json["errors"][0]
+    assert r.status_code == 422 and "still being written" in r.json["errors"][0]
 
 
 def test_http_muse_switch_gives_labelled_demo_result(client):
@@ -268,7 +278,10 @@ def test_a_starting_private_mode_tells_the_person_to_retry(monkeypatch):
     monkeypatch.setattr(muse, "complete", fake)
     plan = plan_for()
     out = run(plan, "margin", approve_all(plan, 2))["result"]
-    assert any("starting" in f["message"] and "retry" in f["message"] for f in out["findings"])
+    assert any("starting" in f["message"] and "Run this step again" in f["message"] for f in out["findings"])
+    # the message names a button the invite page really offers on a Private step
+    join = (Path(__file__).parent.parent / "static" / "join.js").read_text(encoding="utf-8")
+    assert "'Run this step again'" in join
 
 
 def test_a_cold_private_step_waits_once_not_per_call(monkeypatch):
@@ -284,3 +297,11 @@ def test_a_cold_private_step_waits_once_not_per_call(monkeypatch):
     plan = plan_for()
     out = run(plan, "margin", approve_all(plan, 2))["result"]
     assert len(calls) == 1 and out["demo_reason"] == muse.PRIVATE_STARTING
+
+
+def test_a_waking_private_step_retries_on_its_own_with_the_servers_own_words():
+    join = (Path(__file__).parent.parent / "static" / "join.js").read_text(encoding="utf-8")
+    assert f"result.demo_reason === '{muse.PRIVATE_STARTING}'" in join  # same words the server sends
+    tries = int(join.split("const WAKE_TRIES = ")[1].split(";")[0])
+    pause = int(join.split("const WAKE_WAIT_S = ")[1].split(";")[0])
+    assert tries * (muse.PRIVATE_TIMEOUT + pause) > 200  # outlasts the measured ~200 s cold start

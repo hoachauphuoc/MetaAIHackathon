@@ -205,7 +205,7 @@ function handoverPanel(form) {
 
 // --- workflow --------------------------------------------------------------------------
 function workflowPanel(routes) {
-  const box = el('section', {}, el('h2', {}, 'New order: Sales, Operations, Finance'));
+  const box = el('section', { id: 'order' }, el('h2', {}, 'New order: Sales, Operations, Finance'));
   const f = {
     customer: el('input', { id: 'customer', value: 'Acme Foods' }),
     route: el('select', { id: 'route' }, routes.map((r) => el('option', { value: r }, r))),
@@ -228,8 +228,9 @@ function workflowPanel(routes) {
     }
     runner(res.data, out);
   } }, 'Plan this order');
-  box.append(el('p', { class: 'muted' }, 'Each step runs one assistant. You approve every handoff; ' +
-    'a blocked step can never be approved.'),
+  box.append(el('p', { class: 'muted' }, 'Unlike a chat, each step is one assistant making a tool call; code ' +
+    'computes the numbers, and the next role starts only with your signed approval. ' +
+    'A blocked step can never be approved.'),
   el('label', { for: 'customer' }, 'Customer'), f.customer,
   el('label', { for: 'route' }, 'Shipping route'), f.route,
   el('label', { for: 'pallets' }, 'Pallets'), f.pallets,
@@ -239,6 +240,9 @@ function workflowPanel(routes) {
   return box;
 }
 
+const WAKE_TRIES = 5;  // about 5 x (35 s wait + 25 s pause): longer than the ~200 s cold start
+const WAKE_WAIT_S = 25;
+
 function runner({ plan, signature, roles }, out) {
   const receipts = {};
   const items = plan.steps.map((step) => ({ step, node: el('li', { class: 'step waiting' },
@@ -247,11 +251,12 @@ function runner({ plan, signature, roles }, out) {
   clear(out, el('ol', { class: 'steps' }, items.map((i) => i.node)));
   runStep(0);
 
-  async function runStep(index) {
+  async function runStep(index, attempt = 0) {
     if (index >= items.length) return;
     const { step, node } = items[index];
     node.className = 'step current';
-    const progress = el('p', { class: 'progress', role: 'status' }, 'Working... (about 10 seconds)');
+    const progress = el('p', { class: 'progress', role: 'status' },
+      step.private ? 'Working in Private mode... (up to 40 seconds)' : 'Working... (about 10 seconds)');
     node.append(progress);
     const base = { token, plan, signature, step_id: step.id };
     const res = await api('/api/workflow/step', { method: 'POST', body: { ...base, receipts } });
@@ -266,11 +271,36 @@ function runner({ plan, signature, roles }, out) {
       if (!ok.ok) { node.append(el('p', { class: 'errors' }, ok.data.message)); return; }
       receipts[step.id] = { result, receipt: ok.data.receipt };
       node.className = 'step';
+      // The server signs what the person approved; the next step runs only with that receipt.
+      node.append(el('p', {}, badge('Approved: signed receipt', 'ok'),
+        index + 1 < items.length ? ' The next step can start only with it.' : ' The order is complete.'));
       runStep(index + 1);
     });
     stop.addEventListener('click', () => { approve.disabled = stop.disabled = true;
       node.append(el('p', {}, badge('Stopped by you', 'warn'))); });
-    node.append(...describe(result), el('div', { class: 'row' }, approve, stop));
+    // A cold Private endpoint answers "starting" and wakes in about 3 minutes: the step retries on its own
+    // a few times, with a visible countdown, and a person can still retry at once. It never switches models.
+    let timer = null;
+    const rerun = () => {
+      clearInterval(timer);
+      node.replaceChildren(...[...node.children].slice(0, 2));  // keep the title and the role
+      runStep(index, attempt + 1);
+    };
+    const again = result.private && result.demo_mode ? el('button', { onclick: rerun }, 'Run this step again') : null;
+    const waking = result.demo_reason === 'Private mode starting' && attempt < WAKE_TRIES;
+    const countdown = waking ? el('p', { class: 'progress', role: 'status' }) : null;
+    node.append(...describe(result), ...(countdown ? [countdown] : []), el('div', { class: 'row' }, approve, again, stop));
+    if (waking) {
+      let left = WAKE_WAIT_S;
+      const tick = () => {
+        countdown.textContent = `Private mode is waking up (about 3 minutes). Trying again in ${left} s ` +
+          `(try ${attempt + 2} of ${WAKE_TRIES + 1}).`;
+        if (left-- <= 0) rerun();
+      };
+      tick();
+      timer = setInterval(tick, 1000);
+      [approve, stop].forEach((b) => b.addEventListener('click', () => { clearInterval(timer); countdown.remove(); }));
+    }
   }
 }
 
@@ -342,12 +372,18 @@ function personalRulesPanel() {
       clear(app, el('section', {}, el('p', {}, 'Your assistant is not ready yet. Ask the owner to build the assistants first.')));
       return;
     }
+    const ordering = info.handoff_schema.id === 'logistics';
+    // The order flow is the page's main job but sits below the inbox and chat: one primary step reaches it.
+    const toOrder = ordering ? el('div', { class: 'row' }, el('button', { class: 'primary', onclick: () => {
+      document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('customer').focus({ preventScroll: true });
+    } }, 'Start a new order')) : null;
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
-      info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null,
+      info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null, toOrder,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
       firstDaysPanel(), inboxPanel(info, token), chatPanel(info), personalRulesPanel(),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
-      ...(info.handoff_schema.id === 'logistics'
+      ...(ordering
         ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []),
       handoverPanel(info.handover_form));
   } catch (e) {

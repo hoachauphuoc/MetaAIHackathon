@@ -68,6 +68,12 @@ def make_plan(raw_task, roles, kits):
     task = clean_task(raw_task)
     edges = {(role_id, h["to_role"]) for role_id, kit in kits.items() for h in kit["handoffs"]}
     plan = {"run_id": secrets.token_urlsafe(8), "task": task, "steps": STEPS}
+    # Briefs are written in parallel: name the missing one instead of reporting a missing handoff.
+    titles = {r["id"]: r.get("title", r["id"]) for r in roles}
+    waiting = [titles[s["role_id"]] for s in STEPS if s["role_id"] in titles and s["role_id"] not in kits]
+    if waiting:
+        return plan, [f"The {', '.join(dict.fromkeys(waiting))} assistant is still being written. "
+                      "Wait a moment and press Plan this order again."]
     return plan, rules.validate_plan(plan, roles, edges)
 
 
@@ -177,7 +183,7 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     verdict, why_not = soft_check(step, values, floor, ask, blocked, trace)
     if verdict is None:
         label = {"Private mode unavailable": "Private mode unavailable. ",
-                 muse.PRIVATE_STARTING: "Private mode is starting, which takes about 3 minutes: press retry. "
+                 muse.PRIVATE_STARTING: "Private mode is starting, which takes about 3 minutes: press Run this step again. "
                  }.get(why_not, "")
         findings.append({"status": "needs_human_check", "source": "model", "message":
                          f"{label}The assistant's check did not finish. A person must check "

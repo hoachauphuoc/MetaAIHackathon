@@ -138,6 +138,11 @@ def create_app(db_path=None):
                    "version": (previous or {}).get("version", 0) + 1}
         if (previous or {}).get("handoff_schema"):
             company["handoff_schema"] = previous["handoff_schema"]
+        elif rules.industry_key(body.get("industry")):
+            # A known industry starts on its own shipped form, or the general services one (a clinic or a
+            # software studio never sees pallets); the owner can still redesign it.
+            key = rules.industry_key(body.get("industry"))
+            company["handoff_schema"] = rules.SCHEMAS.get(key, rules.SCHEMAS["services"])
         if (previous or {}).get("levels"):
             company["levels"] = previous["levels"]
         db.save_company(sandbox_id, company)

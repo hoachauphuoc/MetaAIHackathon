@@ -290,3 +290,37 @@ a hidden browser run of the app.
 | Total | 31.9 |
 
 One run. It excludes the owner typing the survey and reading the result, and no hand-made equivalent was timed.
+
+## Set 14: the whole stranger's path in a hidden browser (real models, one run, 2026-10-30)
+
+A headless Chromium drives a local build of this repository with the real Muse models (not the deployed
+link; no Private-mode endpoint was configured, so Glimmer is not part of this run). Every pass or fail is
+computed by the observer's code from what the page or the API returned. The observer is development
+tooling kept outside this repository, so this set is reported, not rerunnable from here.
+31 of 31 checks passed: 21 steps and 10 attack and layout checks.
+
+| Step | Seconds | What the page showed |
+|---|---|---|
+| Open the home page | 0.3 | Role Assistants |
+| Press Try the demo company | 0.1 | survey shown |
+| Press Design my org chart | 8.0 | chart shown |
+| Accept this chart | 5.0 | assistants page |
+| Create the Sales invite link | 1.9 | invite link made |
+| Open the invite link and press Plan this order | 4.6 | plan shown |
+| Approve step 1 | 0.9 | Price USD 2,160, cost USD 1,800, margin 16.7%, computed by code |
+| Approve step 2 | 4.8 | ok |
+| Approve step 3 | 0.9 | ok |
+| Levels: Group bans a skill, Subsidiary saves without it (expect refusal naming Group) | 2.5 | Group bans "Draft a message": a unit below it must keep that ban. |
+| Open /trust | 0.1 | What we store, and what we never do |
+| Clinic demo: chart, assistants and an invite link for every role | 19.3 | 5 roles: clinic director, clinic operations lead, dentist, billing officer, patient support |
+| Clinic: send a treatment-plan quote to the next role | 2.6 | clinic operations lead to dentist: Clear Sent to the Dentist team. It waits in |
+| Clinic: the receiving role takes it and accepts | 1.7 | took it, then pressed Accept; the inbox then showed 0 waiting and 0 in the team queue |
+| Phone: demo company then chart | 7.7 | scrollWidth 375 |
+| Phone: accept the chart and open the Sales invite | 5.7 | invite page |
+| Phone: Start a new order, then Plan this order | 5.5 | plan shown |
+| Phone: approve step 1 | 0.9 | same quote as on desktop |
+| Phone: approve step 2 | 4.3 | ok |
+| Phone: approve step 3 | 0.9 | ok |
+| Phone: elements wider than the viewport | 0.0 | overflowing 0 |
+
+Attack and layout checks, all passed: One sandbox never reads another's company; One sandbox never lists another's assistants; An unknown sandbox id is refused; No forbidden skill reaches an assistant; A non-PNG/JPEG photo is refused before any model call; A non-WAV recording is refused before any model call; /trust states what is never stored; No element wider than a 375 px phone; Real mode shows no FAKE_AI label; No console errors besides expected 422 refusals.

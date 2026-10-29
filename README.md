@@ -7,6 +7,19 @@ handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, fo
 statement **Build for Your World**: the domain is the small company the author knows firsthand, and
 the time freed is the owner's and each employee's.
 
+**What was not possible before:** a ten-person company has no one to set up an assistant per role, and a
+chat window cannot pass a quote from Sales to Operations to Finance under the company's own limits. Here
+the app's side of that setup took 31.9 s in one measured run, and work moves between roles only as tool
+calls whose numbers code computes, each step unlocked by a person's signed approval.
+
+**Checked end to end (set 14, one run):** a hidden browser on the real Muse models (a local build of
+this repo, not the deployed link) finished the whole freight order on desktop and on a 375 px phone
+(chart, assistants, invite, plan, three approvals), the Levels refusal, `/trust`, and a clinic company
+whose treatment-plan quote one role sent and another took and pressed Accept on: 31 of 31 checks, each
+step listed in [docs/MEASURED.md](docs/MEASURED.md). That run had no Private-mode endpoint configured,
+so it does not show Glimmer. One command runs
+every test: `powershell -File scripts/check.ps1`.
+
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
 (Private mode). **Layered rules:** a company can split into units (Group, Subsidiary); a unit may
 only tighten its parent's margin floor and approval limit and must keep every skill its parent bans, and the server
@@ -32,12 +45,17 @@ with a person gating every step.
 - **Fast path (a short click path; the app's own setup took 31.9 s in one measured run, the rest is your clicking):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
-  `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits).
+  `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits). The endpoint
+  sleeps when idle and takes about 200 s to wake: if you see `Private mode starting`, the Finance step tries
+  again on its own with a countdown for about five minutes (or press **Run this step again**); it never
+  switches to another model. On the invite page, **Start a new order**
+  jumps to the order form.
 - **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the inbox, **Export approved** downloads only handoffs every approver accepted. **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
-- **Rerun the numbers:** `python scripts/measure.py` (needs a Meta key). Results: [docs/MEASURED.md](docs/MEASURED.md).
+- **Rerun the numbers:** `python scripts/measure.py` (needs a Meta key) reruns the measured sets; set 14 (the
+  hidden-browser run of the whole path) is reported, not rerunnable from this repo. Results: [docs/MEASURED.md](docs/MEASURED.md).
 
 ## Impact
 
@@ -80,7 +98,8 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    the role (`data/playbooks.json`) and the company's real rules from `data/params.json` (margin
    floor, approval limit, rate card; cost only for roles that may see it). Measured: 9 of 10
    rule-based questions answered correctly against 2 of 10 with the plain prompt. Before anything is sent, emails, phone numbers, card
-   numbers, ID numbers and IBANs are masked in the browser, with a preview. **Compare with generic
+   numbers, ID numbers and IBANs are masked in the browser, with a preview. Personal names and photos are
+   not masked (see Limits). **Compare with generic
    AI** asks the same question of the role assistant and of a plain assistant, side by side.
 6. **Team workflow (Sales, Operations, Finance):** each step lets the model choose a tool's
    arguments by function calling; **code computes every number** (`tools.py`). A two-layer check
@@ -181,8 +200,8 @@ time at the company:
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
 | `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields after the amount-cleaning fix (56 of 60 on the first run), median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines; model layer of the handoff check flagged 10 of 10 contradictions the rules cannot see, 1 false alarm in 10 (set 11, Spark only) |
-| `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not yet run against the real endpoint; list price USD 0.18 per audio hour, so a 30 second note is about USD 0.0015 |
-| `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | One real call on a synthetic page returned the exact box; price not published on the docs page, so no cost is claimed |
+| `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not yet run against the real endpoint; no cost is claimed |
+| `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | Tested with stubbed replies; one unmeasured hand check on a synthetic page, not a measured set; price not published, so no cost is claimed |
 | `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
@@ -205,7 +224,7 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
 | Handover: private draft, own team, leaver cannot accept | `tests/test_handover.py` |
 | Chat tools: read-only, scoped to the person, no tokens or names, notes are data | `tests/test_workspace.py` |
-| Personal data masked in the browser | `tests/js/pii.test.mjs` |
+| Emails, phone, card and ID numbers, IBANs masked in the browser (not names, not photos) | `tests/js/pii.test.mjs` |
 | Model text never becomes HTML | `scripts/check.ps1` fails on `innerHTML` and similar |
 
 OWASP Top 10 for LLM applications, as applied here:
@@ -228,12 +247,12 @@ OWASP Top 10 for LLM applications, as applied here:
 - AI-assisted development: the code was written with Claude Code; the product itself runs on Meta
   Muse models.
 
-## What it costs a company per month (assumptions labelled)
+## What it costs (measured per call; usage is an assumption)
 
 The per-call prices are measured ([docs/MEASURED.md](docs/MEASURED.md)). The usage counts are
 **assumptions** for a 10-person company with 5 roles and 22 working days a month, in three
-scenarios anchored on published figures. **The busy one is our headline: about USD 21 a month for a
-10-person company under these assumed counts. It is an estimate, not measured usage.**
+scenarios anchored on published figures. The scenarios are an illustration of how the measured per-call prices add up, not a claim about any
+company's bill: nothing here measures real usage.
 
 - **Light:** 4 chat answers per person per day. ChatGPT's 18 billion messages a week from 700
   million weekly users is about 3.7 a day per user, most of it not about work ([NBER paper by OpenAI, 2025](https://cdn.openai.com/pdf/a253471f-8260-40c6-a2cc-aa93fe9f142e/economic-research-chatgpt-usage-paper.pdf)).
@@ -256,7 +275,6 @@ the same job by hand was not timed. Details in [docs/MEASURED.md](docs/MEASURED.
 | Setup, once (1 chart USD 0.038 + 5 briefs USD 0.0047 each) | USD 0.06 | USD 0.06 | USD 0.06 |
 | Chat answers, USD 0.0015 each | USD 1.32 | USD 7.92 | USD 26.40 |
 | Workflow steps, 3 per order, under USD 0.01 each (upper bound used) | up to USD 3.30 | up to USD 13.20 | up to USD 33.00 |
-| **Total per month (Muse Wonder and Spark)** | **about USD 5** | **about USD 21** | **about USD 59, at most** |
 
 Private mode (Glimmer on Modal) is billed per warm GPU hour, not per call, and is not in this
 table. Photos, morning briefs and fix suggestions cost about USD 0.002 to 0.02 each and are left out.
@@ -273,13 +291,13 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
 
 ## Limits (honest)
 
-- **Private mode runs on Muse Glimmer 30B, not Muse Spark Open.** Spark Open (816B) does not fit one
-  GPU, so the Finance step uses Glimmer (open weights) served by me on Modal
+- **Private mode runs on Muse Glimmer 30B, not Muse Spark Open.** Spark Open does not fit one
+  GPU (its model card names it [816B with 42B active](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B)), so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
   warm endpoint. A cold start takes about 200 s and the app waits 35 s a try, so when the endpoint is
   idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
-  person to press retry; when Private mode is not configured it says `Private mode unavailable`. It never
+  person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never
   uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
   more often than Spark.
 - Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for

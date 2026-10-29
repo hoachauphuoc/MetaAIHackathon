@@ -27,6 +27,10 @@ function startAgain(message) {
     message ? el('p', { class: 'errors', role: 'alert' }, message) : null,
     el('p', {}, 'Answer ten questions and get an org chart with an AI assistant for every role. ' +
       'You decide at every step. Nothing you chat is stored.'),
+    el('ol', { class: 'how' },
+      el('li', {}, 'Muse Wonder designs your org chart from the ten answers.'),
+      el('li', {}, 'Code checks it against the rules before you can accept it.'),
+      el('li', {}, 'Muse Spark writes one assistant per role; work moves between roles only when a person approves.')),
     el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
       el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
       el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo'))));
@@ -82,7 +86,7 @@ function showSurvey() {
     state.accepted = false;
     showChart();
   }) }, 'Design my org chart');
-  form.append(el('div', { class: 'row' }, button), status);
+  form.append(el('div', { class: 'row sticky-actions' }, button), status);
   clear(app, form);
 }
 
@@ -128,15 +132,16 @@ function showChart() {
   accept.addEventListener('click', guard(async () => {
     accept.disabled = true;
     const res = await api('/api/company', { method: 'POST', sandbox,
-      body: { company: chart.company, size: chart.size, roles: chart.roles } });
+      body: { company: chart.company, size: chart.size, roles: chart.roles, industry: state.answers?.industry } });
     if (res.ok) { state.accepted = true; showAssistants(); } else await revalidate();
   }));
 
   clear(app, el('section', {}, el('h2', {}, `2. Org chart: ${chart.company || 'your company'}`),
     chart.demo_mode ? demoNote(chart.demo_reason) : el('p', {}, badge('Designed by Muse Wonder', 'ok'),
-      ' The rules checked it: one top role, no circles, no more people than you have.'),
+      ` The rules checked it: ${chart.roles.filter((r) => !r.reports_to).length} top role, no circles, ` +
+      `${chart.roles.reduce((n, r) => n + r.headcount, 0)} of ${chart.size} people placed.`),
     chart.source === 'template' ? el('p', { class: 'muted' }, 'This is a standard chart (Template).') : null,
-    list, errorBox, el('div', { class: 'row' }, accept)));
+    list, errorBox, el('div', { class: 'row sticky-actions' }, accept)));
   draw();
   revalidate();
 }
@@ -180,6 +185,10 @@ async function showAssistants() {
       }) }, 'Remove'))));
   }
   app.append(handoffFormSection(), levelsSection(), briefSection());
+  // A workflow moves only along handoffs every assistant declared, so a link opened before the last brief
+  // is written lands on a page whose order cannot be planned yet: links open once all briefs are done.
+  const inviteButtons = [];
+  const inviteButton = (b) => { inviteButtons.push(b); return b; };
   await Promise.all(roles.map(guard(async (role) => {
     const res = await api('/api/assistants', { method: 'POST', sandbox, body: { role_id: role.id } });
     if (!res.ok) { clear(cards[role.id], el('h3', {}, role.title), el('p', { class: 'errors' }, res.data.message)); return; }
@@ -192,14 +201,15 @@ async function showAssistants() {
       kit.removed_skills.length ? el('p', { class: 'errors' }, 'Removed by the rules: ', kit.removed_skills.join(', ')) : null,
       el('h3', {}, 'Hands work to'), el('ul', { class: 'plain' }, kit.handoffs.length
         ? kit.handoffs.map((h) => el('li', {}, `${roles.find((r) => r.id === h.to_role)?.title || h.to_role}: ${h.what}`)) : el('li', {}, 'Nobody')),
-      el('div', { class: 'row' }, el('button', { onclick: guard(async () => {
+      el('div', { class: 'row' }, inviteButton(el('button', { disabled: true, onclick: guard(async () => {
         const inv = await api('/api/invites', { method: 'POST', sandbox, body: {
           role_id: role.id, display_name: `${role.title} ${Math.random().toString(36).slice(2, 5)}` } });
         drawPeople();
         clear(link, inv.ok ? [el('a', { href: inv.data.url, target: '_blank', rel: 'noopener' }, 'Open invite link'),
           ' ', el('code', {}, location.origin + inv.data.url)] : inv.data.message);
-      }) }, 'Create invite link')), link);
+      }) }, 'Create invite link'))), link);
   })));
+  inviteButtons.forEach((b) => { b.disabled = false; });
   app.querySelector('.progress').textContent = 'Each person opens their own link and lands in their role. ' +
     'Open the Sales link to run a new order through Sales, Operations and Finance.';
 }

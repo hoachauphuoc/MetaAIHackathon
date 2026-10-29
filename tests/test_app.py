@@ -107,3 +107,13 @@ def test_the_chart_can_be_streamed_as_stages_then_the_chart(client):
     events = [b.split("\n")[0] for b in r.get_data(as_text=True).strip().split("\n\n")]
     assert events[0] == "event: stage" and events[-1] == "event: done"
     assert client.post("/api/chart?stream=1", json={"answers": {}}).status_code == 410
+
+
+def test_a_known_industry_starts_on_its_own_form_and_freight_keeps_the_order_form(client):
+    roles = [{"id": "md", "title": "Director", "reports_to": None, "headcount": 1},
+             {"id": "ops", "title": "Operations", "reports_to": "md", "headcount": 2}]
+    for industry, form in (("Dental clinic", "clinic"), ("software", "services"), ("logistics", "logistics"),
+                           (None, "logistics")):
+        h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
+        assert client.post("/api/company", json={"roles": roles, "size": 3, "industry": industry}, headers=h).status_code == 201
+        assert client.get("/api/handoff-schema", headers=h).json["schema"]["id"] == form
