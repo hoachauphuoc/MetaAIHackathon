@@ -193,7 +193,7 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | Only skills from the catalog; forbidden skills never reach an assistant | `tests/test_rules.py`, `tests/test_assistants.py` |
 | No silent substitution: a failed model call is labelled `demo_mode` | `tests/test_muse.py`, `tests/test_workflow.py` |
 | No chat storage: table contents and logs unchanged after chat | `tests/test_chat_and_privacy.py`, `tests/test_trust.py` |
-| No training on employee data: `-contributor` model ids refused | `tests/test_muse.py`, `tests/test_trust.py` |
+| No training on employee data in the product (paid Standard mode; `-contributor` model ids refused). The public demo runs on free hackathon credits, which Meta says may use content for product improvement, so it is for sample data only | `tests/test_muse.py`, `tests/test_trust.py` |
 | One sandbox cannot read another | `tests/test_store.py`, `tests/test_app.py` |
 | A person approves every handoff; the model cannot lower a rules status | `tests/test_workflow.py`, `tests/test_tools_and_gate.py` |
 | Private never falls back to the standard API | `tests/test_workflow.py`, `tests/test_trust.py` |
