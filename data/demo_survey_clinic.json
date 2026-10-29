@@ -1,0 +1,12 @@
+{
+  "company_name": "Willow Court Dental",
+  "industry": "clinic",
+  "headcount": 9,
+  "locations": "One clinic with a reception and three treatment rooms",
+  "departments": "Patient accounts, Clinic operations, Billing, Patient support",
+  "managers": "The clinic director manages the leads",
+  "work_mode": "On site, with a part-time billing officer",
+  "main_work": "Dental check-ups, fillings and treatment plans",
+  "tools": "A booking system, spreadsheets, email",
+  "time_sinks": "Writing treatment plan quotes, chasing approvals, reminding patients of first visits"
+}

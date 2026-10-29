@@ -1,0 +1,12 @@
+{
+  "company_name": "Northgate Software",
+  "industry": "software",
+  "headcount": 12,
+  "locations": "One office, most people work remotely",
+  "departments": "Engineering, Accounts, Finance, Client support",
+  "managers": "The managing director manages the leads",
+  "work_mode": "Mixed: office days and remote work",
+  "main_work": "Custom web and mobile apps for small businesses",
+  "tools": "A code host, a ticket board, email, spreadsheets",
+  "time_sinks": "Explaining errors to clients, reviewing small changes, writing estimates"
+}

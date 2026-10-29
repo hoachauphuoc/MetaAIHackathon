@@ -53,6 +53,9 @@ LIMITS = [
     "field by field. Photos are not masked: cover names and phone numbers before taking one.",
     "Reading a photo can go wrong. The values only fill the form; the person checks every field "
     "and the rules check them again. A field the model says it cannot read is left empty and marked.",
+    "The code helper (software companies) explains, reviews and drafts code. It has no tool that runs, deploys or pushes "
+    "anything, so a draft is untested until a person tests it. Passwords, keys and tokens in a pasted message are masked in "
+    "your browser by pattern; an unusual secret can slip through, so remove it before pasting.",
     "Models make mistakes. Every handoff needs a person to press Approve, and a blocked "
     "handoff can never be approved.",
     "Numbers (prices, margins) are computed by code from the company's rate card, not by a model.",

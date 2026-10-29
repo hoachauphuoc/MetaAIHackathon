@@ -92,7 +92,9 @@ def create_app(db_path=None):
 
     @app.get("/api/survey/demo")
     def survey_demo():
-        path = Path(__file__).parent / "data" / "demo_survey.json"
+        industry = request.args.get("industry")
+        name = f"demo_survey_{industry}.json" if industry in ("clinic", "software") else "demo_survey.json"
+        path = Path(__file__).parent / "data" / name
         return jsonify(answers=json.loads(path.read_text(encoding="utf-8")))
 
     @app.post("/api/chart")

@@ -1,6 +1,6 @@
 // Masks personal data in the browser before text is sent to a model. Pattern-based only: it cannot
 // recognise names, and /trust says so. Order matters: longer, more specific patterns first.
-const LABELS = { iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', id: 'ID_NUMBER', phone: 'PHONE' };
+const LABELS = { secret: 'SECRET', iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', id: 'ID_NUMBER', phone: 'PHONE' };
 
 function luhn(digits) {
   let sum = 0;
@@ -15,6 +15,11 @@ function luhn(digits) {
 const digitsOf = (s) => s.replace(/\D/g, '');
 
 const RULES = [
+  // Credentials pasted with code: a private key block, a cloud key id, a vendor token, or name = value for a secret name.
+  ['secret', /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, () => true],
+  ['secret', /\bAKIA[0-9A-Z]{16}\b/g, () => true],
+  ['secret', /\b(?:sk|pk|ghp|gho|xox[baprs])[-_][A-Za-z0-9_-]{16,}\b/g, () => true],
+  ['secret', /\b(?:api[_-]?key|secret|token|passw(?:or)?d)\b\s*[:=]\s*["']?[^\s"',;]{6,}/gi, () => true],
   ['iban', /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?\b/g, () => true],
   ['email', /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g, () => true],
   ['card', /\b(?:\d[ -]?){12,18}\d\b/g, (m) => {

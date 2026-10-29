@@ -1,6 +1,6 @@
 // Inbox and Today: documents waiting between roles. Everything shown is about packages, never people.
 import { confirmMask } from '/static/mask.js';
-import { download, readRecord, toCsv, toJson } from '/static/exchange.js';
+import { download, readRecord, toApprovedCsv, toApprovedJson, toCsv, toJson } from '/static/exchange.js';
 import { photoPicker } from '/static/photo.js';
 import { MAX_SECONDS, recordingToWav, toDataUrl } from '/static/wav.js';
 import { reminderText, stuckLine, stuckRows } from '/static/stuck.js';
@@ -306,11 +306,15 @@ export function inboxPanel(info, token) {
 
   const exportRow = el('div', { class: 'row' },
     el('button', { onclick: async () => exportAs('json') }, 'Export JSON'),
-    el('button', { onclick: async () => exportAs('csv') }, 'Export CSV'));
+    el('button', { onclick: async () => exportAs('csv') }, 'Export CSV'),
+    el('button', { onclick: async () => exportAs('approved-csv') }, 'Export approved (CSV)'),
+    el('button', { onclick: async () => exportAs('approved-json') }, 'Export approved (JSON)'));
   async function exportAs(kind) {
     const res = await api(`/api/inbox?token=${encodeURIComponent(token)}`);
     const packages = res.data.packages.filter((p) => p.schema.id === schema.id);
-    if (kind === 'json') download('handoffs.json', toJson(packages), 'application/json');
+    if (kind === 'approved-csv') download('approved-handoffs.csv', toApprovedCsv(packages, schema), 'text/csv');
+    else if (kind === 'approved-json') download('approved-handoffs.json', toApprovedJson(packages, schema), 'application/json');
+    else if (kind === 'json') download('handoffs.json', toJson(packages), 'application/json');
     else download('handoffs.csv', toCsv(packages, schema), 'text/csv');
   }
 

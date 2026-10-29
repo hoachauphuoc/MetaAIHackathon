@@ -12,11 +12,17 @@ MAX_HISTORY = 12
 MAX_MESSAGE = 4000
 
 
-def playbook_for(kit):
-    """First playbook whose keyword is in the role's id or title; the generic one otherwise."""
+def playbook_key(kit, schema=None):
+    """First playbook whose keyword is in the role's id or title; generic otherwise. A playbook with
+    only_for (the freight ones talk about routes and pallets) applies to those forms only."""
     name = f"{kit.get('role_id', '')} {kit.get('role_title', '')}".lower()
-    return next((p for key, p in PLAYBOOKS.items() if key != "generic"
-                 and any(word in name for word in p["keywords"])), PLAYBOOKS["generic"])
+    form = (schema or rules.DEFAULT_SCHEMA)["id"]
+    return next((key for key, p in PLAYBOOKS.items() if key != "generic" and form in p.get("only_for", [form])
+                 and any(word in name for word in p["keywords"])), "generic")
+
+
+def playbook_for(kit, schema=None):
+    return PLAYBOOKS[playbook_key(kit, schema)]
 
 
 def company_rules(playbook, schema=None):
@@ -36,7 +42,7 @@ def company_rules(playbook, schema=None):
 
 
 def system_prompt(person, kit, schema=None):
-    book = playbook_for(kit)
+    book = playbook_for(kit, schema)
     return (
         f"You are the AI assistant for the {kit['role_title']} role at a small company. "
         f"Goal: {kit['goal']} Everyday jobs: {'; '.join(kit['jobs'])}. "

@@ -57,6 +57,28 @@ export function toJson(packages) {
   return JSON.stringify(packages.map((p) => ({ values: p.values, status: p.check_status, state: p.state, due: p.due })), null, 2);
 }
 
+// The connector export: only handoffs every approver accepted and that were not blocked, with the form's fields in
+// the form's order and no free-text notes, so a sheet or another system gets a fixed, already-decided record.
+export function approvedOnly(packages) {
+  return packages.filter((p) => p.state === 'accepted' && p.check_status !== 'blocked');
+}
+
+export function toApprovedCsv(packages, schema) {
+  const keys = schema.fields.map((f) => f.key);
+  const lines = [['handoff_id', ...keys, 'approved_by', 'sent_on'].map(cell).join(',')];
+  for (const p of approvedOnly(packages)) {
+    lines.push([p.id, ...keys.map((k) => p.values[k]), p.chain_titles.join(' > '), p.sent_on].map(cell).join(','));
+  }
+  return lines.join('\r\n');
+}
+
+export function toApprovedJson(packages, schema) {
+  const keys = schema.fields.map((f) => f.key);
+  return JSON.stringify(approvedOnly(packages).map((p) => ({
+    handoff_id: p.id, values: Object.fromEntries(keys.map((k) => [k, p.values[k] ?? null])),
+    approved_by: p.chain_titles, sent_on: p.sent_on })), null, 2);
+}
+
 export function download(name, text, type) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([text], { type }));

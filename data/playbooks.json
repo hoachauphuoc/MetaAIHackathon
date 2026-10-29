@@ -14,6 +14,26 @@
     "never": [
       "Never promise a delivery date before Operations confirms.",
       "Never share internal cost or margin with a customer."
+    ],
+    "only_for": [
+      "logistics"
+    ]
+  },
+  "sales_any": {
+    "keywords": [
+      "sales",
+      "account",
+      "customer success"
+    ],
+    "shows_cost": false,
+    "method": [
+      "Before quoting, confirm every required field of the company's form and the date; ask for what is missing instead of guessing.",
+      "Quote only with numbers the tools returned, then state the margin; if it would fall under the floor, say it needs approval and do not offer the price.",
+      "Hand the work over only when the form is complete."
+    ],
+    "never": [
+      "Never promise a date before the receiving team confirms.",
+      "Never share internal cost or margin with a customer."
     ]
   },
   "operations": {
@@ -29,6 +49,28 @@
       "Check an incoming order for route, pallets, delivery date and contradictions before accepting.",
       "Write the schedule as a dated list; flag any date that is in the past or too close.",
       "Return an order with one concrete reason the sender can act on."
+    ],
+    "never": [
+      "Never change a price or a discount.",
+      "Escalate safety or major delay issues to the top role."
+    ],
+    "only_for": [
+      "logistics"
+    ]
+  },
+  "operations_any": {
+    "keywords": [
+      "operations",
+      "ops",
+      "logistics",
+      "dispatch",
+      "warehouse"
+    ],
+    "shows_cost": true,
+    "method": [
+      "Check an incoming handoff against the company's form and for contradictions before accepting.",
+      "Write the schedule as a dated list; flag any date that is in the past or too close.",
+      "Return a handoff with one concrete reason the sender can act on."
     ],
     "never": [
       "Never change a price or a discount.",
@@ -68,6 +110,26 @@
     "never": [
       "Never promise a refund; refunds go to Finance.",
       "Never share internal cost details."
+    ]
+  },
+  "engineering": {
+    "keywords": [
+      "engineer",
+      "developer",
+      "software",
+      "devops",
+      "programmer"
+    ],
+    "shows_cost": false,
+    "method": [
+      "Explain or review the code or the error the person pasted; ask for the language and the goal if either is missing.",
+      "Draft a snippet the person copies and tests themselves, and label it 'Untested draft'.",
+      "Name the risks you see: secrets in the code, injection, data loss, a change that cannot be undone."
+    ],
+    "never": [
+      "Never run, deploy, push or merge anything, and never say or imply that you did.",
+      "Never repeat a password, key or token: tell the person to remove it and rotate it.",
+      "Never write code meant to get around a company's security or to harm anyone."
     ]
   },
   "management": {

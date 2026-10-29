@@ -59,6 +59,14 @@ def validate_chart(roles, company_size, people_by_role=None):
     return errors
 
 
+def scope_skills(skills, playbook_key):
+    """A catalog skill that names roles ("roles") stays only on a role whose playbook is one of them, and that role
+    always holds it. Code decides this, never the model that wrote the kit."""
+    scoped = {s["id"]: s["roles"] for s in SKILLS["allowed"] if "roles" in s}
+    kept = [s for s in skills if playbook_key in scoped.get(s, [playbook_key])]
+    return kept + [s for s, roles in scoped.items() if playbook_key in roles and s not in kept]
+
+
 def filter_skills(requested, banned=()):
     """Return (kept, removed). Unknown or forbidden ids never reach an assistant, nor does a skill a level bans."""
     kept, removed = [], []
@@ -101,6 +109,17 @@ def validate_plan(plan, roles, edges):
 # validates and applies it. Thresholds come from the owner or params, never from the model.
 SCHEMAS = json.loads((DATA / "handoff_schemas.json").read_text(encoding="utf-8"))
 DEFAULT_SCHEMA = SCHEMAS["logistics"]
+# Words an owner types for an industry we ship a form for; anything else keeps falling back to "services".
+INDUSTRY_WORDS = {"clinic": ("clinic", "dental", "dentist", "medical", "physio", "health"),
+                  "software": ("software", "developer", "devops", "app development", "web studio", "it services")}
+
+
+def industry_key(text):
+    """The shipped key for the industry an owner typed: an exact key first, then a known word, else None."""
+    text = str(text or "").strip().lower()
+    if text in SCHEMAS:
+        return text
+    return next((key for key, words in INDUSTRY_WORDS.items() if any(w in text for w in words)), None)
 # Sent by a person leaving a role to their own team; not a company form, so canonical() cannot claim it.
 HANDOVER_SCHEMA = json.loads((DATA / "handover_form.json").read_text(encoding="utf-8"))
 FIELD_TYPES = ("text", "longtext", "integer", "number", "money", "date", "choice")

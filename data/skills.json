@@ -1,15 +1,57 @@
 {
   "allowed": [
-    {"id": "draft_message", "label": "Draft a message"},
-    {"id": "summarize_document", "label": "Summarize a document"},
-    {"id": "quote_price", "label": "Quote a price from the rate card"},
-    {"id": "check_margin", "label": "Check a margin against the floor"},
-    {"id": "make_calendar_event", "label": "Make a calendar event"},
-    {"id": "lookup_my_queue", "label": "Look up the handoffs waiting for my role"},
-    {"id": "prepare_handoff", "label": "Prepare a handoff for another role"},
-    {"id": "check_handoff_fields", "label": "Check a handoff for missing fields"},
-    {"id": "plan_schedule", "label": "Plan a schedule"},
-    {"id": "reconcile_amounts", "label": "Compare amounts across documents"}
+    {
+      "id": "draft_message",
+      "label": "Draft a message"
+    },
+    {
+      "id": "summarize_document",
+      "label": "Summarize a document"
+    },
+    {
+      "id": "quote_price",
+      "label": "Quote a price from the rate card"
+    },
+    {
+      "id": "check_margin",
+      "label": "Check a margin against the floor"
+    },
+    {
+      "id": "make_calendar_event",
+      "label": "Make a calendar event"
+    },
+    {
+      "id": "lookup_my_queue",
+      "label": "Look up the handoffs waiting for my role"
+    },
+    {
+      "id": "prepare_handoff",
+      "label": "Prepare a handoff for another role"
+    },
+    {
+      "id": "check_handoff_fields",
+      "label": "Check a handoff for missing fields"
+    },
+    {
+      "id": "plan_schedule",
+      "label": "Plan a schedule"
+    },
+    {
+      "id": "reconcile_amounts",
+      "label": "Compare amounts across documents"
+    },
+    {
+      "id": "help_with_code",
+      "label": "Explain, review or draft code for a person to copy and run themselves",
+      "roles": [
+        "engineering"
+      ]
+    }
   ],
-  "forbidden": ["evaluate_person", "rank_employees", "hr_decision", "monitor_activity"]
+  "forbidden": [
+    "evaluate_person",
+    "rank_employees",
+    "hr_decision",
+    "monitor_activity"
+  ]
 }

@@ -47,7 +47,7 @@ def clean_answers(answers):
 def template_chart(industry, size):
     """Scale a template to the company: one seat per role, extras by weight, roles dropped if
     the company is smaller than the template."""
-    base = TEMPLATES.get(industry) or TEMPLATES["services"]
+    base = TEMPLATES.get(rules.industry_key(industry) or "") or TEMPLATES["services"]
     kept = base[:max(1, min(len(base), size))]
     ids = {r["id"] for r in kept}
     roles = [{"id": r["id"], "title": r["title"], "headcount": 1, "source": "template",

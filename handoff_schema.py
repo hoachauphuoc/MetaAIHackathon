@@ -46,7 +46,7 @@ def clean_text(value, limit=300):
 
 
 def template_for(industry):
-    return rules.SCHEMAS.get(industry if industry in rules.SCHEMAS else "services")
+    return rules.SCHEMAS.get(rules.industry_key(industry), rules.SCHEMAS["services"])
 
 
 def canonical(schema):

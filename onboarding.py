@@ -78,7 +78,7 @@ def plan(kit, titles, schema, ask, blocked):
     role = {"role": kit["role_title"], "goal": kit["goal"], "jobs": kit["jobs"], "skills": kit["skills"],
             "hands_work_to": [{"role": titles.get(h["to_role"], h["to_role"]), "what": h["what"]}
                               for h in kit["handoffs"]],
-            "how_this_role_works": chat.playbook_for(kit)["method"],
+            "how_this_role_works": chat.playbook_for(kit, schema)["method"],
             "handoff_form": [f["label"] for f in schema["fields"]]}
     call = ask([{"role": "system", "content": PROMPT},
                 {"role": "user", "content": "<data>\n" + json.dumps(role) + "\n</data>"}],

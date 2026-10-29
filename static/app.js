@@ -4,7 +4,7 @@ import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/u
 
 const app = document.getElementById('app');
 const FIELDS = [
-  ['company_name', 'Company name'], ['industry', 'Industry (logistics, retail or services)'],
+  ['company_name', 'Company name'], ['industry', 'Industry (logistics, retail, services, clinic or software)'],
   ['headcount', 'How many people work there?'], ['locations', 'Where do you work?'],
   ['departments', 'Which teams exist?'], ['managers', 'Who manages whom?'],
   ['work_mode', 'On site, remote or mixed?'], ['main_work', 'What is the main work?'],
@@ -26,14 +26,16 @@ function startAgain(message) {
     message ? el('p', { class: 'errors', role: 'alert' }, message) : null,
     el('p', {}, 'Answer ten questions and get an org chart with an AI assistant for every role. ' +
       'You decide at every step. Nothing you chat is stored.'),
-    el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'))));
+    el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
+      el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
+      el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo'))));
 }
 
-async function tryDemo() {
+async function tryDemo(industry) {
   const made = await api('/api/sandbox', { method: 'POST' });
   sandbox = made.data.sandbox;
   localStorage.setItem('sandbox', sandbox);
-  state.answers = (await api('/api/survey/demo')).data.answers;
+  state.answers = (await api(`/api/survey/demo${industry === 'clinic' || industry === 'software' ? `?industry=${industry}` : ''}`)).data.answers;
   showSurvey();
 }
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readRecord, toCsv } from '../../static/exchange.js';
+import { readRecord, toCsv, toApprovedCsv, toApprovedJson } from '../../static/exchange.js';
 
 const schema = { fields: [{ key: 'customer' }, { key: 'pallets' }, { key: 'price' }] };
 
@@ -28,4 +28,27 @@ test('an oversized file is refused', () => {
 test('an exported cell that starts like a formula gets a leading quote mark', () => {
   const csv = toCsv([{ values: { customer: '=cmd', pallets: 3, price: '1"2' }, check_status: 'clear', state: 'sent', due: null }], schema);
   assert.match(csv, /"'=cmd","3","1""2"/);
+});
+
+const done = (id, state, status, extra = {}) => ({
+  id, state, check_status: status, sent_on: '2026-10-29', chain_titles: ['Operations', 'Finance'],
+  values: { customer: id, pallets: 3, price: 10 }, ...extra });
+
+test('the approved export keeps only accepted packages that were not blocked', () => {
+  const csv = toApprovedCsv([done('a', 'accepted', 'clear'), done('b', 'sent', 'clear'),
+    done('c', 'returned', 'clear'), done('d', 'accepted', 'blocked')], schema);
+  assert.equal(csv.split('\r\n').length, 2);
+  assert.match(csv, /^"handoff_id","customer","pallets","price","approved_by","sent_on"/);
+  assert.match(csv, /"a","a","3","10","Operations > Finance","2026-10-29"/);
+});
+
+test('the approved export never carries free-text notes and keeps the form column order', () => {
+  const p = done('a', 'accepted', 'clear');
+  p.values.notes = 'call 0912345678';
+  assert.ok(!toApprovedCsv([p], schema).includes('0912345678'));
+  assert.deepEqual(Object.keys(JSON.parse(toApprovedJson([p], schema))[0].values), ['customer', 'pallets', 'price']);
+});
+
+test('an approved export cell that starts like a formula gets a leading quote mark', () => {
+  assert.match(toApprovedCsv([done('=x', 'accepted', 'clear', { values: { customer: '=cmd' } })], schema), /"'=cmd"/);
 });

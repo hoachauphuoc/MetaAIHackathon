@@ -1,33 +1,137 @@
 {
   "pii": [
-    ["email", "Contact lan.nguyen@harborlane.vn about the quote."],
-    ["email", "send to a+b@sub.example.co.uk please"],
-    ["email", "CC: ops_team@acme-foods.com"],
-    ["email", "email me at LAN@EXAMPLE.COM"],
-    ["email", "billing@x.io, finance@x.io both"],
-    ["phone", "Call +84 912 345 678 tomorrow"],
-    ["phone", "Phone: 0912.345.678"],
-    ["phone", "ring (024) 3825 1234 after lunch"],
-    ["phone", "+1 (415) 555-0132 is the dock"],
-    ["phone", "my mobile 091 234 5678"],
-    ["phone", "+44 20 7946 0958 for the UK depot"],
-    ["card", "Card 4111 1111 1111 1111 expires 12/28"],
-    ["card", "pay with 5500-0000-0000-0004"],
-    ["card", "4111111111111111"],
-    ["card", "AmEx 3782 822463 10005"],
-    ["ssn", "SSN 078-05-1120"],
-    ["ssn", "social 219-09-9999"],
-    ["ssn", "ssn: 123-45-6789"],
-    ["id", "CCCD 001204012345"],
-    ["id", "ID number 079201001234"],
-    ["id", "citizen id 038099001122"],
-    ["iban", "IBAN GB82 WEST 1234 5698 7654 32"],
-    ["iban", "DE89370400440532013000"],
-    ["iban", "pay to FR14 2004 1010 0505 0001 3M02 606"],
-    ["name", "Ask Nguyen Van An to sign"],
-    ["name", "Mrs. Tran approved it"],
-    ["name", "Contact Maria Lopez"],
-    ["name", "John Smith is the buyer"]
+    [
+      "email",
+      "Contact lan.nguyen@harborlane.vn about the quote."
+    ],
+    [
+      "email",
+      "send to a+b@sub.example.co.uk please"
+    ],
+    [
+      "email",
+      "CC: ops_team@acme-foods.com"
+    ],
+    [
+      "email",
+      "email me at LAN@EXAMPLE.COM"
+    ],
+    [
+      "email",
+      "billing@x.io, finance@x.io both"
+    ],
+    [
+      "phone",
+      "Call +84 912 345 678 tomorrow"
+    ],
+    [
+      "phone",
+      "Phone: 0912.345.678"
+    ],
+    [
+      "phone",
+      "ring (024) 3825 1234 after lunch"
+    ],
+    [
+      "phone",
+      "+1 (415) 555-0132 is the dock"
+    ],
+    [
+      "phone",
+      "my mobile 091 234 5678"
+    ],
+    [
+      "phone",
+      "+44 20 7946 0958 for the UK depot"
+    ],
+    [
+      "card",
+      "Card 4111 1111 1111 1111 expires 12/28"
+    ],
+    [
+      "card",
+      "pay with 5500-0000-0000-0004"
+    ],
+    [
+      "card",
+      "4111111111111111"
+    ],
+    [
+      "card",
+      "AmEx 3782 822463 10005"
+    ],
+    [
+      "ssn",
+      "SSN 078-05-1120"
+    ],
+    [
+      "ssn",
+      "social 219-09-9999"
+    ],
+    [
+      "ssn",
+      "ssn: 123-45-6789"
+    ],
+    [
+      "id",
+      "CCCD 001204012345"
+    ],
+    [
+      "id",
+      "ID number 079201001234"
+    ],
+    [
+      "id",
+      "citizen id 038099001122"
+    ],
+    [
+      "iban",
+      "IBAN GB82 WEST 1234 5698 7654 32"
+    ],
+    [
+      "iban",
+      "DE89370400440532013000"
+    ],
+    [
+      "iban",
+      "pay to FR14 2004 1010 0505 0001 3M02 606"
+    ],
+    [
+      "name",
+      "Ask Nguyen Van An to sign"
+    ],
+    [
+      "name",
+      "Mrs. Tran approved it"
+    ],
+    [
+      "name",
+      "Contact Maria Lopez"
+    ],
+    [
+      "name",
+      "John Smith is the buyer"
+    ],
+    [
+      "secret",
+      "const key = 'AKIAIOSFODNN7EXAMPLE';"
+    ],
+    [
+      "secret",
+      "password = hunter2hunter2"
+    ],
+    [
+      "secret",
+      "export GITHUB_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123456789"
+    ],
+    [
+      "secret",
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEabc\n-----END RSA PRIVATE KEY-----"
+    ],
+    [
+      "secret",
+      "client sent api_key: 9f8e7d6c5b4a3"
+    ]
   ],
   "clean": [
     "Quote 12 pallets Hanoi-Haiphong for USD 2160",
@@ -41,6 +145,9 @@
     "Version 2.4.1 released on 10.11.2026",
     "The route is 1,120 km",
     "Room 204 on floor 3",
-    "Ship by 15/11/2026"
+    "Ship by 15/11/2026",
+    "Explain how a JWT token expires.",
+    "Why does my password reset email arrive late?",
+    "The token budget is 4000 per call."
   ]
 }

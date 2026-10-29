@@ -34,6 +34,23 @@
       {"kind": "date_not_past", "field": "start_date", "other": null, "percent": null, "usd": null}
     ]
   },
+  "clinic": {
+    "id": "clinic", "title": "Treatment plan quote", "title_field": "patient_ref",
+    "fields": [
+      {"key": "patient_ref", "label": "Patient reference (a number, not a name)", "noun": "patient reference", "type": "text", "required": true, "options": []},
+      {"key": "treatment", "label": "Treatment", "noun": "treatment", "type": "text", "required": true, "options": []},
+      {"key": "sessions", "label": "Sessions", "noun": "sessions", "type": "integer", "required": true, "options": []},
+      {"key": "fee", "label": "Quoted fee (USD)", "noun": "fee", "type": "money", "required": true, "options": []},
+      {"key": "cost", "label": "Clinic cost (USD)", "noun": "cost", "type": "money", "required": true, "options": []},
+      {"key": "start_date", "label": "First visit", "noun": "first visit", "type": "date", "required": true, "options": []}
+    ],
+    "rules": [
+      {"kind": "not_below", "field": "fee", "other": "cost", "percent": null, "usd": null},
+      {"kind": "min_margin", "field": "fee", "other": "cost", "percent": null, "usd": null},
+      {"kind": "escalate_over", "field": "fee", "other": null, "percent": null, "usd": null},
+      {"kind": "date_not_past", "field": "start_date", "other": null, "percent": null, "usd": null}
+    ]
+  },
   "retail": {
     "id": "retail", "title": "Order", "title_field": "customer",
     "fields": [

@@ -6,6 +6,20 @@
     {"id": "finance", "title": "Finance Lead", "reports_to": "md", "weight": 2},
     {"id": "support", "title": "Customer Support", "reports_to": "ops", "weight": 2}
   ],
+  "clinic": [
+    {"id": "director", "title": "Clinic Director", "reports_to": null, "weight": 1},
+    {"id": "patients", "title": "Patient Account Coordinator", "reports_to": "director", "weight": 3},
+    {"id": "operations", "title": "Clinic Operations Lead", "reports_to": "director", "weight": 3},
+    {"id": "billing", "title": "Billing Officer", "reports_to": "director", "weight": 2},
+    {"id": "support", "title": "Patient Support", "reports_to": "operations", "weight": 2}
+  ],
+  "software": [
+    {"id": "md", "title": "Managing Director", "reports_to": null, "weight": 1},
+    {"id": "engineering", "title": "Engineering Lead", "reports_to": "md", "weight": 5},
+    {"id": "sales", "title": "Account Manager", "reports_to": "md", "weight": 2},
+    {"id": "finance", "title": "Finance Admin", "reports_to": "md", "weight": 1},
+    {"id": "support", "title": "Client Support", "reports_to": "engineering", "weight": 2}
+  ],
   "retail": [
     {"id": "owner", "title": "Store Owner", "reports_to": null, "weight": 1},
     {"id": "sales", "title": "Sales Lead", "reports_to": "owner", "weight": 4},

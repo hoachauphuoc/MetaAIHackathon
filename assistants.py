@@ -1,6 +1,7 @@
 """One assistant kit per role: Spark writes the words, rules filter the skills and the handoffs."""
 import json
 
+import chat
 import muse
 import rules
 
@@ -46,6 +47,12 @@ def fallback_kit(role, roles):
 
 
 def build(role, roles, blocked=lambda: None):
+    """The kit, with role-bound skills (code help) scoped by code to the roles that own them."""
+    kit = _build(role, roles, blocked)
+    return {**kit, "skills": rules.scope_skills(kit["skills"], chat.playbook_key(kit))}
+
+
+def _build(role, roles, blocked):
     """Return the kit plus what was removed. demo_mode is True whenever Spark did not write it."""
     other_ids = [r["id"] for r in roles if r["id"] != role["id"]]
     skill_ids = sorted(rules.ALLOWED_SKILLS)
