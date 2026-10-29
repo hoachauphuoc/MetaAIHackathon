@@ -33,6 +33,7 @@ with a person gating every step.
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits).
+- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the inbox, **Export approved** downloads only handoffs every approver accepted. **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -41,9 +42,9 @@ with a person gating every step.
 ## Impact
 
 Employees worry about AI at work, and companies leak data into it. The figures below are quoted
-as published; the product answers each one with a design rule that has a test.
+as published. The right-hand column is a design response, enforced by a test: it shows what the product does about each finding, not a measured reduction in worry, leaks or time.
 
-| Finding | Source | Product answer |
+| Finding | Source | Design response (enforced by a test, not measured impact) |
 |---|---|---|
 | 52% of US workers feel worried about future AI use in the workplace, 36% hopeful (n = 5,273 employed adults, published 25 Feb 2025) | [Pew Research Center](https://www.pewresearch.org/social-trends/2025/02/25/u-s-workers-are-more-worried-than-hopeful-about-future-ai-use-in-the-workplace) | Assistants help with documents; four skills that evaluate, rank, monitor or decide about people are never available |
 | 81% of US adults say AI used to evaluate workers would make workers feel inappropriately watched (fielded 12-18 Dec 2022, n = 11,004 adults) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/ai-in-hiring-and-evaluating-workers-what-americans-think) | No per-person metrics exist anywhere in the data model |

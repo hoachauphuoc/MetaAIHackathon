@@ -214,3 +214,12 @@ def test_a_level_saved_without_bans_keeps_the_ones_it_had(client):
     client.put("/api/levels/group", json={**GROUP, "banned_skills": [BAN]}, headers=h)
     client.put("/api/levels/group", json={**GROUP, "margin_floor_pct": 21}, headers=h)
     assert client.get("/api/levels", headers=h).json["bans"] == {BAN: "Group"}
+
+
+def test_the_owner_page_gets_the_same_refusal_in_a_200_body_and_nothing_is_saved(client):
+    h = leveled(client)
+    child = {**GROUP, "margin_floor_pct": 19}
+    soft = client.put("/api/levels/subsidiary?soft=1", json=child, headers=h)
+    assert soft.status_code == 200 and soft.json["saved"] is False
+    assert soft.json["errors"] == client.put("/api/levels/subsidiary", json=child, headers=h).json["errors"]
+    assert client.get("/api/levels", headers=h).json["levels"][1]["margin_floor_pct"] != 19

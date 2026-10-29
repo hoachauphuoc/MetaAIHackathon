@@ -407,6 +407,11 @@ def create_app(db_path=None):
         schema = effective_schema(company)
         return rules.bind_levels([mine], effective_params(company), schema)[1] if mine else schema
 
+    def refusal(errors):
+        if request.args.get("soft") == "1":
+            return jsonify(saved=False, error="loosens_parent", errors=errors)
+        return jsonify(error="loosens_parent", errors=errors), 422
+
     @app.route("/api/personal-rules", methods=["GET", "PUT"])
     def personal_rules():
         """Private to the person: no owner or unit route reads this table."""
@@ -417,7 +422,7 @@ def create_app(db_path=None):
         values = {rule: body.get(rule) for rule in rules.LEVEL_RULES}
         errors = rules.level_value_errors(values) or rules.validate_child_rules(above, values, "The company")
         if errors:
-            return jsonify(error="loosens_parent", errors=errors), 422
+            return refusal(errors)
         db.save_personal_rules(me["token"], values)
         return jsonify(rules=values)
 
@@ -458,7 +463,7 @@ def create_app(db_path=None):
         if not errors and index > 0:
             errors = rules.validate_child_rules(levels[index - 1], values, levels[index - 1]["name"])
         if errors:
-            return jsonify(error="loosens_parent", errors=errors), 422
+            return refusal(errors)
         levels[index] = {**levels[index], **values}
         db.save_company(sandbox_id, company)
         banned = rules.ban_provenance(levels)

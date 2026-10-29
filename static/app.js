@@ -319,8 +319,8 @@ function levelsSection() {
       const save = guard(async () => {
         const values = Object.fromEntries(Object.keys(names).map((rule, i) => [rule, Number(inputs[i].value)]));
         values.banned_skills = Object.keys(res.data.skills).filter((id, i) => bans[i].checked);
-        const put = await api(`/api/levels/${unit.id}`, { method: 'PUT', sandbox, body: values });
-        if (put.ok) { await load(); return; }
+        const put = await api(`/api/levels/${unit.id}?soft=1`, { method: 'PUT', sandbox, body: values });
+        if (put.ok && put.data.saved !== false) { await load(); return; }
         clear(message, el('div', { class: 'errors' }, put.data.errors.map((e) => e.message).join(' ')));
       });
       const banList = el('details', {}, el('summary', {}, `${unit.name}: skills banned (${(unit.banned_skills || []).length})`),

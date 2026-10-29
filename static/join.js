@@ -321,9 +321,9 @@ function personalRulesPanel() {
   const save = async () => {
     const values = {};
     for (const rule in inputs) values[rule] = inputs[rule].value === '' ? null : Number(inputs[rule].value);
-    const res = await api('/api/personal-rules', { method: 'PUT', body: { token, ...values } });
+    const res = await api('/api/personal-rules?soft=1', { method: 'PUT', body: { token, ...values } });
     clear(errors);
-    if (res.ok) { status.textContent = 'Saved. Only your assistant uses these.'; return; }
+    if (res.ok && res.data.saved !== false) { status.textContent = 'Saved. Only your assistant uses these.'; return; }
     status.textContent = '';
     errors.append(el('div', { class: 'errors' }, el('ul', {}, (res.data.errors || [{ message: res.data.message || 'Could not save.' }])
       .map((e) => el('li', {}, e.message)))));
