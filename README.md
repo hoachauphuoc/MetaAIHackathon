@@ -294,8 +294,8 @@ time at the company:
    Muse Voice Transcribe. The browser converts the recording to 16 kHz mono WAV, the server checks it
    by code (format, length) and sends it once; only the text comes back, into the message box of
    item 17, so the same masking, the same model reading and the same person checks apply. The
-   recording is never stored. Measured once with a real microphone (a Vietnamese sentence came out
-   right). **Unmeasured:** word accuracy has no number; noisy speech and a full order are not tested (see Limits).
+   recording is never stored. The recording and the WAV checks are tested with fake audio; the
+   transcription endpoint has **not** been run against real audio, so no accuracy or example result is claimed (see Limits).
 20. **Cover before reading:** on a photo, the person names what to hide (for example `signature`),
    SAM 3.1 outlines it, and the browser paints those boxes black on its own copy before Spark reads the
    photo. Only boxes come back (code parses and clips them), the request sets `store: false`, and the
