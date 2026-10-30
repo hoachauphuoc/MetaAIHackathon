@@ -354,7 +354,7 @@ function describe(result) {
   // and that code ran it. The model never runs the tool and never sees the rules' result as a number to change.
   for (const call of result.trace.filter((x) => x.arguments)) {
     lines.push(el('p', { class: 'muted', id: `chosen-${result.step_id}` },
-      `Chosen by ${call.answered_by || 'the model'}: ${call.tool}(${JSON.stringify(call.arguments)}). Code ran it.`));
+      `Chosen by ${call.answered_by || "the model"}: ${call.tool}(${typeof call.arguments === "string" ? call.arguments : JSON.stringify(call.arguments)}). Code ran it.`));
   }
   // The id comes from the provider's own response; a step no model answered shows none, only the demo note.
   const answered = result.trace.find((x) => x.answered_by && !x.demo_mode);
