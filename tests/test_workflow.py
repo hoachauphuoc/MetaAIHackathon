@@ -116,6 +116,16 @@ def test_a_result_the_server_did_not_produce_cannot_be_approved():
         workflow.approve(plan, "quote", out["result"], out["ticket"])
 
 
+def test_a_result_holding_whole_floats_can_be_approved_after_the_browser_round_trip():
+    # Glimmer's tool arguments held 2160.0; JSON.stringify sends 2160 and the live approval failed (2026-10-30).
+    plan = plan_for()
+    out = run(plan, "quote", {})
+    out["result"]["trace"].append({"arguments": {"price": 2160.0, "pallets": 12.0}})
+    ticket = workflow.sign("ticket", plan["run_id"], "quote", out["result"])
+    from_browser = json.loads(json.dumps(out["result"]).replace("2160.0", "2160").replace("12.0", "12"))
+    assert workflow.approve(plan, "quote", from_browser, ticket)
+
+
 def test_full_run_computes_numbers_in_code_and_keeps_them_between_steps():
     plan = plan_for()
     receipts = approve_all(plan, 2)
