@@ -1,5 +1,6 @@
 // Employee page: chat with the role's assistant, and run a team workflow with a person approving
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
+import { approvedOrderDraft } from '/static/exchange.js';
 import { findingsBlock, inboxPanel, inputFor } from '/static/inbox.js';
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
@@ -204,14 +205,18 @@ function handoverPanel(form) {
 }
 
 // --- workflow --------------------------------------------------------------------------
-// Before Finance runs on the open-weights model, say honestly whether it is likely awake. The server only reports when
-// the endpoint last answered; it does not probe, so reading this never wakes or bills the endpoint.
+// Before Finance runs on the open-weights model, say honestly whether it is likely awake. Opening the order form asks
+// the server to wake the endpoint (no order data is sent; the server sends one wake request per two minutes at most),
+// so the time spent filling the form covers part of the cold start. It shortens the wait; it does not remove it.
 const WARM_S = 600;
 async function privateReadiness() {
-  const res = await api('/api/private/status');
+  const res = await api('/api/private/prewarm', { method: 'POST', body: { token } });
   if (!res.ok) return null;
   const s = res.data;
   if (!s.configured) return 'Private mode is not set up on this server: the Finance step will be marked for a person to check.';
+  if (s.waking_s !== null)
+    return [badge('Private mode: waking up', 'warn'), ` ${s.model} was woken ${s.waking_s} s ago when this form opened. ` +
+      'A cold start took 166 s when timed, so fill the order meanwhile; if it is not ready, the Finance step retries on its own.'];
   if (s.answered_s_ago !== null && s.answered_s_ago < WARM_S)
     return [badge('Private mode: probably warm', 'ok'), ` ${s.model} answered ${Math.max(1, Math.round(s.answered_s_ago / 60))} min ago.`];
   return [badge('Private mode: may be asleep', 'warn'), ` ${s.model} has not answered in the last 10 minutes. ` +
@@ -243,7 +248,12 @@ function workflowPanel(routes) {
     runner(res.data, out);
   } }, 'Plan this order');
   const ready = el('p', { class: 'muted', role: 'status' });
-  privateReadiness().then((line) => clear(ready, line));
+  const refresh = () => privateReadiness().then((line) => {
+    clear(ready, line);
+    // Keep the line honest while it wakes: it turns to "probably warm" once the endpoint has answered.
+    if (Array.isArray(line) && line[0].textContent === 'Private mode: waking up') setTimeout(() => ready.isConnected && refresh(), 15000);
+  });
+  refresh();
   box.append(ready, el('p', { class: 'muted' }, 'Unlike a chat, each step is one assistant making a tool call; code ' +
     'computes the numbers, and the next role starts only with your signed approval. ' +
     'A blocked step can never be approved.'),
@@ -290,6 +300,8 @@ function runner({ plan, signature, roles }, out) {
       // The server signs what the person approved; the next step runs only with that receipt.
       node.append(el('p', {}, badge('Approved: signed receipt', 'ok'),
         index + 1 < items.length ? ' The next step can start only with it.' : ' The order is complete.'));
+      if (index + 1 === items.length) out.append(orderDone(items.map((i) => ({ title: i.step.title,
+        role: roles[i.step.role_id] || i.step.role_id, result: receipts[i.step.id].result }))));
       runStep(index + 1);
     });
     stop.addEventListener('click', () => { approve.disabled = stop.disabled = true;
@@ -320,15 +332,39 @@ function runner({ plan, signature, roles }, out) {
   }
 }
 
+// The approved order leaves the product without retyping: an email draft the person sends from their own mail app and
+// the delivery's calendar file. No connector, no key, nothing sent from here.
+function orderDone(steps) {
+  const draft = approvedOrderDraft(steps);
+  return el('div', { class: 'card', id: 'order-done' }, el('h3', {}, 'Send the approved order'),
+    el('p', { class: 'muted' }, 'Only the numbers code computed and who approved each step. You press Send.'),
+    el('div', { class: 'row' },
+      draft.href ? el('a', { class: 'button', href: draft.href }, 'Open email draft') : null,
+      draft.ics ? el('a', { class: 'button', href: URL.createObjectURL(new Blob([draft.ics], { type: 'text/calendar' })),
+        download: 'delivery.ics' }, 'Add to calendar (.ics)') : null),
+    el('pre', { class: 'reminder' }, draft.text));
+}
+
+const ARGS_FROM_ORDER = 'the model did not call the tool, so code took its arguments from the order';  // workflow.py
+
 function describe(result) {
   const t = result.tool_result;
   const lines = [];
+  // The bounded agentic step, shown before anyone approves: which tool the model chose and with what arguments,
+  // and that code ran it. The model never runs the tool and never sees the rules' result as a number to change.
+  for (const call of result.trace.filter((x) => x.arguments)) {
+    lines.push(el('p', { class: 'muted', id: `chosen-${result.step_id}` },
+      `Chosen by ${call.answered_by || 'the model'}: ${call.tool}(${JSON.stringify(call.arguments)}). Code ran it.`));
+  }
   // The id comes from the provider's own response; a step no model answered shows none, only the demo note.
   const answered = result.trace.find((x) => x.answered_by && !x.demo_mode);
   lines.push(el('p', {}, statusBadge(result.status), ' ',
     result.private ? badge('Private mode', 'info') : null, ' ',
     answered ? badge(`Answered by ${answered.answered_by}`, 'ok') : null));
-  if (result.demo_mode) lines.push(demoNote(result.demo_reason));
+  if (result.demo_reason === ARGS_FROM_ORDER)
+    lines.push(el('p', { class: 'demo-note', role: 'status' }, `Labelled: ${ARGS_FROM_ORDER}. The numbers are still ` +
+      'computed by code; the check below was written by the model named above.'));
+  else if (result.demo_mode) lines.push(demoNote(result.demo_reason));
   if (t.price !== undefined && t.margin_pct !== undefined)
     lines.push(el('p', {}, `Price USD ${t.price.toLocaleString()}, cost USD ${t.cost.toLocaleString()}, margin ${t.margin_pct}% (computed by code).`));
   else if (t.ics) lines.push(el('p', {}, `Calendar event: ${t.title} on ${t.date}. `,

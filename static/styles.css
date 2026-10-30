@@ -84,3 +84,6 @@ ol.how li { margin: 4px 0; }
 .wait-art { margin: 12px 0; }
 .wait-art img { display: block; width: 240px; max-width: 100%; height: auto; border-radius: var(--radius-sm); }
 .sticky-actions { position: sticky; bottom: 0; background: var(--panel); padding: 8px 0; }
+
+/* A drafted email: wrap long lines so a phone never scrolls sideways. */
+pre.reminder { white-space: pre-wrap; overflow-wrap: anywhere; }

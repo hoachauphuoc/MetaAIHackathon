@@ -120,12 +120,12 @@ def test_private_status_reports_the_last_answer_without_calling_the_endpoint(rea
     monkeypatch.setattr(muse, "_private_answered_at", None)
     for key in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
         monkeypatch.delenv(key, raising=False)
-    assert muse.private_status() == {"configured": False, "model": None, "answered_s_ago": None}
+    assert muse.private_status() == {"configured": False, "model": None, "answered_s_ago": None, "waking_s": None}
     for key, value in (("PRIVATE_PROVIDER", "modal"), ("PRIVATE_BASE_URL", "https://x"),
                        ("PRIVATE_MODEL", "glimmer"), ("PRIVATE_API_KEY_FILE", "k")):
         monkeypatch.setenv(key, value)
     monkeypatch.setattr(muse, "_client", lambda cfg=None: pytest.fail("status must never call the endpoint"))
-    assert muse.private_status() == {"configured": True, "model": "glimmer", "answered_s_ago": None}
+    assert muse.private_status() == {"configured": True, "model": "glimmer", "answered_s_ago": None, "waking_s": None}
     monkeypatch.setattr(muse, "_client", lambda cfg=None: FakeClient([fake_response("ok")]))
     muse.complete(None, [], private=True)
     assert muse.private_status()["answered_s_ago"] == 0
@@ -133,3 +133,47 @@ def test_private_status_reports_the_last_answer_without_calling_the_endpoint(rea
     monkeypatch.setattr(muse, "_private_answered_at", None)
     muse.complete("muse-spark-1.3", [])
     assert muse.private_status()["answered_s_ago"] is None  # only an open-weights answer counts
+
+
+def test_prewarm_asks_until_the_endpoint_answers_with_no_data_and_never_when_recently_warm(real_path, monkeypatch):
+    sent, seen = [], []
+
+    class Now:  # run the background request inline so the test can see it
+        def __init__(self, target, daemon):
+            self.target = target
+
+        def start(self):
+            self.target()
+
+    class APITimeoutError(Exception):  # named like the SDK's, which is how complete() tells a cold start apart
+        pass
+
+    class Waking:  # times out twice while the container loads, then answers
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    sent.append(kw)
+                    if len(sent) < 3:
+                        raise APITimeoutError()
+                    return fake_response("ok")
+
+    monkeypatch.setattr(muse.threading, "Thread", Now)
+    monkeypatch.setattr(muse, "_private_answered_at", None)
+    monkeypatch.setattr(muse, "_prewarm_at", None)
+    for key in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
+        monkeypatch.delenv(key, raising=False)
+    assert muse.prewarm() is False  # not configured: nothing to wake, nothing billed
+    for key, value in (("PRIVATE_PROVIDER", "modal"), ("PRIVATE_BASE_URL", "https://x"),
+                       ("PRIVATE_MODEL", "glimmer"), ("PRIVATE_API_KEY_FILE", "k")):
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(muse, "_client", lambda cfg=None: (seen.append(muse.private_status()["waking_s"]), Waking)[1])
+    assert muse.prewarm() is True
+    assert all(kw["messages"] == [{"role": "user", "content": "ping"}] and kw["max_tokens"] == 1 for kw in sent)
+    assert len(sent) == 3 and seen[0] == 0  # asked until it answered, and said "waking" while it loaded
+    assert muse.private_status()["waking_s"] is None and muse.private_status()["answered_s_ago"] == 0
+    monkeypatch.setattr(muse, "_prewarm_at", None)
+    assert muse.prewarm() is False and len(sent) == 3  # it just answered: still warm, no request
+    monkeypatch.setattr(muse, "_private_answered_at", None)
+    monkeypatch.setattr(muse, "_prewarm_at", muse.time.time())
+    assert muse.prewarm() is False and len(sent) == 3  # cold but woken a moment ago: rate-limited

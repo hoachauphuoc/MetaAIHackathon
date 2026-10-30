@@ -10,6 +10,6 @@ Set-Location $root
 # Session affinity keeps a visitor on it. Lower min-instances to 0 after 9/11 to stop paying for idle.
 gcloud run deploy $Service --project $Project --region $Region --source . `
     --min-instances 1 --max-instances 1 --memory 1Gi --cpu 1 --session-affinity `
-    --allow-unauthenticated --timeout 120 `
+    --allow-unauthenticated --timeout 120 --quiet `
     --set-secrets "META_API_KEY=meta-api-key:latest,WORKFLOW_SECRET=workflow-secret:latest,/secrets/private-api-key=private-api-key:latest" `
     --set-env-vars "DAILY_CEILING_USD=10,PRIVATE_PROVIDER=modal,PRIVATE_MODEL=meta-models/Muse-Glimmer-30B,PRIVATE_BASE_URL=$PrivateUrl,PRIVATE_API_KEY_FILE=/secrets/private-api-key"

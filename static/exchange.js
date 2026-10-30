@@ -94,6 +94,20 @@ export function approvedMailDraft(p, schema) {
   return { text, href: href.length <= MAILTO_LIMIT ? href : null };
 }
 
+// The same for a finished order: only the numbers code computed and the steps a person approved, never what a model
+// wrote, so the email cannot carry a model's guess. The .ics from the schedule step travels as its own file.
+export function approvedOrderDraft(steps) {
+  const tools = Object.assign({}, ...steps.map((s) => s.result.tool_result));
+  const lines = [`Approved order: ${tools.title || 'order'}`, ''];
+  if (tools.price !== undefined) lines.push(`Price: USD ${tools.price}`, `Cost: USD ${tools.cost}`);
+  if (tools.margin_pct !== undefined) lines.push(`Margin: ${tools.margin_pct}% (computed by code)`);
+  if (tools.date) lines.push(`Delivery: ${tools.date}`);
+  lines.push('', `Approved steps: ${steps.map((s) => `${s.title} (${s.role})`).join(', then ')}`);
+  const text = lines.join('\r\n');
+  const href = `mailto:?subject=${encodeURIComponent(lines[0])}&body=${encodeURIComponent(text)}`;
+  return { text, href: href.length <= MAILTO_LIMIT ? href : null, ics: tools.ics || null };
+}
+
 export function download(name, text, type) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([text], { type }));

@@ -6,6 +6,7 @@ UI can label it (principle 3). Logs hold model, tokens, cost and latency, never 
 import json
 import logging
 import os
+import threading
 import time
 import urllib.request
 import uuid
@@ -61,8 +62,43 @@ def private_status():
     """What the invite page may say before a Private step runs: configured or not, the model id, and how long ago
     the endpoint last answered. Recent means probably warm; nothing is probed, so nothing wakes or bills."""
     cfg = private_config()
-    ago = None if _private_answered_at is None else int(time.time() - _private_answered_at)
-    return {"configured": cfg is not None, "model": cfg["model"] if cfg else None, "answered_s_ago": ago}
+    now = time.time()
+    ago = None if _private_answered_at is None else int(now - _private_answered_at)
+    waking = None if _prewarm_at is None or (_private_answered_at or 0) > _prewarm_at else int(now - _prewarm_at)
+    return {"configured": cfg is not None, "model": cfg["model"] if cfg else None, "answered_s_ago": ago,
+            "waking_s": waking}
+
+
+_prewarm_at = None
+PREWARM_EVERY_S = 120  # one wake request per server at most this often, whoever opens a page
+WARM_S = 600  # the endpoint idles out 10 minutes after its last answer
+
+
+def prewarm():
+    """Wake the open-weights endpoint when someone opens a page that will need it, so the minutes spent filling the
+    order cover part of the cold start. The request holds no data (a fixed one-word prompt), runs in the background,
+    is sent at most once per PREWARM_EVERY_S, and is skipped when the endpoint answered recently. Returns whether a
+    wake request was started."""
+    global _prewarm_at
+    now = time.time()
+    if (private_config() is None or (_private_answered_at and now - _private_answered_at < WARM_S)
+            or (_prewarm_at and now - _prewarm_at < PREWARM_EVERY_S)):
+        return False
+    _prewarm_at = now
+    threading.Thread(target=_wake, daemon=True).start()
+    return True
+
+
+WAKE_TRIES = 6  # 6 x 35 s outlasts the 166 s cold start measured; one try alone would time out before it is ready
+
+
+def _wake():
+    # Ask again while the endpoint is still starting: a timed-out request does not tell us when it became ready, and
+    # only an answer turns the invite page's line from "waking up" to "probably warm". Any other error stops here.
+    for _ in range(WAKE_TRIES):
+        out = complete("private", [{"role": "user", "content": "ping"}], private=True, max_tokens=1)
+        if out["demo_reason"] != PRIVATE_STARTING:
+            return
 
 
 def cost_usd(model, tokens_in, tokens_out):

@@ -167,6 +167,14 @@ def create_app(db_path=None):
     def private_status():
         return jsonify(muse.private_status())
 
+    @app.post("/api/private/prewarm")
+    def private_prewarm():
+        # Only someone already in a sandbox (an invite holder, or an owner who started a demo) can wake the paid GPU;
+        # the request carries no order data.
+        token = (request.get_json(silent=True) or {}).get("token")
+        db.person_by_token(str(token)) if token else current_sandbox()
+        return jsonify({"started": muse.prewarm(), **muse.private_status()})
+
     @app.get("/api/handoff-schema")
     def current_handoff_schema():
         company = accepted_company(current_sandbox())

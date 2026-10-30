@@ -445,7 +445,7 @@ python scripts/measure.py [set1 ... set10]  # the measured sets (no argument run
 python scripts/record_demo.py              # records the golden path as a captioned .webm
 ```
 
-Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager).
+Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager). A push to `main` runs the same checks in GitHub Actions (`.github/workflows/deploy.yml`) and, when they pass and the `GCP_SA_KEY` secret is set, runs that script. The Private-mode endpoint scales to zero; for the judging days only, `GLIMMER_MIN_CONTAINERS=1 modal deploy scripts/private_modal.py` keeps one container awake (billed by the second), and a plain `modal deploy` turns it off. Opening the order form or starting a demo also wakes it (one request, no data, at most every two minutes): that shortens the 166 s cold start, it does not remove it.
 
 Models are called through the OpenAI SDK pointed at `https://api.meta.ai/v1`.
 

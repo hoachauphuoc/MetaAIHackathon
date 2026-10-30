@@ -199,7 +199,7 @@ def test_bad_tool_arguments_are_retried_once_then_taken_from_the_package(monkeyp
     monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Mars", "pallets": 10}))
     result = run(plan_for(), "quote", {})["result"]
     assert result["tool_result"]["price"] == 1800
-    assert result["demo_mode"] is True
+    assert result["demo_mode"] is True and result["demo_reason"] == workflow.ARGS_FROM_ORDER
     assert len([t for t in result["trace"] if t["tool"] == "quote_price"]) == 2
 
 
@@ -322,3 +322,34 @@ def test_a_waking_private_step_retries_on_its_own_with_the_servers_own_words():
     tries = int(join.split("const WAKE_TRIES = ")[1].split(";")[0])
     pause = int(join.split("const WAKE_WAIT_S = ")[1].split(";")[0])
     assert tries * (muse.PRIVATE_TIMEOUT + pause) > 200  # outlasts the 166 s cold start measured in set 10
+
+
+def test_the_invite_page_says_exactly_why_a_step_with_order_arguments_is_labelled():
+    # A Glimmer step once showed "Answered by" next to "Muse did not write this part" (2026-10-30).
+    js = (Path(__file__).parent.parent / "static" / "join.js").read_text(encoding="utf-8")
+    assert f"'{workflow.ARGS_FROM_ORDER}'" in js
+
+
+def test_a_model_finding_that_quotes_a_number_the_order_does_not_have_is_dropped(monkeypatch):
+    # Glimmer wrote "margin 20.0%" beside the code's 16.7% in the live Finance step (2026-10-30).
+    verdict = {"status": "needs_attention", "summary": "Check.", "findings": [
+        "margin_pct mismatch: computed 20.0% from price 2160 and cost 1800",
+        "delivery_date 2026-11-13 is in the future"]}
+    monkeypatch.setattr(workflow, "soft_check", workflow.soft_check)
+    out, why = workflow.soft_check({"title": "Check the margin", "id": "m"},
+                                   {"price": 2160, "cost": 1800, "margin_pct": 16.7, "delivery_date": "2026-11-13"},
+                                   "clear", lambda *a, **k: {"demo_mode": False, "text": json.dumps(verdict),
+                                                             "model": "x", "answered_by": "x", "latency_ms": 1},
+                                   lambda: None, [])
+    assert why is None
+    assert out["findings"] == ["delivery_date 2026-11-13 is in the future"]
+
+
+def test_the_tool_arguments_the_model_chose_are_on_the_trace_for_the_page_to_show():
+    # Bounded agency made visible (improvement X03, idea I06): the page shows the chosen tool call before Approve.
+    plan = plan_for()
+    out = run(plan, "quote", {})
+    call = [t for t in out["result"]["trace"] if t["tool"] == "quote_price"]
+    assert call and "arguments" in call[0] and call[0]["arguments"]
+    js = (Path(__file__).parent.parent / "static" / "join.js").read_text(encoding="utf-8")
+    assert "Chosen by" in js and "Code ran it." in js

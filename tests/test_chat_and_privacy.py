@@ -164,3 +164,16 @@ def test_unknown_roles_fall_back_to_the_generic_playbook_and_titles_pick_the_fun
     assert chat.playbook_for({"role_id": "r2", "role_title": "Operations Lead"}) is chat.PLAYBOOKS["operations"]
     assert chat.playbook_for({"role_id": "md", "role_title": "Managing Director"}) is chat.PLAYBOOKS["management"]
     assert chat.playbook_for({"role_id": "s", "role_title": "Customer Support"}) is chat.PLAYBOOKS["support"]
+
+
+def test_only_an_invite_holder_can_wake_the_private_endpoint(client, monkeypatch):
+    woke = []
+    monkeypatch.setattr(muse, "prewarm", lambda: woke.append(1) or True)
+    assert client.post("/api/private/prewarm", json={"token": "nobody"}).status_code >= 400
+    assert woke == []  # a stranger without an invite cannot start the paid GPU
+    token = invite(client, setup_company(client)).json["token"]
+    r = client.post("/api/private/prewarm", json={"token": token})
+    assert r.status_code == 200 and r.json["started"] is True and woke == [1]
+    h = setup_company(client)  # an owner who just started a demo may wake it too, by sandbox
+    assert client.post("/api/private/prewarm", json={}, headers=h).status_code == 200 and woke == [1, 1]
+    assert client.post("/api/private/prewarm", json={}, headers={"X-Sandbox": "nope"}).status_code >= 400

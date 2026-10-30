@@ -1,0 +1,56 @@
+# Every push to main runs the same checks as scripts/check.ps1; when they pass, it deploys with scripts/deploy.ps1,
+# so a deploy can no longer skip the tests or drift from the script. Tests use FAKE_AI and never call a model.
+# One-time setup by the owner (GitHub > Settings > Secrets and variables > Actions):
+#   variable GCP_PROJECT = role-assistants-meta26
+#   secret   GCP_SA_KEY  = JSON key of a deploy-only service account (Cloud Run Admin, Cloud Build Editor,
+#                          Service Account User, Storage Admin on that project). The Meta key never goes here: the
+#                          service reads it from Secret Manager at run time.
+# Without GCP_SA_KEY the deploy job is skipped and only the checks run.
+name: check and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      FAKE_AI: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest -q
+      - run: node --test tests/js/*.test.mjs
+      - name: model and user text never inserted as HTML
+        run: "! grep -nE 'innerHTML|outerHTML|insertAdjacentHTML|document\.write' static/*.js static/*.html"
+
+  deploy:
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: deploy  # one Cloud Run deploy at a time; a newer push waits for the older one
+    steps:
+      - id: key
+        env:
+          KEY: ${{ secrets.GCP_SA_KEY }}
+        run: echo "present=$([ -n "$KEY" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'yes'
+      - uses: google-github-actions/auth@v2
+        if: steps.key.outputs.present == 'yes'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.key.outputs.present == 'yes'
+      - name: deploy with the same script the owner runs by hand
+        if: steps.key.outputs.present == 'yes'
+        shell: pwsh
+        run: ./scripts/deploy.ps1 -Project "${{ vars.GCP_PROJECT }}"

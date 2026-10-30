@@ -51,6 +51,14 @@ function valueFields(prefix, schema, v = {}, due = '', demo = false) {
     ...schema.fields.flatMap((field) => labelled(field.required ? field.label : `${field.label} (optional)`, inputs[field.key])),
     ...labelled('Answer needed by (optional)', dueInput), ...labelled('Notes (untrusted text)', notes)];
   const read = async (maskBox) => {
+    // A field the assistant could not read (from a photo, a message or a spoken note) stays empty and flagged; nothing
+    // is checked or sent until a person has typed in it.
+    const flagged = schema.fields.filter((f) => inputs[f.key].getAttribute('aria-invalid') === 'true').map((f) => f.label);
+    if (flagged.length) {
+      clear(maskBox, el('p', { class: 'errors', role: 'alert' },
+        `Fill these first: ${flagged.join(', ')}. The assistant could not read them, so a person must.`));
+      return null;
+    }
     const values = Object.fromEntries(schema.fields.map((field) => [field.key, inputs[field.key].value]));
     const masked = await confirmMask(notes.value, maskBox);
     return masked === null ? null : { values: { ...values, notes: masked }, due: dueInput.value || null };
@@ -256,7 +264,9 @@ export function inboxPanel(info, token) {
           if (!res.ok) { clear(voiceResult, el('span', { class: 'errors', role: 'alert' }, res.data.message)); return; }
           if (res.data.demo_mode) { clear(voiceResult, demoNote(res.data.demo_reason)); return; }
           emailBox.value = res.data.text;
-          clear(voiceResult, 'Read your words into the box below. Fix anything wrong, then fill the form. The recording was not kept.');
+          clear(voiceResult, 'Your words are in the box below and the form is being filled from them. Anything the note ' +
+            'did not make clear stays empty for you to fill. The recording was not kept.');
+          emailBtn.click();  // the same masked path as a pasted message: you confirm what is covered before any model reads it
         } catch (e) { clear(voiceResult, el('span', { class: 'errors', role: 'alert' }, 'The recording could not be used. Type the job instead.')); }
       };
       recorder.start();

@@ -20,6 +20,11 @@ gives up after 35 s and labels the step "Private mode starting", so warm the end
 `modal run scripts/private_modal.py` a few minutes before a demo. It stays warm for 10 minutes after
 the last request, then the GPU is released and billing stops.
 
+For the judging days only, keep one container awake so no judge meets the cold start, then set it back:
+    GLIMMER_MIN_CONTAINERS=1 modal deploy scripts/private_modal.py     (bills the GPU every second it stays up)
+    modal deploy scripts/private_modal.py                              (back to zero: billing stops when idle)
+An awake H200 is billed by the second whether or not anyone asks, so this is a window, never the default.
+
 Checked on 28/10 against the real model: tool calls parse, reasoning stays out of the answer, and
 json_schema is enforced from the first token, so the model answers without a visible reasoning phase.
 """
@@ -34,6 +39,7 @@ PARSER = "muse_glimmer"  # reasoning and tool-call parsers ship in vLLM since 0.
 GPU = "H200"  # 141 GB: the weights take 56 GiB and vLLM also profiles an image, which overflowed 80 GB cards
 PORT = 8000
 MINUTES = 60
+MIN_CONTAINERS = int(os.environ.get("GLIMMER_MIN_CONTAINERS", "0"))  # read at deploy time; 0 scales to zero
 
 image = (modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.12")
          .entrypoint([])
@@ -44,7 +50,7 @@ vllm_cache = modal.Volume.from_name("vllm-cache", create_if_missing=True)
 app = modal.App("muse-glimmer-private")
 
 
-@app.function(image=image, gpu=GPU, scaledown_window=10 * MINUTES, timeout=30 * MINUTES,
+@app.function(image=image, gpu=GPU, scaledown_window=10 * MINUTES, timeout=30 * MINUTES, min_containers=MIN_CONTAINERS,
               volumes={"/root/.cache/huggingface": hf_cache, "/root/.cache/vllm": vllm_cache},
               secrets=[modal.Secret.from_name("muse-private-key")])
 @modal.concurrent(max_inputs=8)

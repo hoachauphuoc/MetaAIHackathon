@@ -123,10 +123,12 @@ def test_private_status_route_says_only_configured_model_and_last_answer(client,
     for key in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
         monkeypatch.delenv(key, raising=False)
     r = client.get("/api/private/status")
-    assert r.status_code == 200 and set(r.get_json()) == {"configured", "model", "answered_s_ago"}
+    assert r.status_code == 200 and set(r.get_json()) == {"configured", "model", "answered_s_ago", "waking_s"}
     js = Path("static/join.js").read_text(encoding="utf-8")
-    assert "/api/private/status" in js and "may be asleep" in js
-    assert "neither ban that nor force its own tool" in Path("static/app.js").read_text(encoding="utf-8")
+    assert "/api/private/prewarm" in js and "may be asleep" in js and "waking up" in js
+    page = Path("static/app.js").read_text(encoding="utf-8")
+    assert "neither ban that nor force its own tool" in page and "Why I built this" in page
+    assert "lost if the server restarts" in page and "Refused by code, no model asked" in page
 
 
 def test_every_browser_module_parses(tmp_path):

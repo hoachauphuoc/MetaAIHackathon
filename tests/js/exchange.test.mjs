@@ -69,3 +69,16 @@ test('a draft too long for a mail link has the text to copy and no link', () => 
   assert.equal(draft.href, null);
   assert.ok(draft.text.length > 1800);
 });
+
+test('an approved order draft carries only code-computed numbers and the approvals, plus the calendar file', async () => {
+  const { approvedOrderDraft } = await import('../../static/exchange.js');
+  const step = (title, role, tool_result) => ({ title, role, result: { tool_result, summary: 'model words 0912345678' } });
+  const draft = approvedOrderDraft([step('Quote the order', 'Sales', { price: 2160, cost: 1800 }),
+    step('Schedule the delivery', 'Operations', { title: 'Delivery: Acme', date: '2026-11-13', ics: 'BEGIN:VCALENDAR' }),
+    step('Check the margin', 'Finance', { margin_pct: 16.7 })]);
+  assert.match(decodeURIComponent(draft.href), /^mailto:\?subject=Approved order: Delivery: Acme&body=/);
+  assert.ok(draft.text.includes('Price: USD 2160') && draft.text.includes('Margin: 16.7%') && draft.text.includes('Delivery: 2026-11-13'));
+  assert.ok(draft.text.includes('Approved steps: Quote the order (Sales), then Schedule the delivery (Operations), then Check the margin (Finance)'));
+  assert.equal(draft.text.includes('0912345678'), false);  // nothing a model wrote
+  assert.equal(draft.ics, 'BEGIN:VCALENDAR');
+});

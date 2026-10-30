@@ -18,6 +18,10 @@ const PROVENANCE = {
 let sandbox = localStorage.getItem('sandbox');
 let state = { answers: null, chart: null, accepted: false };
 
+const FOUNDER_STORY = 'https://github.com/hoachauphuoc/MetaAIHackathon#founders-story-why-role-assistants';
+// Said where a demo starts, not only on /trust: a stranger should not build on a sandbox that a restart can wipe.
+const SANDBOX_NOTE = 'This is a demo sandbox: it is kept for 24 hours and is lost if the server restarts.';
+
 function startAgain(message) {
   localStorage.removeItem('sandbox');
   sandbox = null;
@@ -27,7 +31,8 @@ function startAgain(message) {
     message ? el('p', { class: 'errors', role: 'alert' }, message) : null,
     el('p', { class: 'why' }, el('strong', {}, 'The problem: '), 'staff who fear AI the company can watch paste ' +
       'client work into outside chatbots, and a company can neither ban that nor force its own tool. Here the company ' +
-      'sets the roles, skills and limits, each employee’s chat stays in their own browser, and a person approves every handoff.'),
+      'sets the roles, skills and limits, each employee’s chat stays in their own browser, and a person approves every handoff. ',
+      el('a', { href: FOUNDER_STORY, target: '_blank', rel: 'noopener' }, 'Why I built this')),
     el('p', {}, 'Answer ten questions and get an org chart with an AI assistant for every role. ' +
       'You decide at every step. Nothing you chat is stored.'),
     el('ol', { class: 'how' },
@@ -36,7 +41,10 @@ function startAgain(message) {
       el('li', {}, 'Muse Spark writes one assistant per role; work moves between roles only when a person approves.')),
     el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
       el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
-      el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo'))));
+      el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo')),
+    el('p', { class: 'muted' }, 'The clinic demo runs the same engine in a second industry: its own "Treatment plan quote" ' +
+      'form, checked by the same code rules (fee not below cost, margin floor), passed on only when a person approves.'),
+    el('p', { class: 'muted', id: 'sandbox-note' }, SANDBOX_NOTE)));
   timeTile().then((tile) => { if (tile && app.querySelector('h2')?.textContent === 'Welcome') app.append(tile); });
 }
 
@@ -44,6 +52,8 @@ async function tryDemo(industry) {
   const made = await api('/api/sandbox', { method: 'POST' });
   sandbox = made.data.sandbox;
   localStorage.setItem('sandbox', sandbox);
+  // The demo reaches the Private-mode Finance step a few minutes from now; wake the endpoint while the owner reads.
+  api('/api/private/prewarm', { method: 'POST', sandbox });
   state.answers = (await api(`/api/survey/demo${industry === 'clinic' || industry === 'software' ? `?industry=${industry}` : ''}`)).data.answers;
   showSurvey();
 }
@@ -59,7 +69,7 @@ function guard(fn) {
 function showSurvey() {
   const inputs = {};
   const form = el('section', {}, el('h2', {}, '1. About the company'),
-    el('p', { class: 'muted' }, 'Prefilled with a demo company. Change anything.'));
+    el('p', { class: 'muted' }, 'Prefilled with a demo company. Change anything. ', SANDBOX_NOTE));
   for (const [key, label] of FIELDS) {
     inputs[key] = el('input', { id: key, value: state.answers[key] ?? '' });
     form.append(el('label', { for: key }, label), inputs[key]);
@@ -362,7 +372,17 @@ function levelsSection() {
         el('button', { onclick: save }, 'Save'), banList);
     });
     const eff = res.data.effective;
-    clear(body, ...rows, message, el('h3', {}, 'Rules in force'),
+    // The refusal is the point of Levels, so a judge can see it in one click: the lowest unit asks for a margin floor
+    // below the one in force, and code (not a model) refuses it and names the unit that set the rule.
+    const child = res.data.levels[res.data.levels.length - 1];
+    const tryLoosen = el('button', { onclick: guard(async () => {
+      const put = await api(`/api/levels/${child.id}?soft=1`, { method: 'PUT', sandbox, body: {
+        margin_floor_pct: eff.margin_floor_pct.value - 5, escalation_usd: child.escalation_usd, banned_skills: child.banned_skills || [] } });
+      clear(message, put.data.saved === false
+        ? el('div', { class: 'errors' }, el('strong', {}, 'Refused by code, no model asked: '), put.data.errors.map((e) => e.message).join(' '))
+        : el('p', { class: 'muted' }, 'Saved: no rule above it was loosened.'));
+    }) }, `Try: ${child.name} lowers the margin floor`);
+    clear(body, el('p', { class: 'muted' }, 'A unit below may only tighten the rules above it. ', tryLoosen), ...rows, message, el('h3', {}, 'Rules in force'),
       el('ul', { class: 'plain' }, Object.keys(names).map((rule) => el('li', {},
         `${names[rule]}: ${eff[rule].value.toLocaleString('en-US')}, set by ${eff[rule].set_by}`)),
         ...Object.entries(res.data.bans).map(([id, by]) => el('li', {}, `Skill banned: ${res.data.skills[id]}, set by ${by}`))));
