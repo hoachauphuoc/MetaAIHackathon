@@ -383,6 +383,30 @@ const RULE_LABELS = {
   margin_floor_pct: ['Margin floor (%)', 'At least', 'The company allows nothing below'],
   escalation_usd: ['Approval limit (USD)', 'At most', 'The company escalates above'],
 };
+// Client names this person types are masked in their browser before any text is sent (static/pii.js). They are
+// kept in this browser only; no request carries them, and the server never sees them.
+function clientNamesPanel() {
+  const box = el('textarea', { id: 'client-names', rows: '4', 'aria-label': 'Client names, one per line' });
+  const status = el('p', { class: 'progress', role: 'status' });
+  const read = () => { try { return JSON.parse(localStorage.getItem('clientNames') || '[]'); } catch { return []; } };
+  box.value = read().join('\n');
+  const warn = () => (read().length ? null : el('p', { class: 'errors', role: 'status' },
+    'No client names set: the names of clients will not be masked before text is sent.'));
+  const warning = el('div');
+  clear(warning, warn());
+  const save = () => {
+    const names = box.value.split('\n').map((n) => n.trim()).filter(Boolean);
+    try { localStorage.setItem('clientNames', JSON.stringify(names)); status.textContent = `Saved ${names.length} names in this browser.`; }
+    catch { status.textContent = 'This browser does not keep names; they will not be masked.'; }
+    clear(warning, warn());
+  };
+  return el('details', { class: 'section' }, el('summary', {}, el('h2', {}, 'Client names (this browser only)')),
+    el('p', { class: 'muted' }, 'A name cannot be found by a pattern, so you list the clients here. Each listed name is ' +
+      'replaced by a placeholder in your browser before text is sent. Nothing sends this list anywhere.'),
+    el('label', { for: 'client-names' }, 'One name per line'), box,
+    el('div', { class: 'row' }, el('button', { onclick: save }, 'Save names')), status, warning);
+}
+
 function personalRulesPanel() {
   const out = el('div');
   const status = el('p', { class: 'progress', role: 'status' });
@@ -436,7 +460,7 @@ function personalRulesPanel() {
     clear(app, el('section', {}, el('h2', {}, 'Your assistant'), el('p', {}, info.assistant.goal),
       info.assistant.demo_mode ? demoNote(info.assistant.demo_reason) : null, toOrder,
       el('h3', {}, 'Limits'), el('ul', { class: 'plain' }, info.assistant.limits.map((l) => el('li', {}, l)))),
-      firstDaysPanel(), inboxPanel(info, token), chatPanel(info), personalRulesPanel(),
+      firstDaysPanel(), inboxPanel(info, token), chatPanel(info), personalRulesPanel(), clientNamesPanel(),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
       ...(ordering
         ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []),

@@ -90,3 +90,13 @@ def test_plan_may_only_follow_declared_handoffs():
     errors = rules.validate_plan(plan, roles, {("sales", "ops")})
     assert errors == ["There is no handoff from ops to finance."]
     assert rules.validate_plan({"steps": []}, roles, set())
+
+
+def test_a_calendar_file_is_built_by_code_and_refused_without_a_date():
+    # I17 (2026-10-30): the .ics comes from the approved date in code; no model call, no guessed date.
+    import pytest
+    import tools
+    assert tools.make_calendar_event("Delivery", "2026-11-13")["ics"].count("DTSTART;VALUE=DATE:20261113") == 1
+    for missing in (None, "", "next Friday", "2026-13-40"):
+        with pytest.raises(ValueError):
+            tools.make_calendar_event("Delivery", missing)

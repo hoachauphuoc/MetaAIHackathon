@@ -1,6 +1,6 @@
 // Masks personal data in the browser before text is sent to a model. Pattern-based only: it cannot
 // recognise names, and /trust says so. Order matters: longer, more specific patterns first.
-const LABELS = { secret: 'SECRET', iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', id: 'ID_NUMBER', phone: 'PHONE' };
+const LABELS = { client: 'CLIENT', secret: 'SECRET', iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', id: 'ID_NUMBER', phone: 'PHONE' };
 
 function luhn(digits) {
   let sum = 0;
@@ -34,11 +34,19 @@ const RULES = [
   }],
 ];
 
-export function maskPii(text) {
+// Client names are the one thing no pattern can find, so the person lists them. They are matched as whole words, in
+// any case, and never leave the browser: only their placeholders are sent.
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export function maskPii(text, clientNames = []) {
   const items = [];
   const counts = {};
   let out = String(text);
-  for (const [type, pattern, accept] of RULES) {
+  const names = clientNames.map((n) => n.trim()).filter((n) => n.length >= 2);
+  const clientRules = names.length
+    ? [['client', new RegExp(`(?<![\\p{L}\\p{N}])(?:${names.map(escapeRegex).join('|')})(?![\\p{L}\\p{N}])`, 'giu'), () => true]]
+    : [];
+  for (const [type, pattern, accept] of [...clientRules, ...RULES]) {
     out = out.replace(pattern, (match) => {
       if (!accept(match)) return match;
       counts[type] = (counts[type] || 0) + 1;

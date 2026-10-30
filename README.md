@@ -278,7 +278,7 @@ time at the company:
    inbox exported as JSON or CSV. Import only fills the form (free-text notes are left out so they
    still pass the masking step), a person checks and sends it, and exported cells that start like
    a spreadsheet formula get a leading quote. **Export approved** adds a second export that holds only handoffs every approver accepted and that were not blocked, with the form's own columns in the form's order, the approval chain and no free-text notes, ready for a sheet or another system to read. No connector, key or outbound call is involved: the person downloads the file. An accepted, unblocked handoff also shows **Open email draft**: a `mailto:` draft with the form's fields and the approval chain (no notes, no model text) that the person sends from their own mail app; past about 1,800 characters there is no link, only **Copy the text** (`tests/js/exchange.test.mjs`).
-15b. **A second industry without training:** a clinic ("Try the clinic demo", or any industry that says clinic, dental, medical or health) gets its own chart template, a "Treatment plan quote" form (patient reference as a number, not a name; fee, cost, first visit) checked by the same code rules (fee not below cost, margin floor, approval limit, date not in the past), and playbooks that no longer talk about routes and pallets. Retail and services keep their forms; an industry we have no form for still falls back to the services form and the chart says Template. Nothing is trained: the structure is a shipped template, the rules are code, and Muse only writes words. Wonder on 5 synthetic clinics and 5 software companies passed the rules 10 of 10 (`docs/MEASURED.md` set 13, one run). The clinic form is not meant for real patient data.
+15b. **A second industry without training** (one referral path; transfers between clinics are not built): a clinic ("Try the clinic demo", or any industry that says clinic, dental, medical or health) gets its own chart template, a "Treatment plan quote" form (patient reference as a number, not a name; fee, cost, first visit) checked by the same code rules (fee not below cost, margin floor, approval limit, date not in the past), and playbooks that no longer talk about routes and pallets. Retail and services keep their forms; an industry we have no form for still falls back to the services form and the chart says Template. Nothing is trained: the structure is a shipped template, the rules are code, and Muse only writes words. Wonder on 5 synthetic clinics and 5 software companies passed the rules 10 of 10 (`docs/MEASURED.md` set 13, one run). The clinic form is not meant for real patient data.
 
 15c. **A code helper for software companies:** a software studio ("Try the software studio demo", or any industry that says software, developer or devops) gets a chart with an Engineering Lead whose assistant holds the skill "Explain, review or draft code for a person to copy and run themselves". Code, not the model, gives that skill to the engineering role only; a level can ban it like any other skill. The assistant has no tool that runs, deploys or pushes (a test lists every tool and fails on such a name), its playbook says to label drafts "Untested draft" and never to repeat a secret, and passwords, cloud keys, vendor tokens and private-key blocks in a pasted message are masked in the browser like personal data. Not measured against the real model beyond one spot check; image generation was cut from this build.
 16. **What is stuck and where:** the sender's inbox lists what they sent that still waits for another
@@ -295,13 +295,29 @@ time at the company:
    by code (format, length) and sends it once; only the text comes back, into the message box of
    item 17, so the same masking, the same model reading and the same person checks apply. The
    recording is never stored. Measured once with a real microphone (a Vietnamese sentence came out
-   right); not yet measured on noisy speech or on a full order (see Limits).
+   right). **Unmeasured:** word accuracy has no number; noisy speech and a full order are not tested (see Limits).
 20. **Cover before reading:** on a photo, the person names what to hide (for example `signature`),
    SAM 3.1 outlines it, and the browser paints those boxes black on its own copy before Spark reads the
    photo. Only boxes come back (code parses and clips them), the request sets `store: false`, and the
    screen says SAM can miss things: the person looks at the preview before sending. Checked in a hidden
    browser against the real endpoint on a synthetic page (a red rectangle became black); not measured
-   on real documents.
+   on real documents. **Unmeasured:** SAM's accuracy on real documents has no number.
+
+## What each role stops doing by hand
+
+- **Sales** no longer retypes a quote: the form is filled from the order, and code computes the price and margin.
+- **Operations** no longer copies an approved package into a sheet: the approved export and the calendar file are built by code from the signed steps.
+- **Finance** no longer re-checks the margin with a calculator: code computes it, and the model only writes the note.
+
+## Claim and proof
+
+| Claim | Proof in the repository |
+|---|---|
+| Numbers come from code, never from a model | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
+| A person's approval is signed; a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
+| Client names are masked in the browser and never sent | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`) |
+| The calendar file is built by code and refused without a date | `test_a_calendar_file_is_built_by_code_and_refused_without_a_date` |
+| Every browser module parses before it reaches a browser | `test_every_browser_module_parses` |
 
 ## Meta models used
 
