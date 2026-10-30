@@ -7,6 +7,25 @@ handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, fo
 statement **Build for Your World**: the domain is the small company the author knows firsthand, and
 the time freed is the owner's and each employee's.
 
+**Why this problem (the author's own, firsthand):** the author manages people at a software company that
+builds and maintains software for clients, and sees both sides of one stuck argument. The company wants
+AI in the work. Employees want it too, but fear that what they type, and the experience they put into it,
+will be used to replace them. So they avoid the company's assistant and paste work into outside chatbots,
+which risks leaking client and project details. The company can neither ban outside AI nor force its own:
+a ban gets worked around, and a forced tool gets resisted. This app is the way out the author wanted:
+the company decides who gets which role's assistant, which skills it may use and what it may spend;
+the employee sets stricter private rules for their own assistant (a margin floor or approval limit,
+readable only with their link, never by the owner), and the chat stays in that employee's own browser, with
+no table of messages on the server. What the company controls (roles, skills, limits, approvals) and what
+the employee keeps are listed in [What is stored](#privacy-and-safety-design-each-line-has-a-test). These
+are the author's observations, not a survey; no real company has used the app yet.
+
+**Where the author wants it to go (not built):** a tree of units (group, subsidiary, department, team), each
+tightening its parent's limits, which the layered rules below already do for two levels, and later a
+connection to systems a business already runs (HR, resource planning, cloud) so the assistants can read
+from them, plus free-text personal working standards (today a private rule is a number). Neither the
+deeper tree, a connector nor free-text standards exists in this repository.
+
 **What was not possible before:** a ten-person company has no one to set up an assistant per role, and a
 chat window cannot pass a quote from Sales to Operations to Finance under the company's own limits. Here
 the app's side of that setup took 31.9 s in one measured run, and work moves between roles only as tool
