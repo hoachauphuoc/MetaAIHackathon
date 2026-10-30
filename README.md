@@ -315,7 +315,7 @@ time at the company:
 |---|---|
 | Numbers come from code, never from a model | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
 | A person's approval is signed; a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
-| Client names are masked in the browser and never sent | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`) |
+| Names you list are masked in the browser; pattern masking alone does not find names | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`); the pattern rules do not detect names (`docs/MEASURED.md`, set 2 and the browser masking table) |
 | The calendar file is built by code and refused without a date | `test_a_calendar_file_is_built_by_code_and_refused_without_a_date` |
 | Every browser module parses before it reaches a browser | `test_every_browser_module_parses` |
 
