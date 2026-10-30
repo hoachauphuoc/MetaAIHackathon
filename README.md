@@ -439,7 +439,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   notes, which the person must read before sending.
 - Measured sets are synthetic and small. The model layer of the gate was tested for contradictions the
   rules cannot see in set 11 (Spark leg only: 10 of 10 caught, 1 false alarm in 10 consistent
-  packages, written by the author); the Glimmer leg (`set11p`) has not been run.
+  packages, written by the author); the Glimmer leg (`set11p`, one run, `docs/MEASURED.md`) caught 9 of 10 and raised 4 false alarms in 10 clean packages.
 - The handoff form is generic; the fixed Sales, Operations, Finance order demo and its rate card
   exist only for the logistics form, so other trades see the inbox and chat only. Only the notes
   field is masked for personal data in the browser; the other text fields are not, so do not type

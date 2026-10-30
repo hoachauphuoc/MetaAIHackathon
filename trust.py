@@ -97,7 +97,9 @@ def build(table_names):
                     {"available": False, "label": "Private mode unavailable.",
                      "attribution": "No open-weights model is connected."}),
         "private_note": "Finance handoffs run in Private mode. If it is unavailable they are "
-                        "marked 'A person must check this', never sent to the standard model.",
+                        "marked 'A person must check this', never sent to the standard model. The open-weights "
+                        "endpoint sleeps when idle and takes about 166 s to wake (timed once, docs/MEASURED.md set 10); "
+                        "during the judging window the owner keeps it awake, and the Finance step says so when it is not.",
         "skills": {"allowed": [s["id"] for s in rules.SKILLS["allowed"]],
                    "forbidden": sorted(rules.FORBIDDEN_SKILLS)},
         "limits": LIMITS,

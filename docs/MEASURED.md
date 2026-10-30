@@ -329,3 +329,15 @@ tooling kept outside this repository, so this set is reported, not rerunnable fr
 | Phone: elements wider than the viewport | 0.0 | overflowing 0 |
 
 Attack and layout checks, all passed: One sandbox never reads another's company; One sandbox never lists another's assistants; An unknown sandbox id is refused; No forbidden skill reaches an assistant; A non-PNG/JPEG photo is refused before any model call; A non-WAV recording is refused before any model call; /trust states what is never stored; No element wider than a 375 px phone; Real mode shows no FAKE_AI label; No console errors besides expected 422 refusals.
+## Set 11p: contradictions on Glimmer (Private mode, one run, 2026-10-30)
+
+`python scripts/measure.py set11p`, warm endpoint (Glimmer answered 3 s after a cold start the same afternoon).
+
+| Result | Value |
+|---|---|
+| Contradicting packages (10) flagged by the final gate | 9 of 10 |
+| Consistent packages (10) raised as false alarms by the model layer | 4 of 10 |
+| Contradictions the rules alone could see | 0 of 10 (expected: the rules cannot read notes) |
+| Model check did not finish | 0 of 20 |
+
+One run, synthetic data. Glimmer finds more contradictions than the rules but raises false alarms on 4 of 10 clean packages, which a person then checks. It is not a measured accuracy claim beyond this set.
