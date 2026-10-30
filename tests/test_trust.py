@@ -80,3 +80,9 @@ def test_private_contributor_model_is_refused(monkeypatch):
     monkeypatch.setenv("PRIVATE_API_KEY_FILE", "key.txt")
     with pytest.raises(muse.Refused):
         muse.complete(None, [], private=True)
+
+
+def test_trust_says_voice_is_experimental_and_unmeasured(client):
+    # The voice claim was rejected by the judges because no real-endpoint run backs it (run -11, 2026-10-30).
+    limits = client.get("/api/trust").get_json()["limits"]
+    assert any("Voice input is experimental" in line and "no accuracy is claimed" in line for line in limits)

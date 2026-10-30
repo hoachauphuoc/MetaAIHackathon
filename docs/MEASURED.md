@@ -356,3 +356,40 @@ One run, synthetic data. Glimmer finds more contradictions than the rules but ra
 | Approve the three steps (Finance in Private mode) | 12.3 |
 
 Finance answered by meta-models/Muse-Glimmer-30B; the order completed. Total 40.0 s. One run.
+## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
+
+`python scripts/load_test.py 100 meta-models/muse-spark-open-1026 baseten`, one fixed 5-token prompt, sequential.
+
+| Result | Value |
+|---|---|
+| Requests ok / errors | 100 / 0 |
+| Latency p50 | 607 ms |
+| Latency p95 | 836 ms |
+| Tokens used | 15,700 |
+
+This is a load test of the endpoint. It is not evidence about users: no person took part and no product data was sent.
+The Baseten price is not returned by its API, so this run states tokens and no cost.
+## Load test: Muse Spark 1.3 on the Meta API, Standard mode (100 sequential requests, 2026-10-30)
+
+`python scripts/load_test.py 100 muse-spark-1.3 meta`, the same fixed 5-token prompt, sequential, run once for comparison with the Baseten run above.
+
+| Result | Value |
+|---|---|
+| Requests ok / errors | 100 / 0 |
+| Latency p50 | 943 ms |
+| Latency p95 | 1,625 ms |
+| Tokens used | 2,000 |
+
+A load test of the endpoint, not evidence about users. Tokens are the Meta API's own count; the cost is not computed here.
+## Load test: Muse-Glimmer-30B on Modal, warm (100 sequential requests, 2026-10-30)
+
+`python scripts/load_test.py 100 meta-models/Muse-Glimmer-30B glimmer`, run right after a warm wake (165 s cold start, see set 10 and the warm log), same 5-token prompt, sequential.
+
+| Result | Value |
+|---|---|
+| Requests ok / errors | 100 / 0 |
+| Latency p50 | 647 ms |
+| Latency p95 | 665 ms |
+| Tokens used | 6,800 |
+
+A load test of the endpoint while warm, not evidence about users. The GPU is billed by the second, so this run's cost is the time it kept the endpoint awake, not the tokens.

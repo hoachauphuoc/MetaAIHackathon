@@ -46,6 +46,7 @@ NEVER_STORED = [
 
 LIMITS = [
     "Demo only: an invite link is the whole credential, there are no passwords.",
+    "Voice input is experimental: the transcription endpoint has not been run on real audio, so no accuracy is claimed.",
     "This demo runs on the hackathon's free Meta credits, and Meta's account page says content sent "
     "while free credits are in use may be used for product improvement. Do not enter real company "
     "data here; a paid account does not carry that term.",

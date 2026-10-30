@@ -290,7 +290,7 @@ time at the company:
    checks and sends. Nothing is stored.
 18. **Start from a past quote:** a new draft from one of the sender's own handoffs. Dates are
    cleared, rate-card figures are recomputed by code, and every change is listed.
-19. **Speak the job:** a push-to-talk button (up to 60 seconds) turns a spoken job note into text with
+19. **Speak the job (experimental):** a push-to-talk button (up to 60 seconds) turns a spoken job note into text with
    Muse Voice Transcribe. The browser converts the recording to 16 kHz mono WAV, the server checks it
    by code (format, length) and sends it once; only the text comes back, into the message box of
    item 17, so the same masking, the same model reading and the same person checks apply. The
@@ -432,7 +432,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
 - Photo reading was measured on rendered sheets, including phone-degraded ones in handwriting-style
   fonts (set 9), not phone photos of real, creased or handwritten paper; expect misreads there. Photos are not masked for personal data. Web search
   is not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried. Voice input
-  (item 19) is built and tested with fake recordings and a stubbed model; a real-model
+  (item 19) is experimental: it is built and tested with fake recordings and a stubbed model; a real-model
   word-error rate on noisy speech has not been measured.
 - The morning brief, first-days plan and handover draft were each run against the real model
   only a few times (see MEASURED); the handover is worded by the model from the person's own
