@@ -132,7 +132,7 @@ The measured row is the app's side only; the human row is my estimate and is lab
 | One assistant and invite link per role | Admin-set spending caps (today: a per-sandbox call limit for the demo) |
 | Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
 | Handoffs with a person's signed approval at every step | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
-| Private mode on Glimmer (idle endpoint wakes in about 200 s, an estimate) | Free-text personal working styles (today a private rule is a number) |
+| Private mode on Glimmer (an idle endpoint woke in 166 s, measured once) | Free-text personal working styles (today a private rule is a number) |
 
 Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
 its parent's limits but never loosen them, and later into the systems a business already runs. None of that
@@ -148,7 +148,7 @@ second column is claimed as working.
   minutes (probably warm) or not (may be asleep); the server only reports its last answer, it never probes the endpoint.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits). The endpoint
-  sleeps when idle and takes about 200 s to wake (an estimate; no timed set records it): if you see `Private mode starting`, the Finance step tries
+  sleeps when idle and took 166 s to wake in the one timed cold start (docs/MEASURED.md, set 10): if you see `Private mode starting`, the Finance step tries
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
@@ -405,7 +405,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   GPU (its model card names it [816B with 42B active](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B)), so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start takes about 200 s (an estimate, not a measured set; `python scripts/warm_glimmer.py 45` wakes the
+  warm endpoint. A cold start took 166 s in the one timed run (docs/MEASURED.md, set 10; `python scripts/warm_glimmer.py 45` wakes the
   endpoint, keeps it warm for 45 minutes and prints how long the wake took) and the app waits 35 s a try, so when the endpoint is
   idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
   person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never

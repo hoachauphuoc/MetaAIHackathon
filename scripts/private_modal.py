@@ -15,7 +15,7 @@ Then point the app at it (the key goes in a file, never on the command line):
     PRIVATE_MODEL=meta-models/Muse-Glimmer-30B
     PRIVATE_API_KEY_FILE=<file holding the same long random string>
 
-The first request after idle waits for the model to load (about 200 s measured on an H200); the app
+The first request after idle waits for the model to load (166 s timed on an H200, docs/MEASURED.md set 10); the app
 gives up after 35 s and labels the step "Private mode starting", so warm the endpoint with
 `modal run scripts/private_modal.py` a few minutes before a demo. It stays warm for 10 minutes after
 the last request, then the GPU is released and billing stops.

@@ -1,6 +1,6 @@
 """Keep the Private-mode endpoint (Glimmer on Modal) warm for a window, then let it idle out.
 
-A cold start takes about 200 s (an estimate this script can measure) and the app waits 35 s, so run this a few minutes before a demo or a
+A cold start took 166 s when timed (docs/MEASURED.md, set 10) and the app waits 35 s, so run this a few minutes before a demo or a
 recording and leave it open. One tiny request every 8 minutes keeps the container inside Modal's
 10-minute idle limit, so the GPU is billed for the window only. Needs the four PRIVATE_* variables
 (see private_modal.py); prints timings and never the key.

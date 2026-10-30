@@ -6,7 +6,7 @@ Run the app with `scripts/run.ps1 -Real` first. With FAKE_AI the video would sho
 label everywhere, so use it only to rehearse. One browser page is used for every role so the
 recording stays a single file; the person switches by opening the invite links in turn.
 Warm the Private-mode endpoint first (`modal run scripts/private_modal.py`, a few minutes before):
-a cold Glimmer takes about 200 s, the app waits 60 s, and the take would show "Private mode unavailable".
+a cold Glimmer took 166 s to wake when timed, the app waits 60 s, and the take would show "Private mode unavailable".
 """
 import argparse
 import re

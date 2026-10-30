@@ -311,4 +311,4 @@ def test_a_waking_private_step_retries_on_its_own_with_the_servers_own_words():
     assert f"result.demo_reason === '{muse.PRIVATE_STARTING}'" in join  # same words the server sends
     tries = int(join.split("const WAKE_TRIES = ")[1].split(";")[0])
     pause = int(join.split("const WAKE_WAIT_S = ")[1].split(";")[0])
-    assert tries * (muse.PRIVATE_TIMEOUT + pause) > 200  # outlasts the measured ~200 s cold start
+    assert tries * (muse.PRIVATE_TIMEOUT + pause) > 200  # outlasts the 166 s cold start measured in set 10

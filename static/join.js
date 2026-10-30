@@ -256,7 +256,7 @@ function workflowPanel(routes) {
   return box;
 }
 
-const WAKE_TRIES = 5;  // about 5 x (35 s wait + 25 s pause): longer than the ~200 s cold start
+const WAKE_TRIES = 5;  // about 5 x (35 s wait + 25 s pause): longer than the 166 s cold start measured
 const WAKE_WAIT_S = 25;
 
 function runner({ plan, signature, roles }, out) {
