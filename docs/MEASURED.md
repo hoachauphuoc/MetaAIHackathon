@@ -341,3 +341,18 @@ Attack and layout checks, all passed: One sandbox never reads another's company;
 | Model check did not finish | 0 of 20 |
 
 One run, synthetic data. Glimmer finds more contradictions than the rules but raises false alarms on 4 of 10 clean packages, which a person then checks. It is not a measured accuracy claim beyond this set.
+## Live check on the deployed judge path (X07, X08)
+
+`python scripts/live_check.py <deployed link>`, 2026-10-30 17:22 (Vietnam time), revision role-assistants-00025-xn8, Glimmer warm from a 5 s wake at 17:22:31.
+
+| Step | Seconds |
+|---|---|
+| Open the home page | 4.2 |
+| Start the demo company | 0.1 |
+| Wonder designs the chart | 6.9 |
+| Accept the chart | 5.0 |
+| Create the Sales invite | 2.7 |
+| Plan an order | 8.7 |
+| Approve the three steps (Finance in Private mode) | 12.3 |
+
+Finance answered by meta-models/Muse-Glimmer-30B; the order completed. Total 40.0 s. One run.
