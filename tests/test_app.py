@@ -141,3 +141,10 @@ def test_every_browser_module_parses(tmp_path):
         copy.write_text(js.read_text(encoding="utf-8"), encoding="utf-8")
         r = subprocess.run([node, "--check", str(copy)], capture_output=True, text=True)
         assert r.returncode == 0, f"{js.name}: {r.stderr.strip()[:300]}"
+
+
+def test_the_chart_wait_shows_the_muse_image_illustration_with_its_label(client):
+    r = client.get("/static/img/chart-wait.webp")
+    assert r.status_code == 200 and r.data[8:12] == b"WEBP"
+    js = Path("static/app.js").read_text(encoding="utf-8")
+    assert "/static/img/chart-wait.webp" in js and "Muse Image (muse-image-1.0), not a picture of your chart" in js

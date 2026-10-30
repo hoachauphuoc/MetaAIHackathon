@@ -65,9 +65,15 @@ function showSurvey() {
     form.append(el('label', { for: key }, label), inputs[key]);
   }
   const status = el('p', { class: 'progress', role: 'status' });
+  // Made once by Muse Image when the app was built and served as a file: an image call during the wait would only
+  // add to the wait. The caption says it is not the company's chart; the step line above it is the real progress.
+  const art = el('figure', { class: 'wait-art', hidden: true },
+    el('img', { src: '/static/img/chart-wait.webp', alt: 'A pencil drawing the lines of an org chart', width: '240', height: '240' }),
+    el('figcaption', { class: 'muted' }, 'Illustration made once by Muse Image (muse-image-1.0), not a picture of your chart.'));
   const button = el('button', { class: 'primary', onclick: guard(async () => {
     for (const key in inputs) state.answers[key] = inputs[key].value;
     button.disabled = true;
+    art.hidden = false;
     // Each line is a step the server really reached; the seconds are the real time since the step began.
     let step = 0, began = Date.now(), line = '';
     const draw = () => { status.textContent = `${line} (${Math.round((Date.now() - began) / 1000)} s)`; };
@@ -82,6 +88,7 @@ function showSurvey() {
     } finally { clearInterval(ticker); }
     if (!result || result.error) {
       button.disabled = false;
+      art.hidden = true;
       status.textContent = result?.error || 'Something went wrong.';
       return;
     }
@@ -89,7 +96,7 @@ function showSurvey() {
     state.accepted = false;
     showChart();
   }) }, 'Design my org chart');
-  form.append(el('div', { class: 'row sticky-actions' }, button), status);
+  form.append(el('div', { class: 'row sticky-actions' }, button), status, art);
   clear(app, form);
 }
 

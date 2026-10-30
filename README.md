@@ -310,6 +310,7 @@ time at the company:
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
 | `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields after the amount-cleaning fix (56 of 60 on the first run), median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines; model layer of the handoff check flagged 10 of 10 contradictions the rules cannot see, 1 false alarm in 10 (set 11, Spark only) |
 | `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not yet run against the real endpoint; no cost is claimed |
+| `muse-image-1.0` | The illustration shown while Wonder designs the chart (`static/img/chart-wait.webp`), made once when the app was built, not during the wait, and captioned as not the company's chart | One generation, 23.3 s, 216 KB WebP; price per image not published to us, so no cost is claimed |
 | `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | Tested with stubbed replies; one unmeasured hand check on a synthetic page, not a measured set; price not published, so no cost is claimed |
 | `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
@@ -404,7 +405,8 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   GPU (its model card names it [816B with 42B active](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B)), so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start takes about 200 s (an estimate, not a measured set) and the app waits 35 s a try, so when the endpoint is
+  warm endpoint. A cold start takes about 200 s (an estimate, not a measured set; `python scripts/warm_glimmer.py 45` wakes the
+  endpoint, keeps it warm for 45 minutes and prints how long the wake took) and the app waits 35 s a try, so when the endpoint is
   idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
   person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never
   uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points

@@ -31,3 +31,17 @@ def test_a_cold_answer_is_reported_not_hidden():
     warm.warm(1, lambda m, **kw: {"demo_mode": True, "demo_reason": "Private mode starting"},
               sleep=lambda s: None, clock=lambda: 0.0, say=lines.append)
     assert "not ready: Private mode starting" in lines[0]
+
+
+def test_a_cold_endpoint_is_asked_again_until_it_answers_and_the_wake_time_is_printed():
+    warm = load()
+    now, lines = [0.0], []
+    replies = iter([True, True, False])  # demo_mode: two cold answers, then a real one
+
+    def ask(messages, **kw):
+        now[0] += 35  # each cold try waits out the request timeout
+        return {"demo_mode": next(replies, False), "demo_reason": "Private mode starting"}
+
+    warm.warm(1, ask, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0], say=lines.append)
+    assert sum("not ready" in line for line in lines) == 2
+    assert any(line.startswith("Woke after 115 s") for line in lines)  # 3 x 35 s asking + 2 x 5 s pauses

@@ -81,4 +81,6 @@ p.long { white-space: pre-wrap; margin: 2px 0 8px; }
 ol.how { margin: 0 0 var(--space-2); padding-left: 1.4em; }
 ol.how li { margin: 4px 0; }
 /* The survey and the chart are long on a phone: their one next step stays in reach. */
+.wait-art { margin: 12px 0; }
+.wait-art img { display: block; width: 240px; max-width: 100%; height: auto; border-radius: var(--radius-sm); }
 .sticky-actions { position: sticky; bottom: 0; background: var(--panel); padding: 8px 0; }
