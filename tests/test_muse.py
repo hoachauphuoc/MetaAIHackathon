@@ -62,6 +62,14 @@ def test_real_answer_is_not_demo_mode_and_cost_comes_from_usage(real_path, monke
     assert out["cost_usd"] == pytest.approx(1.25 + 4.25)
 
 
+def test_the_result_carries_the_model_id_the_provider_answered_with(real_path, monkeypatch):
+    response = fake_response("hi")
+    response.model = "provider-reported-id"
+    use_client(monkeypatch, response)
+    assert muse.complete("muse-spark-1.3", [])["answered_by"] == "provider-reported-id"
+    assert muse.demo_result("muse-spark-1.3", "x")["answered_by"] is None  # no model answered: no id either
+
+
 def test_one_retry_then_success(real_path, monkeypatch):
     client = use_client(monkeypatch, TimeoutError(), fake_response())
     assert muse.complete("muse-wonder-1.0", [])["demo_mode"] is False
@@ -106,3 +114,22 @@ def test_a_cold_private_container_is_labelled_starting_and_never_uses_the_meta_a
     assert out["demo_mode"] and out["demo_reason"] == muse.PRIVATE_STARTING
     assert seen and all(cfg is not None for cfg in seen)
     assert len(seen) == 1, "a cold start is not retried: two waits would pass the 120 s request limit"
+
+
+def test_private_status_reports_the_last_answer_without_calling_the_endpoint(real_path, monkeypatch):
+    monkeypatch.setattr(muse, "_private_answered_at", None)
+    for key in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
+        monkeypatch.delenv(key, raising=False)
+    assert muse.private_status() == {"configured": False, "model": None, "answered_s_ago": None}
+    for key, value in (("PRIVATE_PROVIDER", "modal"), ("PRIVATE_BASE_URL", "https://x"),
+                       ("PRIVATE_MODEL", "glimmer"), ("PRIVATE_API_KEY_FILE", "k")):
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(muse, "_client", lambda cfg=None: pytest.fail("status must never call the endpoint"))
+    assert muse.private_status() == {"configured": True, "model": "glimmer", "answered_s_ago": None}
+    monkeypatch.setattr(muse, "_client", lambda cfg=None: FakeClient([fake_response("ok")]))
+    muse.complete(None, [], private=True)
+    assert muse.private_status()["answered_s_ago"] == 0
+    use_client(monkeypatch, fake_response("standard"))
+    monkeypatch.setattr(muse, "_private_answered_at", None)
+    muse.complete("muse-spark-1.3", [])
+    assert muse.private_status()["answered_s_ago"] is None  # only an open-weights answer counts

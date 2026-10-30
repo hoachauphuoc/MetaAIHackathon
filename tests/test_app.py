@@ -117,3 +117,27 @@ def test_a_known_industry_starts_on_its_own_form_and_freight_keeps_the_order_for
         h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
         assert client.post("/api/company", json={"roles": roles, "size": 3, "industry": industry}, headers=h).status_code == 201
         assert client.get("/api/handoff-schema", headers=h).json["schema"]["id"] == form
+
+
+def test_private_status_route_says_only_configured_model_and_last_answer(client, monkeypatch):
+    for key in ("PRIVATE_PROVIDER", "PRIVATE_BASE_URL", "PRIVATE_MODEL", "PRIVATE_API_KEY_FILE"):
+        monkeypatch.delenv(key, raising=False)
+    r = client.get("/api/private/status")
+    assert r.status_code == 200 and set(r.get_json()) == {"configured", "model", "answered_s_ago"}
+    js = Path("static/join.js").read_text(encoding="utf-8")
+    assert "/api/private/status" in js and "may be asleep" in js
+    assert "neither ban that nor force its own tool" in Path("static/app.js").read_text(encoding="utf-8")
+
+
+def test_every_browser_module_parses(tmp_path):
+    # Unit tests import only some modules; a quote typo in a page module would otherwise reach the browser.
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    for js in Path("static").glob("*.js"):
+        copy = tmp_path / (js.stem + ".mjs")
+        copy.write_text(js.read_text(encoding="utf-8"), encoding="utf-8")
+        r = subprocess.run([node, "--check", str(copy)], capture_output=True, text=True)
+        assert r.returncode == 0, f"{js.name}: {r.stderr.strip()[:300]}"

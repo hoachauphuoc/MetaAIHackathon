@@ -163,6 +163,10 @@ def create_app(db_path=None):
         return jsonify(handoff_schema.generate(answers, company["roles"],
                                                lambda: db.spend_model_call(sandbox_id)))
 
+    @app.get("/api/private/status")
+    def private_status():
+        return jsonify(muse.private_status())
+
     @app.get("/api/handoff-schema")
     def current_handoff_schema():
         company = accepted_company(current_sandbox())

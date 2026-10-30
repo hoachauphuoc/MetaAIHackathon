@@ -41,7 +41,8 @@ label { display: block; font-weight: 600; margin-top: 12px; }
 input, select, textarea { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-height: 44px; }
 textarea { min-height: 80px; }
 button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 8px 18px; min-height: 44px; cursor: pointer; transition: background .15s, transform .1s, box-shadow .15s; }
-button:hover:not([disabled]) { border-color: var(--accent); }
+a.button { display: inline-flex; align-items: center; box-sizing: border-box; font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 8px 18px; min-height: 44px; text-decoration: none; }
+button:hover:not([disabled]), a.button:hover { border-color: var(--accent); }
 button:active:not([disabled]) { transform: translateY(1px); }
 button.primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 button[disabled] { opacity: .6; cursor: not-allowed; }

@@ -1,6 +1,6 @@
 // Inbox and Today: documents waiting between roles. Everything shown is about packages, never people.
 import { confirmMask } from '/static/mask.js';
-import { download, readRecord, toApprovedCsv, toApprovedJson, toCsv, toJson } from '/static/exchange.js';
+import { approvedMailDraft, download, readRecord, toApprovedCsv, toApprovedJson, toCsv, toJson } from '/static/exchange.js';
 import { photoPicker } from '/static/photo.js';
 import { MAX_SECONDS, recordingToWav, toDataUrl } from '/static/wav.js';
 import { reminderText, stuckLine, stuckRows } from '/static/stuck.js';
@@ -166,7 +166,21 @@ export function inboxPanel(info, token) {
       ...findingsBlock(p.findings),
       why ? el('div', { class: 'block-banner', role: 'alert' }, el('strong', {}, '⛔ Blocked: no one can accept this'),
         el('p', {}, `${why} Return it with a reason.`)) : null,
-      el('div', { class: 'row' }, actions), fix);
+      el('div', { class: 'row' }, actions), fix, mailDraft(p));
+  }
+
+  // Approved handoffs only: a draft in the person's own mail app, which they send themselves.
+  function mailDraft(p) {
+    const draft = approvedMailDraft(p, p.schema);
+    if (!draft) return null;
+    const note = el('span', { class: 'muted', role: 'status' });
+    return el('div', { class: 'row' },
+      draft.href ? el('a', { class: 'button', href: draft.href }, 'Open email draft') : null,
+      el('button', { onclick: async () => {
+        try { await navigator.clipboard.writeText(draft.text); note.textContent = 'Copied. Paste it into your mail app and send it yourself.'; }
+        catch { note.textContent = 'Select the text and copy it.'; }
+      } }, 'Copy the text'),
+      draft.href ? null : el('span', { class: 'muted' }, 'Too long for a mail link: copy the text or use Export approved.'), note);
   }
 
   async function refresh() {

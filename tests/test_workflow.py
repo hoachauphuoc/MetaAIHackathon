@@ -210,7 +210,14 @@ def test_blocked_by_cap_never_calls_muse(monkeypatch):
 def test_trace_holds_names_and_timings_but_no_order_contents():
     out = run(plan_for(), "quote", {})
     assert json.dumps(out["result"]["trace"]).count("Acme") == 0
-    assert {"step", "tool", "model", "ms"} <= set(out["result"]["trace"][0])
+    assert {"step", "tool", "model", "ms", "answered_by"} <= set(out["result"]["trace"][0])
+
+
+def test_the_trace_records_which_model_answered_each_call(monkeypatch):
+    monkeypatch.setattr(muse, "complete", lambda *a, **k: reply(answered_by="reported-by-provider"))
+    trace = run(plan_for(), "quote", {})["result"]["trace"]
+    assert trace and all(t["answered_by"] == "reported-by-provider" for t in trace)
+    assert "answered_by" in Path("static/join.js").read_text(encoding="utf-8")
 
 
 # --- over HTTP ---------------------------------------------------------------------------

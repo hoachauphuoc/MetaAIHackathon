@@ -312,7 +312,7 @@ tooling kept outside this repository, so this set is reported, not rerunnable fr
 | Approve step 3 | 0.9 | ok |
 | Levels: Group bans a skill, Subsidiary saves without it (expect refusal naming Group) | 2.5 | Group bans "Draft a message": a unit below it must keep that ban. |
 | Open /trust | 0.1 | What we store, and what we never do |
-| Clinic demo: chart, assistants and an invite link for every role | 19.3 | 5 roles: clinic director, clinic operations lead, dentist, billing officer, patient support |
+| Clinic demo: chart, assistants and an invite link for every role | 19.3 | 5 roles in this run: clinic director, clinic operations lead, dentist, billing officer, patient support (Wonder designs the chart each time, so titles differ between runs) |
 | Clinic: send a treatment-plan quote to the next role | 2.6 | clinic operations lead to dentist: Clear Sent to the Dentist team. It waits in |
 | Clinic: the receiving role takes it and accepts | 1.7 | took it, then pressed Accept; the inbox then showed 0 waiting and 0 in the team queue |
 | Phone: demo company then chart | 7.7 | scrollWidth 375 |

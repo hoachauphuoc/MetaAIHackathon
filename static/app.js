@@ -25,6 +25,9 @@ function startAgain(message) {
   clear(app, el('section', {},
     el('h2', {}, 'Welcome'),
     message ? el('p', { class: 'errors', role: 'alert' }, message) : null,
+    el('p', { class: 'why' }, el('strong', {}, 'The problem: '), 'staff who fear AI the company can watch paste ' +
+      'client work into outside chatbots, and a company can neither ban that nor force its own tool. Here the company ' +
+      'sets the roles, skills and limits, each employee’s chat stays in their own browser, and a person approves every handoff.'),
     el('p', {}, 'Answer ten questions and get an org chart with an AI assistant for every role. ' +
       'You decide at every step. Nothing you chat is stored.'),
     el('ol', { class: 'how' },

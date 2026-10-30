@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readRecord, toCsv, toApprovedCsv, toApprovedJson } from '../../static/exchange.js';
+import { approvedMailDraft, readRecord, toCsv, toApprovedCsv, toApprovedJson } from '../../static/exchange.js';
 
 const schema = { fields: [{ key: 'customer' }, { key: 'pallets' }, { key: 'price' }] };
 
@@ -51,4 +51,21 @@ test('the approved export never carries free-text notes and keeps the form colum
 
 test('an approved export cell that starts like a formula gets a leading quote mark', () => {
   assert.match(toApprovedCsv([done('=x', 'accepted', 'clear', { values: { customer: '=cmd' } })], schema), /"'=cmd"/);
+});
+
+const form = { title: 'Quote', title_field: 'customer', fields: [{ key: 'customer', label: 'Customer' }, { key: 'pallets', label: 'Pallets' }] };
+
+test('only an accepted, unblocked handoff gets an email draft, built from the form fields and the approval chain', () => {
+  assert.equal(approvedMailDraft(done('a', 'sent', 'clear'), form), null);
+  assert.equal(approvedMailDraft(done('b', 'accepted', 'blocked'), form), null);
+  const draft = approvedMailDraft(done('Acme', 'accepted', 'clear', { values: { customer: 'Acme', pallets: 3, notes: 'call 0912345678' } }), form);
+  assert.match(decodeURIComponent(draft.href), /^mailto:\?subject=Approved: Acme&body=Approved: Acme/);
+  assert.ok(draft.text.includes('Pallets: 3') && draft.text.includes('Approved by: Operations, then Finance'));
+  assert.equal(draft.text.includes('0912345678'), false);
+});
+
+test('a draft too long for a mail link has the text to copy and no link', () => {
+  const draft = approvedMailDraft(done('x', 'accepted', 'clear', { values: { customer: 'x'.repeat(2000), pallets: 1 } }), form);
+  assert.equal(draft.href, null);
+  assert.ok(draft.text.length > 1800);
 });

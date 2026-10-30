@@ -7,24 +7,7 @@ handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, fo
 statement **Build for Your World**: the domain is the small company the author knows firsthand, and
 the time freed is the owner's and each employee's.
 
-**Why this problem (the author's own, firsthand):** the author manages people at a software company that
-builds and maintains software for clients, and sees both sides of one stuck argument. The company wants
-AI in the work. Employees want it too, but fear that what they type, and the experience they put into it,
-will be used to replace them. So they avoid the company's assistant and paste work into outside chatbots,
-which risks leaking client and project details. The company can neither ban outside AI nor force its own:
-a ban gets worked around, and a forced tool gets resisted. This app is the way out the author wanted:
-the company decides who gets which role's assistant, which skills it may use and what it may spend;
-the employee sets stricter private rules for their own assistant (a margin floor or approval limit,
-readable only with their link, never by the owner), and the chat stays in that employee's own browser, with
-no table of messages on the server. What the company controls (roles, skills, limits, approvals) and what
-the employee keeps are listed in [What is stored](#privacy-and-safety-design-each-line-has-a-test). These
-are the author's observations, not a survey; no real company has used the app yet.
-
-**Where the author wants it to go (not built):** a tree of units (group, subsidiary, department, team), each
-tightening its parent's limits, which the layered rules below already do for two levels, and later a
-connection to systems a business already runs (HR, resource planning, cloud) so the assistants can read
-from them, plus free-text personal working standards (today a private rule is a number). Neither the
-deeper tree, a connector nor free-text standards exists in this repository.
+**Why this problem:** the author manages software teams and sees it daily; see the [founder's story](#founders-story-why-role-assistants).
 
 **What was not possible before:** a ten-person company has no one to set up an assistant per role, and a
 chat window cannot pass a quote from Sales to Operations to Finance under the company's own limits. Here
@@ -54,8 +37,106 @@ the author; [docs/MEASURED.md](docs/MEASURED.md)). What is and is never stored: 
 **Live:** https://role-assistants-662084666675.us-central1.run.app
 
 This is an agent pipeline, not a chatbot: survey, then Wonder (design), then rules (validate),
-then Spark in parallel (assistants), then the assistants hand work to each other along the chart
+then Spark (one assistant brief per role), then the assistants hand work to each other along the chart
 with a person gating every step.
+
+## Founder's story: why Role Assistants
+
+**The deadlock.** I manage software development and maintenance teams, and I watch the same standoff
+every week. The company wants AI in the work, but fears leaked client data and uncontrolled cost. Banning
+outside AI is unrealistic; forcing one rigid internal tool gets resisted. Employees want AI too, but they
+fear AI the company can watch: that their workflows, domain know-how and the prompts they have refined will
+be logged and one day used to replace them. So they walk around the company tool and paste work into outside
+chatbots, which is exactly where client data leaks. The company cannot enforce AI, and the employees will
+not adopt it. These are my observations as a manager, not a survey, and no real company has used the app yet.
+
+**The idea.** AI as an extension of the person, not their replacement, with governance and privacy kept in
+different hands. My stance, which the design follows: *employees are not a fallback for failing automation;
+they are the essential physical and intellectual interface.* That is why a person approves every handoff and
+no model can remove that gate. It is built for the person using the tool, not for a manager watching a
+screen: the employee gets an assistant for their own role, and nothing in it reports on how they work.
+
+- **The company decides** the roles, which skills each role's assistant may use, the margin floors and
+  approval limits, and who must approve each handoff. Code enforces these and the server refuses anything
+  looser, naming the rule.
+- **The employee keeps** the chat (held in their own browser, with a button to clear it; the server has no
+  table of messages and its logs hold token counts and cost only), and **My private rules**, stricter limits
+  for their own assistant, readable only with their link and never by the owner. Nothing records how a person works.
+
+**Why now.** Giving every role its own assistant, with permissions per level, used to mean consultants and
+infrastructure. With Meta's models the owner answers ten questions: Muse Wonder designs the org chart, code
+rules check it, Muse Spark writes one assistant brief per role, and Muse Glimmer 30B serves Private mode.
+Measured: the app's side of that setup took 31.9 s in one run. I expect a first-time owner to need
+a few minutes of clicking, but only the 31.9 s is measured.
+
+**Five rules this build follows.**
+
+1. **One sharp, real problem, from my own desk.** I met it as an IT manager, though no real company has used the
+   app yet, so this is not dogfooding. Employees who fear company-watched AI paste client work into outside chatbots,
+   so the company loses control exactly where the data is most sensitive. The market I know is IT outsourcing and
+   software-maintenance firms, where a client contract on data security meets staff who want AI's speed (the
+   "Try the software studio demo" company is that case). Everything here targets that gap and nothing else.
+2. **A deterministic safety boundary: AI proposes; code and a person decide.** Wonder and Spark propose and write; the rules, the skills
+   catalogue, the approval chain and the call limits are code that a model answer cannot loosen.
+   Nothing is sent, approved or exported without a person pressing the button: the assistant drafts, the person
+   decides.
+   AI is used where it gives leverage (a chart and a brief per role in seconds, a draft from a photo or a
+   message) and kept out of what it must not touch: no tool runs, deploys or pushes, and a model that may
+   train on employee data is refused.
+3. **Evidence over promises.** A figure appears here only if a run produced it (with the set number in
+   [docs/MEASURED.md](docs/MEASURED.md)); anything else is labelled an estimate or listed as not built, and a
+   failed model call is shown as demo mode, never filled in. The app fails closed: a blocked step cannot be
+   approved, and Private mode never falls back to the standard model when its endpoint is asleep or down.
+   `/trust` states what the app stores and what it never does.
+4. **Off the critical path.** The model does the planning and architecture at setup (the chart and a brief
+   per role); at run time it only writes words and picks tool arguments. The rule floor, every number and every permission is plain code that never waits for a
+   model, so a slow or failed model call can delay a note but cannot change a price, a limit or an approval.
+   The one slow part is the Private-mode endpoint, which sleeps when idle; warming it before use is the cost
+   saving and the speed fix (see Limits).
+5. **Privacy first, scoped honestly.** Emails, phone, card and ID numbers are masked in the browser before any
+   model sees them (names and photos are not), chat history stays in the employee's own browser, and server
+   logs hold token counts and cost only. Nothing is stored about how a person works.
+
+**Adoption cost for an employee is close to zero.** Nothing is installed: an invite link opens the assistant in
+the browser, on a laptop or on a 375 px phone (set 14 walked the whole path at both sizes), so the first use
+needs no IT ticket. A native app is not built.
+
+**Authority split: what the model may decide and what only code decides.** The model reasons and writes
+words; code holds everything that costs money or can hurt someone, and a model answer can never loosen it.
+
+| The model decides (words and proposals) | Code decides (structure, money, safety) |
+|---|---|
+| Wonder proposes the org chart; Spark writes each role's brief, chat replies, form drafts and notes | The chart stands only if it has no cycle, no orphan, one top role and no more people than the company has |
+| Spark chooses the arguments of a tool call | Every number (price, cost, margin) is computed by the tool, and only skills in `data/skills.json` reach an assistant; banned skills never do |
+| The assistant's check adds notes to a step | The rules set the status and the model can only raise it, never lower it; a blocked step cannot be approved |
+| Nothing | Approval limits, margin floors and the approver chain; the next step starts only with a signed receipt |
+| Nothing | The per-sandbox model-call limit, Standard mode only (a `-contributor` model id is refused), no table of chat messages |
+
+The tests behind the safety rows are listed in [Privacy and safety design](#privacy-and-safety-design-each-line-has-a-test);
+the approval gate and the status rule are in `tests/test_workflow.py`.
+
+**Operational leverage: setup time.**
+
+| | A per-role AI rollout done the usual way | Role Assistants |
+|---|---|---|
+| Time to a working assistant for every role | Weeks to months of consulting, infrastructure and integration (my experience; not measured) | An owner answering ten questions: I expect 5 to 10 minutes (not measured) |
+| App time on the demo company, from the home page to the first invite link | n/a | 15.3 s in one real-model run, with no typing (set 14, [docs/MEASURED.md](docs/MEASURED.md)) |
+
+The measured row is the app's side only; the human row is my estimate and is labelled as one.
+
+**Built today, and not built**
+
+| Built and tested in this repository | Not built (the direction) |
+|---|---|
+| Chart from ten questions, checked by code | Divisions, departments, teams and individual levels (today: Group and Subsidiary) |
+| One assistant and invite link per role | Admin-set spending caps (today: a per-sandbox call limit for the demo) |
+| Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
+| Handoffs with a person's signed approval at every step | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
+| Private mode on Glimmer (idle endpoint wakes in about 200 s, an estimate) | Free-text personal working styles (today a private rule is a number) |
+
+Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
+its parent's limits but never loosen them, and later into the systems a business already runs. None of that
+second column is claimed as working.
 
 ## For judges
 
@@ -63,9 +144,11 @@ with a person gating every step.
   **Design my org chart**. Nothing to sign up for.
 - **Fast path (a short click path; the app's own setup took 31.9 s in one measured run, the rest is your clicking):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
   **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
+  Above the order form a line says whether Private mode is set up and whether Glimmer answered in the last ten
+  minutes (probably warm) or not (may be asleep); the server only reports its last answer, it never probes the endpoint.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits). The endpoint
-  sleeps when idle and takes about 200 s to wake: if you see `Private mode starting`, the Finance step tries
+  sleeps when idle and takes about 200 s to wake (an estimate; no timed set records it): if you see `Private mode starting`, the Finance step tries
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
@@ -75,6 +158,12 @@ with a person gating every step.
 - **Read the trust page:** `/trust` is generated from the running configuration.
 - **Rerun the numbers:** `python scripts/measure.py` (needs a Meta key) reruns the measured sets; set 14 (the
   hidden-browser run of the whole path) is reported, not rerunnable from this repo. Results: [docs/MEASURED.md](docs/MEASURED.md).
+
+- **Agentic use, bounded on purpose:** in the order workflow the model chooses the arguments of a tool call
+  (`quote_price`, `check_margin`, `make_calendar_event`), code computes every number, the rules can only raise a
+  step's status, and the next role starts only with a person's signed approval; a blocked step cannot be
+  approved. The autonomy is the tool choice; the approval gate is the product, and no model can remove it
+  (`tests/test_workflow.py`).
 
 ## Impact
 
@@ -86,7 +175,7 @@ as published. The right-hand column is a design response, enforced by a test: it
 | 52% of US workers feel worried about future AI use in the workplace, 36% hopeful (n = 5,273 employed adults, published 25 Feb 2025) | [Pew Research Center](https://www.pewresearch.org/social-trends/2025/02/25/u-s-workers-are-more-worried-than-hopeful-about-future-ai-use-in-the-workplace) | Assistants help with documents; four skills that evaluate, rank, monitor or decide about people are never available |
 | 81% of US adults say AI used to evaluate workers would make workers feel inappropriately watched (fielded 12-18 Dec 2022, n = 11,004 adults) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/ai-in-hiring-and-evaluating-workers-what-americans-think) | No per-person metrics exist anywhere in the data model |
 | 48% of respondents entered non-public company information and 45% entered employee information into GenAI tools (Cisco 2024 Data Privacy Benchmark, n = 2,600 privacy and security professionals) | [Cisco](https://newsroom.cisco.com/c/r/newsroom/en/us/a/y2024/m01/organizations-ban-use-of-generative-ai-over-data-privacy-security-cisco-study.html) | Chat is never stored on the server; Standard mode only; a Private mode path for open weights |
-| 45% of US employees used AI at work at least a few times a year in Q3 2025, 10% daily (fielded 5-19 Aug 2025) | [Gallup](https://www.gallup.com/workplace/699689/ai-use-at-work-rises.aspx) | Role jobs make AI useful for the daily job without writing prompts |
+| 45% of US employees used AI at work at least a few times a year in Q3 2025, 10% daily (fielded 5-19 Aug 2025) | [Gallup](https://www.gallup.com/workplace/699689/ai-use-at-work-rises.aspx) | Role jobs make AI useful for the daily job without writing prompts (a design choice; no test enforces it) |
 | 22.4% of owner time goes to administrative tasks plus legal and compliance (UENI's own survey, n = 837 US businesses with five or fewer employees, May 2024) | [UENI](https://ueni.com/en-us/small-business-research/how-microbusiness-owners-spend-their-time) | The morning brief lists open documents by role so the owner sees what waits on whom; the model writes words, code picks the documents |
 | 11 hours a week on administrative or finance tasks (American Express SME Barometer, a company-run survey, n = 1,000 UK owners, July 2026) | [Retail Times](https://retailtimes.co.uk/amex-sme-barometer-small-business-owners-spend-nearly-twice-the-time-on-admin-than-growing-their-business/) | Handoffs carry a checked form instead of a chat thread, and the chat assistant reads the person's own documents. We measured accuracy, not hours saved |
 | 66% of US adults agree AI-based worker evaluation would lead to the collected information being misused (Pew, 20 Apr 2023) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/americans-views-on-use-of-ai-to-monitor-and-evaluate-workers/) | Nothing is kept about how a person works, and the onboarding plan shows nobody, including the owner, how far a new hire got |
@@ -108,7 +197,8 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    rejects circles, missing bosses, two top roles and more headcount than the company has, and
    explains the problem in words. If Wonder fails or breaks a rule, a labelled **Template** chart
    is shown instead. The owner edits any role (live validation) and presses **Accept**.
-3. **Assistants:** one `muse-spark-1.3` call per role, in parallel. Skills must come from
+3. **Assistants:** one `muse-spark-1.3` call per role; the browser starts them together, but the
+   31.9 s setup figure was measured with the calls one after another, so parallel speed is not measured. Skills must come from
    `data/skills.json`; anything else is removed and shown as removed. Handoffs may only point at
    roles that exist.
 4. **Invite links:** one per person, tied to a role. A role with no free seat refuses.
@@ -187,7 +277,7 @@ time at the company:
 15. **Plug into what you already run:** a handoff can be filled from a JSON or CSV file and the
    inbox exported as JSON or CSV. Import only fills the form (free-text notes are left out so they
    still pass the masking step), a person checks and sends it, and exported cells that start like
-   a spreadsheet formula get a leading quote. **Export approved** adds a second export that holds only handoffs every approver accepted and that were not blocked, with the form's own columns in the form's order, the approval chain and no free-text notes, ready for a sheet or another system to read. No connector, key or outbound call is involved: the person downloads the file.
+   a spreadsheet formula get a leading quote. **Export approved** adds a second export that holds only handoffs every approver accepted and that were not blocked, with the form's own columns in the form's order, the approval chain and no free-text notes, ready for a sheet or another system to read. No connector, key or outbound call is involved: the person downloads the file. An accepted, unblocked handoff also shows **Open email draft**: a `mailto:` draft with the form's fields and the approval chain (no notes, no model text) that the person sends from their own mail app; past about 1,800 characters there is no link, only **Copy the text** (`tests/js/exchange.test.mjs`).
 15b. **A second industry without training:** a clinic ("Try the clinic demo", or any industry that says clinic, dental, medical or health) gets its own chart template, a "Treatment plan quote" form (patient reference as a number, not a name; fee, cost, first visit) checked by the same code rules (fee not below cost, margin floor, approval limit, date not in the past), and playbooks that no longer talk about routes and pallets. Retail and services keep their forms; an industry we have no form for still falls back to the services form and the chart says Template. Nothing is trained: the structure is a shipped template, the rules are code, and Muse only writes words. Wonder on 5 synthetic clinics and 5 software companies passed the rules 10 of 10 (`docs/MEASURED.md` set 13, one run). The clinic form is not meant for real patient data.
 
 15c. **A code helper for software companies:** a software studio ("Try the software studio demo", or any industry that says software, developer or devops) gets a chart with an Engineering Lead whose assistant holds the skill "Explain, review or draft code for a person to copy and run themselves". Code, not the model, gives that skill to the engineering role only; a level can ban it like any other skill. The assistant has no tool that runs, deploys or pushes (a test lists every tool and fails on such a name), its playbook says to label drafts "Untested draft" and never to repeat a secret, and passwords, cloud keys, vendor tokens and private-key blocks in a pasted message are masked in the browser like personal data. Not measured against the real model beyond one spot check; image generation was cut from this build.
@@ -314,7 +404,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   GPU (its model card names it [816B with 42B active](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B)), so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start takes about 200 s and the app waits 35 s a try, so when the endpoint is
+  warm endpoint. A cold start takes about 200 s (an estimate, not a measured set) and the app waits 35 s a try, so when the endpoint is
   idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
   person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never
   uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points

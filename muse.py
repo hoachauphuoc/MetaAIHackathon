@@ -41,6 +41,7 @@ def check_model(model, private=False):
 
 
 PRIVATE_STARTING = "Private mode starting"
+_private_answered_at = None  # when the open-weights endpoint last answered; one number, nothing about who asked"
 # A cold container needs about 3 minutes, so waiting longer cannot help: answer "starting" well inside the
 # 120 s the host allows a request, or the person sees a 504 and no label.
 PRIVATE_TIMEOUT = 35
@@ -54,6 +55,14 @@ def private_config():
            "model": os.environ.get("PRIVATE_MODEL"),
            "key_file": os.environ.get("PRIVATE_API_KEY_FILE")}
     return cfg if all(cfg.values()) else None
+
+
+def private_status():
+    """What the invite page may say before a Private step runs: configured or not, the model id, and how long ago
+    the endpoint last answered. Recent means probably warm; nothing is probed, so nothing wakes or bills."""
+    cfg = private_config()
+    ago = None if _private_answered_at is None else int(time.time() - _private_answered_at)
+    return {"configured": cfg is not None, "model": cfg["model"] if cfg else None, "answered_s_ago": ago}
 
 
 def cost_usd(model, tokens_in, tokens_out):
@@ -82,9 +91,10 @@ def _client(private=None):
 
 
 def _result(model, demo_mode, reason=None, text="", tool_calls=(), tokens_in=0, tokens_out=0,
-            latency_ms=0):
+            latency_ms=0, answered_by=None):
+    # answered_by is the id the provider's own response carried; it stays None when no model answered.
     return {
-        "model": model, "demo_mode": demo_mode, "demo_reason": reason, "text": text,
+        "model": model, "answered_by": answered_by, "demo_mode": demo_mode, "demo_reason": reason, "text": text,
         "tool_calls": list(tool_calls), "tokens_in": tokens_in, "tokens_out": tokens_out,
         "cost_usd": cost_usd(model, tokens_in, tokens_out), "latency_ms": latency_ms,
     }
@@ -124,9 +134,13 @@ def complete(model, messages, reasoning_effort="low", private=False, **kwargs):
                  for c in msg.tool_calls or []]
         out = _result(model, False, text=msg.content or "", tool_calls=calls,
                       tokens_in=r.usage.prompt_tokens, tokens_out=r.usage.completion_tokens,
-                      latency_ms=int((time.time() - start) * 1000))
+                      latency_ms=int((time.time() - start) * 1000),
+                      answered_by=getattr(r, "model", None) or model)
         log.info("model=%s in=%d out=%d cost=%.5f ms=%d", model, out["tokens_in"],
                  out["tokens_out"], out["cost_usd"], out["latency_ms"])
+        if cfg:
+            global _private_answered_at
+            _private_answered_at = time.time()
         if cost_listener:
             cost_listener(out["cost_usd"])
         return out

@@ -79,6 +79,21 @@ export function toApprovedJson(packages, schema) {
     approved_by: p.chain_titles, sent_on: p.sent_on })), null, 2);
 }
 
+// An email draft for a handoff every approver accepted: the form's own fields and the approval chain, never the
+// free-text notes and nothing a model wrote. The person presses Send in their own mail app; nothing is sent from here.
+// A long mailto link is cut off by some mail apps, so past the limit there is no link, only the text to copy.
+const MAILTO_LIMIT = 1800;
+
+export function approvedMailDraft(p, schema) {
+  if (!approvedOnly([p]).length) return null;
+  const title = p.values[schema.title_field] || schema.title;
+  const text = [`Approved: ${title}`, '',
+    ...schema.fields.map((f) => `${f.label}: ${p.values[f.key] ?? ''}`), '',
+    `Approved by: ${p.chain_titles.join(', then ')}`, `Sent on: ${p.sent_on}`].join('\r\n');
+  const href = `mailto:?subject=${encodeURIComponent(`Approved: ${title}`)}&body=${encodeURIComponent(text)}`;
+  return { text, href: href.length <= MAILTO_LIMIT ? href : null };
+}
+
 export function download(name, text, type) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([text], { type }));

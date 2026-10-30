@@ -110,6 +110,7 @@ def call_tool(step, values, ask, blocked, trace):
             tool_choice="auto",  # Muse rejects a forced function (HTTP 400, checked 27/10)
             reasoning_effort="minimal", max_tokens=300)
         trace.append({"step": step["id"], "tool": name, "model": call["model"],
+                      "answered_by": call.get("answered_by"),
                       "ms": call["latency_ms"], "demo_mode": call["demo_mode"]})
         if call["demo_mode"] or not call["tool_calls"]:
             break
@@ -136,6 +137,7 @@ def soft_check(step, values, rules_status, ask, blocked, trace):
                          "json_schema": {"name": "check", "strict": True, "schema": CHECK_SCHEMA}},
         reasoning_effort="minimal", max_tokens=600)
     trace.append({"step": step["id"], "tool": "soft_check", "model": call["model"],
+                  "answered_by": call.get("answered_by"),
                   "ms": call["latency_ms"], "demo_mode": call["demo_mode"]})
     if call["demo_mode"]:
         return None, call["demo_reason"]

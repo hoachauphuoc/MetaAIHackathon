@@ -204,6 +204,20 @@ function handoverPanel(form) {
 }
 
 // --- workflow --------------------------------------------------------------------------
+// Before Finance runs on the open-weights model, say honestly whether it is likely awake. The server only reports when
+// the endpoint last answered; it does not probe, so reading this never wakes or bills the endpoint.
+const WARM_S = 600;
+async function privateReadiness() {
+  const res = await api('/api/private/status');
+  if (!res.ok) return null;
+  const s = res.data;
+  if (!s.configured) return 'Private mode is not set up on this server: the Finance step will be marked for a person to check.';
+  if (s.answered_s_ago !== null && s.answered_s_ago < WARM_S)
+    return [badge('Private mode: probably warm', 'ok'), ` ${s.model} answered ${Math.max(1, Math.round(s.answered_s_ago / 60))} min ago.`];
+  return [badge('Private mode: may be asleep', 'warn'), ` ${s.model} has not answered in the last 10 minutes. ` +
+    'It sleeps when idle, so the Finance step may say it is starting and retry on its own (about 3 minutes).'];
+}
+
 function workflowPanel(routes) {
   const box = el('section', { id: 'order' }, el('h2', {}, 'New order: Sales, Operations, Finance'));
   const f = {
@@ -228,7 +242,9 @@ function workflowPanel(routes) {
     }
     runner(res.data, out);
   } }, 'Plan this order');
-  box.append(el('p', { class: 'muted' }, 'Unlike a chat, each step is one assistant making a tool call; code ' +
+  const ready = el('p', { class: 'muted', role: 'status' });
+  privateReadiness().then((line) => clear(ready, line));
+  box.append(ready, el('p', { class: 'muted' }, 'Unlike a chat, each step is one assistant making a tool call; code ' +
     'computes the numbers, and the next role starts only with your signed approval. ' +
     'A blocked step can never be approved.'),
   el('label', { for: 'customer' }, 'Customer'), f.customer,
@@ -307,8 +323,11 @@ function runner({ plan, signature, roles }, out) {
 function describe(result) {
   const t = result.tool_result;
   const lines = [];
+  // The id comes from the provider's own response; a step no model answered shows none, only the demo note.
+  const answered = result.trace.find((x) => x.answered_by && !x.demo_mode);
   lines.push(el('p', {}, statusBadge(result.status), ' ',
-    result.private ? badge('Private mode', 'info') : null));
+    result.private ? badge('Private mode', 'info') : null, ' ',
+    answered ? badge(`Answered by ${answered.answered_by}`, 'ok') : null));
   if (result.demo_mode) lines.push(demoNote(result.demo_reason));
   if (t.price !== undefined && t.margin_pct !== undefined)
     lines.push(el('p', {}, `Price USD ${t.price.toLocaleString()}, cost USD ${t.cost.toLocaleString()}, margin ${t.margin_pct}% (computed by code).`));
