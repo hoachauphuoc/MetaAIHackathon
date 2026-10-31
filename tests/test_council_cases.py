@@ -61,6 +61,8 @@ def test_council_case(case):
         body = r.get_json(silent=True)
         for key in expect.get("json_has", []):
             assert body is not None and present(body, key), f"{step['path']}: missing {key}"
+        for path, wanted in expect.get("json_eq", {}).items():
+            assert body is not None and dig(body, path) == wanted, f"{step['path']}: {path} != {wanted!r}"
         for text in expect.get("body_lacks", []):
             assert text not in r.get_data(as_text=True), f"{step['path']}: body holds {text!r}"
         for name, path in (step.get("save") or {}).items():
