@@ -194,6 +194,8 @@ again at its source by a second pass. Two rows are a company's own survey and sa
 the 39 checked figures and what they do not show are in [docs/research](docs/research/README.md).
 The strongest evidence is our own measured set, which you can rerun: [docs/MEASURED.md](docs/MEASURED.md).
 
+**Independent review.** On 2026-10-31 SOLIFAN (Japan) reviewed this repository once and reproduced abnormal cases locally. It found three high, one medium and one low issue; each is fixed; the four code findings have regression tests, the median fix is a code change only. The Japanese original, an English translation and the finding-to-fix table are in [docs/evidence/solifan](docs/evidence/solifan/README.md). It is a limited technical review, not a quality certification, and it did not re-measure our past figures.
+
 **Timed runs.** The landing page shows a "Timed runs" tile read from `data/timed_runs.json`: the same job with a stopwatch by hand and in the app, who held the stopwatch, and the saving computed by code (`timed.py`, tested). A row is added only with `python scripts/timed_run.py`, never by a model. Today it holds one app-side time (setup, 31.9 s, `docs/MEASURED.md`) and no by-hand time yet, and the tile says so.
 
 ## How it works
