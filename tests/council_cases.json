@@ -21837,5 +21837,4173 @@
   "round": 15,
   "tester": "privacy",
   "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-isolation-1",
+  "title": "chart rejects non-object answers",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-isolation-2",
+  "title": "company and validate reject mistyped roles",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 3,
+     "roles": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 3,
+     "roles": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": {
+      "x": 1
+     },
+     "size": 3
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "ok",
+      "errors"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-isolation-3",
+  "title": "form and levels reject mistyped values",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 3,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "lead",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "oops",
+     "escalation_usd": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-isolation-4",
+  "title": "text and photo routes reject non-string inputs",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 3,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "lead",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": 123,
+     "phrase": "stamp"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-photo",
+    "json": {
+     "token": "{tok}",
+     "image": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-isolation-5",
+  "title": "sandboxes isolated and forged tokens refused",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "AcmeA",
+     "size": 3,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "lead",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "AcmeA"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/invite/{tokA}",
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "company"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/invite/bogus-token-xyz-123",
+    "expect": {
+     "status": [
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-rules-1",
+  "title": "chart rejects non-object answers",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": []
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-rules-2",
+  "title": "validate and company survive mistyped fields",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": "oops",
+     "size": 5
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "ok",
+      "errors"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": 123,
+     "size": "oops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "ok",
+      "errors"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "industry": 123,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-rules-3",
+  "title": "levels reject mistyped numbers",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/subsidiary",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/subsidiary",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "escalation_usd": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/subsidiary",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-rules-4",
+  "title": "text and photo readers fail closed on types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-photo",
+    "json": {
+     "token": "{tok}",
+     "image": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-rules-5",
+  "title": "draft and personal rules survive mistyped values",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 5,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "json": {
+     "token": "{tok}",
+     "notes": 123
+    },
+    "expect": {
+     "status": [
+      200,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "json": {
+     "token": "{tok}",
+     "notes": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      200,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/personal-rules",
+    "json": {
+     "token": "{tok}",
+     "margin_floor_pct": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-abuse-1",
+  "title": "chart and company type confusion gives 4xx not 500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": [
+      1,
+      2,
+      3
+     ]
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "industry": 123,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": 123,
+     "size": "oops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "ok",
+      "errors"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-abuse-2",
+  "title": "handoff schema accept rejects non-object schema",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-abuse-3",
+  "title": "levels update rejects mistyped numbers and bans",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201,
+      200
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": {
+      "x": 1
+     },
+     "escalation_usd": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "oops",
+     "escalation_usd": "oops",
+     "banned": 123,
+     "banned_skills": 123,
+     "bans": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-abuse-4",
+  "title": "person text photo and draft reject wrong types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "A"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": 123,
+     "phrase": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "json": {
+     "token": "{tok}",
+     "notes": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-abuse-5",
+  "title": "workflow signatures and audio reject wrong types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": {},
+     "signature": 123,
+     "step_id": {
+      "x": 1
+     },
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tok}",
+     "plan": {},
+     "result": {},
+     "signature": 123,
+     "step_id": 123,
+     "ticket": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/transcribe",
+    "json": {
+     "token": "{tok}",
+     "audio": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r16-privacy-1",
+  "title": "Chart rejects non-object answers without crashing",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": [
+      "not",
+      "an",
+      "object"
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "free text"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": 42
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r16-privacy-2",
+  "title": "Company accepts or rejects non-string industry without crashing",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "industry": {
+      "x": 1
+     },
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "industry": [
+      "clinic"
+     ],
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r16-privacy-3",
+  "title": "Chart validation handles non-list roles and non-number size",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": "boss",
+     "size": "two"
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": 123,
+     "size": []
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": {
+      "boss": 1
+     },
+     "size": {
+      "n": 1
+     }
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r16-privacy-4",
+  "title": "Photo regions rejects non-string phrase without crashing",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Alex"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": "not-an-image",
+     "phrase": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": "not-an-image",
+     "phrase": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": "not-an-image",
+     "phrase": [
+      "face"
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r16-privacy-5",
+  "title": "From-text and handover draft handle non-string text fields",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Alex"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "json": {
+     "token": "{tok}",
+     "notes": 12345
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "Internal Server Error"
+     ]
+    }
+   }
+  ],
+  "round": 16,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r17-isolation-1",
+  "title": "chart answers wrong type must be 400 not 500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": [
+      1
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-isolation-2",
+  "title": "company roles and size wrong type must be 400",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": "big",
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": {
+      "id": "boss"
+     }
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-isolation-3",
+  "title": "handoff-schema accept wrong type must be 400",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      },
+      {
+       "id": "staff",
+       "title": "Staff",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": []
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-isolation-4",
+  "title": "from-text from-photo draft wrong types must not 500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      },
+      {
+       "id": "staff",
+       "title": "Staff",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-photo",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "image": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "notes": 123
+    },
+    "expect": {
+     "status": [
+      200,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-isolation-5",
+  "title": "assistant made in A must not appear in B",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      },
+      {
+       "id": "staff",
+       "title": "Staff",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "skills"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "assistants"
+     ],
+     "body_lacks": [
+      "Boss",
+      "boss"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/people",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "people"
+     ],
+     "body_lacks": [
+      "Team member"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "isolation",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-rules-1",
+  "title": "chart and company mistyped fields fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": "oops",
+     "size": "oops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "ok",
+      "errors"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "industry": 123,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-rules-2",
+  "title": "levels values with wrong types fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": {
+      "x": 1
+     },
+     "escalation_usd": 100
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/nope",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 50,
+     "escalation_usd": 100
+    },
+    "expect": {
+     "status": [
+      404
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-rules-3",
+  "title": "invite assistant schema mistyped ids fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      404
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      404
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": [
+      "boss"
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      404
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-rules-4",
+  "title": "text photo draft mistyped fields fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "image": 123,
+     "phrase": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handover/draft",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "notes": 123
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-rules-5",
+  "title": "workflow precheck send inner types fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "runs",
+       "source": "demo"
+      },
+      {
+       "id": "worker",
+       "title": "Worker",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "does",
+       "source": "demo"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "worker"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "goal": 123
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/precheck",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "values": {
+      "price": {
+       "x": 1
+      },
+      "job": [
+       1,
+       2
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "status",
+      "findings"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "token": "{tok}",
+     "to_role": "boss",
+     "values": {
+      "price": {
+       "x": 1
+      }
+     }
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-abuse-1",
+  "title": "company chart validate type confusion",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": "ten",
+     "roles": []
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ],
+     "industry": 123
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart/validate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "roles": "oops",
+     "size": 10
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chart",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": "oops"
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-abuse-2",
+  "title": "offboard and missing company isolation",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/people/999999/offboard",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/people/9223372036854775808/offboard",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/levels",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      404,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/invite/bad-token-xyz-123",
+    "expect": {
+     "status": [
+      400,
+      404,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-abuse-3",
+  "title": "handoff schema accept bad types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": "oops"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": []
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "schema": {
+      "foo": "bar"
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-abuse-4",
+  "title": "levels unit bad value types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "high",
+     "escalation_usd": 5
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 10,
+     "escalation_usd": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/no-such-unit",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 10,
+     "escalation_usd": 5
+    },
+    "expect": {
+     "status": [
+      400,
+      404
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-abuse-5",
+  "title": "person media routes bad types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs/from-text",
+    "json": {
+     "token": "{tok}",
+     "text": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/transcribe",
+    "json": {
+     "token": "{tok}",
+     "audio": {
+      "x": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": 123,
+     "phrase": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-privacy-1",
+  "title": "invite token never appears in owner reads",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Alice"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/people",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "{tok}"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "{tok}"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/people",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "{tok}"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-privacy-2",
+  "title": "chat text is not stored and hides token",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Bob"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chat",
+    "json": {
+     "token": "{tok}",
+     "message": "ZebraChatSecret771122"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "{tok}"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/inbox?token={tok}",
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "ZebraChatSecret771122",
+      "{tok}"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-privacy-3",
+  "title": "compare stores nothing and hides token",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Cara"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/compare",
+    "json": {
+     "token": "{tok}",
+     "message": "CompareSecret445566"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "{tok}"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/inbox?token={tok}",
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "CompareSecret445566"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-privacy-4",
+  "title": "mistyped values fail closed without internals",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Dan"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chat",
+    "json": {
+     "token": "{tok}",
+     "message": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback",
+      "AttributeError",
+      "KeyError"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoffs",
+    "json": {
+     "token": "{tok}",
+     "to_role": 123,
+     "values": {}
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback",
+      "AttributeError",
+      "KeyError"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/handoff-schema/generate",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "answers": [
+      1,
+      2
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback",
+      "AttributeError"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r17-privacy-5",
+  "title": "sandbox data never crosses sandboxes",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "BlueAcme7711",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "RedAcme9922",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "AliceBlueSecret123"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/people",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "AliceBlueSecret123",
+      "BlueAcme7711"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "RedAcme9922"
+     ]
+    }
+   }
+  ],
+  "round": 17,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
  }
 ]
