@@ -30,7 +30,8 @@ jobs:
       - run: python -m pytest -q
       - run: node --test tests/js/*.test.mjs
       - name: model and user text never inserted as HTML
-        run: "! grep -nE 'innerHTML|outerHTML|insertAdjacentHTML|document\.write' static/*.js static/*.html"
+        run: |
+          ! grep -nE 'innerHTML|outerHTML|insertAdjacentHTML|document\.write' static/*.js static/*.html
 
   deploy:
     needs: check
