@@ -28644,5 +28644,775 @@
   "round": 20,
   "tester": "abuse",
   "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r21-rules-1",
+  "title": "Group ban blocks a new order plan",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "leads",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "sells",
+       "source": "test"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "delivers",
+       "source": "test"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "checks",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "company"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 50,
+     "escalation_usd": 100,
+     "banned_skills": [
+      "quote_price"
+     ],
+     "banned": [
+      "quote_price"
+     ],
+     "bans": [
+      "quote_price"
+     ]
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ],
+     "json_has": [
+      "levels"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "S"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "kind": "order",
+      "pallets": 10,
+      "route": "A to B",
+      "customer": "Acme",
+      "price": 1800,
+      "cost": 1500
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 21,
+  "tester": "rules",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r21-rules-2",
+  "title": "Same order without ban still plans",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "leads",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "sells",
+       "source": "test"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "delivers",
+       "source": "test"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 2,
+       "reports_to": "boss",
+       "reason": "checks",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "company"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "S"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "kind": "order",
+      "pallets": 10,
+      "route": "A to B",
+      "customer": "Acme",
+      "price": 1800,
+      "cost": 1500
+     }
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 21,
+  "tester": "rules",
+  "model": "muse-spark-1.3",
+  "note": "loop7: corrected wrong expectation - case omitted POST /api/assistants, so plan correctly returned 422 'still being written'; assistants now created before planning."
+ },
+ {
+  "id": "r22-abuse-1",
+  "title": "ban then new order plan and step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "sales"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "sales"
+      },
+      {
+       "id": "sales_a",
+       "title": "Sales Assistant",
+       "headcount": 1,
+       "reports_to": "sales"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      404
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 30,
+     "escalation_usd": 5000,
+     "banned_skills": [
+      "quote_price"
+     ],
+     "banned": [
+      "quote_price"
+     ],
+     "bans": [
+      "quote_price"
+     ]
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "A"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      404,
+      409,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "A to B",
+      "pallets": 10,
+      "delivery_date": "2026-12-01"
+     }
+    },
+    "expect": {
+     "status": [
+      422
+     ],
+     "body_lacks": [
+      "Traceback",
+      "tool_result"
+     ]
+    }
+   }
+  ],
+  "round": 22,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "loop7: corrected wrong setup - case omitted POST /api/assistants, so plan correctly 422ed with no plan key and harness crashed on save; also step_id was 0. Now assistants are created, ban is asserted 200, and the banned fresh plan must refuse 422 with no tool_result. Step step removed because a refused plan has nothing to step."
+ },
+ {
+  "id": "r22-abuse-2",
+  "title": "existing plan stepped after ban",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "sales"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "sales"
+      },
+      {
+       "id": "sales_a",
+       "title": "Sales Assistant",
+       "headcount": 1,
+       "reports_to": "sales"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201,
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      404,
+      409,
+      410
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "A to B",
+      "pallets": 10,
+      "delivery_date": "2026-12-01"
+     }
+    },
+    "save": {
+     "p": "plan",
+     "s": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      201,
+      400,
+      404
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 30,
+     "escalation_usd": 5000,
+     "banned_skills": [
+      "quote_price"
+     ],
+     "banned": [
+      "quote_price"
+     ]
+    },
+    "expect": {
+     "status": [
+      200,
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{p}",
+     "signature": "{s}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      409
+     ],
+     "body_lacks": [
+      "Traceback",
+      "tool_result"
+     ]
+    }
+   }
+  ],
+  "round": 22,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "loop7: corrected wrong setup - case omitted POST /api/assistants, so plan correctly 422ed with no plan key and harness crashed on save. Now plan succeeds before the ban, and stepping it after the ban must refuse 409 (stale version and/or banned), with no tool_result."
  }
 ]

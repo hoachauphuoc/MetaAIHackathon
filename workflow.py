@@ -76,7 +76,15 @@ def clean_task(raw):
             "delivery_date": text("delivery_date", 10), "notes": text("notes", 1000)}
 
 
-def make_plan(raw_task, roles, kits, company_id="", company_version=0, today=None):
+def _refuse_if_banned(step, bans=()):
+    # Levels are authoritative: a kit already stripped of a banned skill must not be the only check.
+    banned = set(bans.keys()) if isinstance(bans, dict) else set(bans or ())
+    if step.get("tool") in banned:
+        raise PermissionError(f"Tool '{step['tool']}' is banned by a level.")
+
+
+
+def make_plan(raw_task, roles, kits, company_id="", company_version=0, today=None, bans=()):
     """Return (plan, errors). Edges are the handoffs the assistants declared."""
     task = clean_task(raw_task)
     edges = {(role_id, h["to_role"]) for role_id, kit in kits.items() for h in kit["handoffs"]}
@@ -89,7 +97,14 @@ def make_plan(raw_task, roles, kits, company_id="", company_version=0, today=Non
     if waiting:
         return plan, [f"The {', '.join(dict.fromkeys(waiting))} assistant is still being written. "
                       "Wait a moment and press Plan this order again."]
-    return plan, rules.validate_plan(plan, roles, edges)
+    errors = rules.validate_plan(plan, roles, edges)
+    if not errors:
+        for step in STEPS:
+            try:
+                _refuse_if_banned(step, bans)
+            except PermissionError as e:
+                errors.append(str(e))
+    return plan, errors
 
 
 def package_values(task, results):
@@ -181,7 +196,7 @@ def numbers(text):
     return [float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)]
 
 
-def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
+def run_step(plan, step_id, receipts, today, params, blocked, modes=None, bans=()):
     """Run one step. `receipts` = {step_id: {"result", "receipt"}} for every earlier step.
     `modes` = {step_id: "public" | "private"} is the person's choice for this run. A step left out keeps its default.
     A step the person sets to Private while the endpoint is not warm sends nothing anywhere: Private never falls back
@@ -198,6 +213,7 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
             raise PermissionError(f"Step '{earlier['title']}' has not been approved.")
         results[earlier["id"]] = got["result"]
     step, trace = steps[index], []
+    _refuse_if_banned(step, bans)
     values = package_values(plan["task"], results)
 
     private = {"public": False, "private": True}.get(chosen, step["private"])
@@ -248,8 +264,9 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
     return {"result": result, "ticket": sign("ticket", plan["run_id"], step["id"], result)}
 
 
-def approve(plan, step_id, result, ticket):
+def approve(plan, step_id, result, ticket, bans=()):
     """A human pressed Approve. A blocked step can never be approved."""
+    _refuse_if_banned({"tool": result.get("tool"), "role_id": result.get("role_id")}, bans)
     if plan.get("company_id") and result.get("company_id") != plan["company_id"]:
         raise PermissionError("This result belongs to a different company.")
     if not valid(ticket, "ticket", plan["run_id"], step_id, result):

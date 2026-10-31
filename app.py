@@ -364,7 +364,7 @@ def create_app(db_path=None):
         if not isinstance(task, dict):
             return jsonify(error="bad_task", message="Task must be an object."), 400
         try:
-            plan, errors = workflow.make_plan(task, company.get("roles", []), kits, person["sandbox_id"], company.get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
+            plan, errors = workflow.make_plan(task, company.get("roles", []), kits, person["sandbox_id"], company.get("version", 0), datetime.datetime.now(datetime.timezone.utc).date(), bans=rules.ban_provenance(company.get("levels")))
         except (ValueError, TypeError, AttributeError) as e:
             return jsonify(error="bad_task", message=str(e)), 400
         if errors:
@@ -380,14 +380,16 @@ def create_app(db_path=None):
             return jsonify(error="bad_plan", message="Plan must be an object."), 400
         try:
             workflow.verify_plan(plan, body.get("signature"), person["sandbox_id"], (db.get_company(person["sandbox_id"]) or {}).get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
+            company = db.get_company(person["sandbox_id"]) or {}
             out = workflow.run_step(
                 plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
-                effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]),
-                modes=body.get("modes") if isinstance(body.get("modes"), dict) else None)
+                effective_params(company), lambda: db.spend_model_call(person["sandbox_id"]),
+                modes=body.get("modes") if isinstance(body.get("modes"), dict) else None,
+                bans=rules.ban_provenance(company.get("levels")))
         except (TypeError, AttributeError) as e:
             return jsonify(error="bad_step", message=str(e)), 400
         except PermissionError as e:
-            return jsonify(error="not_approved", message=str(e)), 409
+            return jsonify(error="banned" if "banned" in str(e) else "not_approved", message=str(e)), 409
         except (StopIteration, KeyError):
             return jsonify(error="bad_step", message="No such step."), 400
         return jsonify(out)
@@ -399,12 +401,13 @@ def create_app(db_path=None):
             return jsonify(error="bad_plan", message="Plan and result must be objects."), 400
         try:
             workflow.verify_plan(body["plan"], body.get("signature"), person["sandbox_id"], (db.get_company(person["sandbox_id"]) or {}).get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
+            company = db.get_company(person["sandbox_id"]) or {}
             receipt = workflow.approve(body["plan"], body.get("step_id"), body.get("result"),
-                                       body.get("ticket"))
+                                       body.get("ticket"), bans=rules.ban_provenance(company.get("levels")))
         except (TypeError, AttributeError, KeyError) as e:
             return jsonify(error="bad_plan", message=str(e)), 400
         except PermissionError as e:
-            return jsonify(error="forged", message=str(e)), 403
+            return jsonify(error="banned" if "banned" in str(e) else "forged", message=str(e)), 403
         except ValueError as e:
             return jsonify(error="blocked", message=str(e)), 409
         return jsonify(receipt=receipt)

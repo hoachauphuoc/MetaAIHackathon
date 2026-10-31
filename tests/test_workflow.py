@@ -293,6 +293,27 @@ def test_http_forged_plan_is_refused(client):
     assert r.status_code == 409
 
 
+def test_http_banned_tool_is_refused_at_plan_step_and_approve(client, monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse())
+    h, token = sales_token(client)
+    assert client.post("/api/levels/enable", headers=h).status_code == 201
+    banned = client.put("/api/levels/group", headers=h, json={
+        "margin_floor_pct": 10, "escalation_usd": 5000, "banned_skills": ["quote_price"]})
+    assert banned.status_code == 200, banned.get_json()
+    # Re-create kits after the ban so they exist, then a fresh current-version plan must refuse.
+    for role in ("sales", "ops", "finance"):
+        client.post("/api/assistants", json={"role_id": role}, headers=h)
+    planned = client.post("/api/workflow/plan", json={"token": token, "task": TASK})
+    assert planned.status_code == 422 and "banned" in planned.json["errors"][0]
+    # Unit level: run_step and approve also fail closed on a banned tool.
+    plan = plan_for()
+    with pytest.raises(PermissionError, match="banned"):
+        workflow.run_step(plan, "quote", {}, TODAY, tools.PARAMS, lambda: None, bans={"quote_price": "Group"})
+    out = run(plan, "quote", {})
+    with pytest.raises(PermissionError, match="banned"):
+        workflow.approve(plan, "quote", out["result"], out["ticket"], bans={"quote_price": "Group"})
+
+
 def test_http_plan_before_the_briefs_are_written_is_422_and_says_so(client):
     _, token = sales_token(client, kits=False)
     r = client.post("/api/workflow/plan", json={"token": token, "task": TASK})
