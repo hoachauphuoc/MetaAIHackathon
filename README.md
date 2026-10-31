@@ -12,7 +12,11 @@ the time freed is the owner's and each employee's.
 **What was not possible before:** a ten-person company has no one to set up an assistant per role, and a
 chat window cannot pass a quote from Sales to Operations to Finance under the company's own limits. Here
 the app's side of that setup took 31.9 s in one measured run, and work moves between roles only as tool
-calls whose numbers code computes, each step unlocked by a person's signed approval.
+calls whose numbers code computes from the signed order and quote (model-returned arguments
+that differ are recomputed from that source and flagged `needs_human_check`), each step unlocked
+only after a person presses Approve and the server issues an HMAC-protected receipt for the
+approved result (a server-issued receipt, not a personal signature; in the demo the same invited
+user approves at all three steps).
 
 **Checked end to end (set 14, one run):** a hidden browser on the real Muse models (a local build of
 this repo, not the deployed link) finished the whole freight order on desktop and on a 375 px phone
@@ -107,9 +111,9 @@ words; code holds everything that costs money or can hurt someone, and a model a
 | The model decides (words and proposals) | Code decides (structure, money, safety) |
 |---|---|
 | Wonder proposes the org chart; Spark writes each role's brief, chat replies, form drafts and notes | The chart stands only if it has no cycle, no orphan, one top role and no more people than the company has |
-| Spark chooses the arguments of a tool call | Every number (price, cost, margin) is computed by the tool, and only skills in `data/skills.json` reach an assistant; banned skills never do |
+| Spark chooses the arguments of a tool call | Every number (price, cost, margin) is computed by the tool from the signed order and quote; model-returned arguments that differ are recomputed from that source and flagged `needs_human_check`; only skills in `data/skills.json` reach an assistant; banned skills never do |
 | The assistant's check adds notes to a step | The rules set the status and the model can only raise it, never lower it; a blocked step cannot be approved |
-| Nothing | Approval limits, margin floors and the approver chain; the next step starts only with a signed receipt |
+| Nothing | Approval limits, margin floors and the approver chain; the next step starts only with the server-issued HMAC receipt issued after a person presses Approve (not a personal signature) |
 | Nothing | The per-sandbox model-call limit, Standard mode only (a `-contributor` model id is refused), no table of chat messages |
 
 The tests behind the safety rows are listed in [Privacy and safety design](#privacy-and-safety-design-each-line-has-a-test);
@@ -131,7 +135,7 @@ The measured row is the app's side only; the human row is my estimate and is lab
 | Chart from ten questions, checked by code | Divisions, departments, teams and individual levels (today: Group and Subsidiary) |
 | One assistant and invite link per role | Admin-set spending caps (today: a per-sandbox call limit for the demo) |
 | Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
-| Handoffs with a person's signed approval at every step | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
+| Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; in the demo the same invited user approves at all three steps) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
 | Private mode on Glimmer (an idle endpoint woke in 166 s, measured once) | Free-text personal working styles (today a private rule is a number) |
 
 Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
@@ -160,8 +164,10 @@ second column is claimed as working.
   hidden-browser run of the whole path) is reported, not rerunnable from this repo. Results: [docs/MEASURED.md](docs/MEASURED.md).
 
 - **Agentic use, bounded on purpose:** in the order workflow the model chooses the arguments of a tool call
-  (`quote_price`, `check_margin`, `make_calendar_event`), code computes every number, the rules can only raise a
-  step's status, and the next role starts only with a person's signed approval; a blocked step cannot be
+  (`quote_price`, `check_margin`, `make_calendar_event`), code computes every number from the signed order and quote (model-returned arguments that differ are recomputed from that source and flagged `needs_human_check`), the rules can only raise a
+  step's status, and the next role starts only after a person presses Approve and the server issues
+  an HMAC-protected receipt for the approved result (not a personal signature; in the demo the same
+  invited user approves at all three steps); a blocked step cannot be
   approved. The autonomy is the tool choice; the approval gate is the product, and no model can remove it
   (`tests/test_workflow.py`).
 
@@ -211,9 +217,9 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    not masked (see Limits). **Compare with generic
    AI** asks the same question of the role assistant and of a plain assistant, side by side.
 6. **Team workflow (Sales, Operations, Finance):** each step lets the model choose a tool's
-   arguments by function calling; **code computes every number** (`tools.py`). A two-layer check
+   arguments by function calling; **code computes every number** (`tools.py`) from the signed order and quote; model-returned arguments that differ are recomputed from that source and flagged `needs_human_check`. A two-layer check
    follows: rules set a floor, then the model reads the package (customer notes are untrusted
-   text) and may only raise the status. A person presses Approve; the server signs each result and
+   text) and may only raise the status. A person presses Approve; the server then issues an HMAC-protected receipt for the approved result (a server-issued receipt, not a personal signature; in the demo the same invited user approves at all three steps) and
    refuses step N+1 without a valid receipt for step N. A blocked step cannot be approved.
 
 7. **Inbox and Today:** a person sends a quote package to another role along a declared handoff.
@@ -224,7 +230,7 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    their own package; the card carries the assistant's two-sentence summary and the queue is
    ordered by rules (waiting for me, overdue, worst status first); on a returned package **Suggest a
    fix** asks Spark for the smallest edit, the rules re-check it and the sender decides; above USD 50,000 the top role
-   signs after the receiver; overdue is a property of the package. **Today** counts documents
+   must also approve after the receiver (this Inbox maker-checker approval is separate from the workflow's server-issued HMAC receipt); overdue is a property of the package. **Today** counts documents
    only. The owner can remove a person: their link answers 410 with `Clear-Site-Data`, their seat
    frees up, and work they held returns to the queue.
 
@@ -252,7 +258,7 @@ time at the company:
 10. **Morning brief:** the owner presses one button and sees the open documents in three short
    lists (needs the top role, stuck, moving today) with counts by role. Code puts each document
    in its list; Spark writes one line per document and never sees names or links; a line for an
-   unknown document or naming a person is replaced by a line written by code. Read-only: signing
+   unknown document or naming a person is replaced by a line written by code. Read-only: approval
    still happens in the top role's inbox.
 11. **First three days:** a new person opens their link and gets a three-day plan built from
    their role's assistant: what they send and to whom, which assistant skill helps. Only the
@@ -309,15 +315,15 @@ This is the design intent: which hand steps the app takes over. The time it save
 ran (the "Timed runs" tile and the setup time in docs/MEASURED.md); nothing else here has a saving behind it.
 
 - **Sales** no longer retypes a quote: the form is filled from the order, and code computes the price and margin.
-- **Operations** no longer copies an approved package into a sheet: the approved export and the calendar file are built by code from the signed steps.
+- **Operations** no longer copies an approved package into a sheet: the approved export and the calendar file are built by code from the steps covered by server-issued HMAC receipts.
 - **Finance** no longer re-checks the margin with a calculator: code computes it, and the model only writes the note.
 
 ## Claim and proof
 
 | Claim | Proof in the repository |
 |---|---|
-| Numbers come from code, never from a model | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
-| A person's approval is signed; a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
+| Numbers come from code, never from a model: they come from the signed order and quote, and model-returned arguments that differ are recomputed from that source and flagged `needs_human_check` | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
+| After a person presses Approve the server issues an HMAC-protected receipt (not a personal signature); a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
 | Names you list are masked in the browser; pattern masking alone does not find names | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`); the pattern rules do not detect names (`docs/MEASURED.md`, set 2 and the browser masking table) |
 | The calendar file is built by code and refused without a date | `test_a_calendar_file_is_built_by_code_and_refused_without_a_date` |
 | Every browser module parses before it reaches a browser | `test_every_browser_module_parses` |
@@ -363,7 +369,7 @@ OWASP Top 10 for LLM applications, as applied here:
 | LLM01 Prompt injection | Customer notes sit inside a `<data>` block marked untrusted; the model can only raise a status; measured on 8 injection cases |
 | LLM02 Sensitive information disclosure | No message table, no message logging, Referrer-Policy `no-referrer` because the invite token sits in the URL |
 | LLM05 Improper output handling | Strict JSON schemas, rules validate every output, `textContent` only in the UI, CSP `script-src 'self'` |
-| LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; signed receipts |
+| LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; server-issued HMAC receipts after Approve (not personal signatures) |
 | LLM10 Unbounded consumption | 80 model calls per sandbox, a daily cost ceiling, 24-hour sandboxes |
 
 ## Building period (built during the hackathon)

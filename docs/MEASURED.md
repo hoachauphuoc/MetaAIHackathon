@@ -4,6 +4,12 @@ Produced by `python scripts/measure.py` on 2026-10-27 (rerun the same day after 
 `muse-spark-1.3`. The data is synthetic and the samples are small, so these are raw counts, not
 percentages. Anyone with a Meta key can rerun the script.
 
+**Median definition (L01).** Earlier one-off medians in this file were computed as the upper
+median, `sorted(values)[len(values)//2]`; `scripts/measure.py` now uses `statistics.median`.
+No figure in this file was re-run or recomputed for that change: every median below (including
+sets 1, 3, 5, 6, 7, 8, 9, 12 and 13) and the one-off 31.9 s setup total remain the originally
+reported values. Do not mix them with future re-measurements under `statistics.median`.
+
 ## Set 1: does Wonder's org chart pass the rules on the first try?
 
 10 synthetic companies (logistics, retail, services; 5 to 30 people). The chart must pass
