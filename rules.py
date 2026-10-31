@@ -232,8 +232,9 @@ def level_value_errors(values):
         if isinstance(v, bool) or not isinstance(v, (int, float)) or not spec["low"] <= v <= spec["high"]:
             errors.append({"rule": rule, "message":
                            f"The {spec['label']} must be a number between {spec['low']:,} and {spec['high']:,}."})
+    # Type-check elements before set(): an unhashable element (object/list) must give an error, not crash.
     banned = values.get(BANNED, [])
-    if not isinstance(banned, list) or any(s not in ALLOWED_SKILLS for s in banned) or len(set(banned)) != len(banned):
+    if not isinstance(banned, list) or any(not isinstance(s, str) or s not in ALLOWED_SKILLS for s in banned) or len(set(banned)) != len(banned):
         errors.append({"rule": BANNED, "message": "Banned skills must be a list of skills from the catalog, each once."})
     return errors
 

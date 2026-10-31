@@ -190,7 +190,9 @@ def test_every_dropped_ban_is_caught_whatever_the_parent_bans():
         assert rules.validate_child_rules(parent, {**GROUP, "banned_skills": ids}) == []
 
 
-@pytest.mark.parametrize("bad", [["evaluate_person"], ["no_such_skill"], [BAN, BAN], "draft_message"])
+@pytest.mark.parametrize("bad", [["evaluate_person"], ["no_such_skill"], [BAN, BAN], "draft_message",
+                                 [{"tool": "quote_price"}], [[BAN]], [123], [None], [True], 123,
+                                 {"tool": "quote_price"}, None])
 def test_only_catalog_skills_can_be_banned_each_once(client, bad):
     h = leveled(client)
     got = client.put("/api/levels/group", json={**GROUP, "banned_skills": bad}, headers=h)

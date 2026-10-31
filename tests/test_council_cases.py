@@ -30,7 +30,7 @@ def fill(value, env):
 
 
 def dig(data, path):
-    for part in path.split("."):
+    for part in (path.split(".")[1:] if path.split(".")[0] == "json" else path.split(".")):
         data = data[int(part)] if isinstance(data, list) else data[part]
     return data
 

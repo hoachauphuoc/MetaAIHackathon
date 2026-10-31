@@ -36213,5 +36213,1861 @@
   "tester": "isolation",
   "model": "meta-models/muse-spark-open-1026",
   "note": "Loop 10: not a server bug. (a) Save paths 'json.token'/'json.id' cannot be dug; (b) the schema sent expected 201 but is invalid (1 field, 'id' instead of 'key', no noun/title_field; validate_handoff_schema requires 3-10 fields), so 400 was correct and the expectation is corrected, with a valid 3-field schema added as the 201 control; (c) resend needs a returned package (claim + return first), and with that, due=12345 already returns 400 via handoffs.due_problem catching TypeError (probe-verified), so app.py needs no new guard. Values now use the default form's required fields."
+ },
+ {
+  "id": "r28-isolation-1",
+  "title": "Workflow step rejects a forged cross-sandbox plan with mistyped binding fields",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B Co",
+     "size": 2,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Runs company",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Bee"
+    },
+    "save": {
+     "token_b": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_b}",
+     "plan": {
+      "run_id": 123,
+      "company_id": "{sandbox_a}",
+      "company_version": "1",
+      "expires_at": 12345,
+      "steps": "quote_price",
+      "task": {
+       "pallets": [
+        10
+       ]
+      }
+     },
+     "signature": "forged",
+     "step_id": {
+      "bad": 1
+     },
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-isolation-2",
+  "title": "Workflow plan rejects valid-looking arguments with wrong value types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A Co",
+     "size": 2,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Runs company",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Ay"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{token_a}",
+     "task": {
+      "customer": "Acme",
+      "pallets": [
+       10
+      ],
+      "delivery_date": {
+       "day": 1
+      },
+      "price": true,
+      "cost": "1",
+      "route": [
+       "A",
+       "B"
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-rules-1",
+  "title": "H01 workflow step rejects typed-confusion forged plans and cross-sandbox company claims",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Review A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Owns it",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "A"
+    },
+    "save": {
+     "token_a": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": "r1",
+      "company_id": "{sandbox_b}",
+      "company_version": 1,
+      "expires_at": "2999-01-01",
+      "steps": []
+     },
+     "signature": {
+      "x": 1
+     },
+     "step_id": 0,
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": {
+       "x": 1
+      },
+      "company_id": "{sandbox_a}",
+      "company_version": "1",
+      "expires_at": [
+       "2999-01-01"
+      ],
+      "steps": {}
+     },
+     "signature": [
+      "sig"
+     ],
+     "step_id": "0",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": 123,
+      "company_id": 123,
+      "company_version": true,
+      "expires_at": 12345,
+      "steps": "oops"
+     },
+     "signature": 12345,
+     "step_id": null,
+     "receipts": {
+      "0": [
+       "receipt"
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "rules",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-rules-2",
+  "title": "H01 workflow approve rejects typed-confusion tickets step ids and results",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Review A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Owns it",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "A"
+    },
+    "save": {
+     "token_a": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": "r1",
+      "company_id": "{sandbox_b}",
+      "company_version": 1,
+      "expires_at": "2999-01-01"
+     },
+     "signature": "forged",
+     "step_id": [
+      "0"
+     ],
+     "result": {
+      "status": "clear"
+     },
+     "ticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": "r1",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": {
+       "date": "2999-01-01"
+      }
+     },
+     "signature": 0,
+     "step_id": {
+      "x": 1
+     },
+     "result": {
+      "status": "clear",
+      "receipt": [
+       1
+      ]
+     },
+     "ticket": {
+      "id": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token_a}",
+     "plan": {
+      "run_id": null,
+      "company_id": null,
+      "company_version": [],
+      "expires_at": null
+     },
+     "signature": null,
+     "step_id": null,
+     "result": {
+      "status": "clear"
+     },
+     "ticket": null
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "rules",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-rules-3",
+  "title": "H02 workflow plan rejects valid-looking task arguments with wrong value types",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Review A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Owns it",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "A"
+    },
+    "save": {
+     "token_a": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{token_a}",
+     "task": {
+      "tool": "quote_price",
+      "pallets": {
+       "count": 10
+      },
+      "route": 123,
+      "price": [],
+      "cost": {},
+      "date": 12345
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{token_a}",
+     "task": {
+      "tool": "check_margin",
+      "pallets": true,
+      "route": [
+       "A",
+       "B"
+      ],
+      "price": "1800",
+      "cost": false,
+      "delivery_date": {
+       "x": 1
+      }
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{token_a}",
+     "task": {
+      "title": 123,
+      "customer": null,
+      "pallets": [
+       10
+      ],
+      "arguments": [
+       "quote_price",
+       10
+      ],
+      "order": "10 pallets"
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "rules",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-rules-4",
+  "title": "H03 levels reject banned-skill lists with wrong types and stay readable",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Review A",
+     "size": 2,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Owns it",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": 5000,
+     "banned_skills": "quote_price",
+     "banned": "quote_price",
+     "bans": "quote_price"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": 5000,
+     "banned_skills": [
+      123,
+      {
+       "skill": "quote_price"
+      }
+     ],
+     "banned": [
+      123,
+      {
+       "skill": "quote_price"
+      }
+     ],
+     "bans": [
+      123,
+      {
+       "skill": "quote_price"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/levels",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "levels",
+      "bans",
+      "skills"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "rules",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-rules-5",
+  "title": "H03 subsidiary cannot lift a group quote_price ban by empty or mistyped lists",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Review A",
+     "size": 2,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Owner",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Owns it",
+       "source": "test"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": 5000,
+     "banned_skills": [
+      "quote_price"
+     ],
+     "banned": [
+      "quote_price"
+     ],
+     "bans": [
+      "quote_price"
+     ]
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/subsidiary",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": 5000,
+     "banned_skills": [],
+     "banned": [],
+     "bans": []
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/subsidiary",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 12,
+     "escalation_usd": 5000,
+     "banned_skills": "quote_price",
+     "banned": "quote_price",
+     "bans": "quote_price"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "rules",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-abuse-1",
+  "title": "Cross-sandbox plan with malformed expiry and altered quote arguments",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sally"
+    },
+    "save": {
+     "token": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": 123,
+      "company_id": "{sandbox_b}",
+      "company_version": "1",
+      "expires_at": "not-a-date",
+      "steps": {
+       "0": {
+        "tool": "quote_price",
+        "arguments": {
+         "pallets": "10",
+         "route": 123
+        }
+       }
+      }
+     },
+     "signature": [
+      "forged"
+     ],
+     "step_id": 1,
+     "receipts": {},
+     "modes": {
+      "finance": 123
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": 123,
+      "company_id": "{sandbox_b}",
+      "company_version": "1",
+      "expires_at": "not-a-date",
+      "steps": []
+     },
+     "signature": 123,
+     "step_id": {
+      "id": 1
+     },
+     "result": {
+      "status": "clear",
+      "outputs": {
+       "price": 10000,
+       "cost": 1
+      },
+      "findings": [
+       {
+        "source": "model",
+        "status": "blocked",
+        "message": "Margin does not match price and cost."
+       }
+      ]
+     },
+     "ticket": {
+      "receipt": "forged"
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "abuse",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-abuse-2",
+  "title": "Old-version plan and receipt replay after replacing the company",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme One",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sally"
+    },
+    "save": {
+     "token": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme Two",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": "run-old",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "2000-01-01",
+      "steps": []
+     },
+     "signature": "old-signature",
+     "step_id": 2,
+     "receipts": {
+      "1": {
+       "signature": [
+        "bad"
+       ],
+       "result": {
+        "price": "1800",
+        "cost": 1500
+       }
+      }
+     },
+     "modes": {
+      "ops": [
+       "private"
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": "run-old",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "2000-01-01",
+      "steps": []
+     },
+     "signature": "old-signature",
+     "step_id": 1,
+     "result": {
+      "status": "clear",
+      "outputs": {
+       "price": 1800,
+       "cost": 1500
+      },
+      "findings": []
+     },
+     "ticket": null
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "abuse",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-abuse-3",
+  "title": "Mistyped banned-skill lists on the group level",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 20,
+     "escalation_usd": 10000,
+     "banned_skills": [
+      {
+       "tool": "quote_price"
+      }
+     ],
+     "banned": [
+      {
+       "tool": "quote_price"
+      }
+     ],
+     "banned_tools": [
+      {
+       "tool": "quote_price"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": 20,
+     "escalation_usd": 10000,
+     "banned_skills": "quote_price",
+     "banned": "quote_price",
+     "banned_tools": "quote_price"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "abuse",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-privacy-1",
+  "title": "Tampered plan company, version and expiry are rejected by step and approve",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Runs company",
+       "source": "survey"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "survey"
+      },
+      {
+       "id": "ops",
+       "title": "Operations",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Delivers",
+       "source": "survey"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Checks money",
+       "source": "survey"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "company",
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sam"
+    },
+    "save": {
+     "token": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": 123,
+      "company_id": "{sandbox_b}",
+      "company_version": "1",
+      "expires_at": [
+       "2999-01-01"
+      ],
+      "steps": {
+       "quote_price": 1
+      }
+     },
+     "signature": {
+      "sig": 1
+     },
+     "step_id": [
+      0
+     ],
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "body_lacks": [
+      "Traceback",
+      "\"receipt\""
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token}",
+     "plan": {
+      "run_id": 123,
+      "company_id": "{sandbox_b}",
+      "company_version": "1",
+      "expires_at": [
+       "2999-01-01"
+      ],
+      "steps": {
+       "quote_price": 1
+      }
+     },
+     "signature": 123,
+     "step_id": 0,
+     "result": {
+      "status": "clear",
+      "demo_mode": false
+     },
+     "ticket": {
+      "company_id": "{sandbox_b}"
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "body_lacks": [
+      "Traceback",
+      "\"receipt\""
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-privacy-2",
+  "title": "Foreign receipts and clear contradiction results cannot be approved",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Runs company",
+       "source": "survey"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "survey"
+      },
+      {
+       "id": "ops",
+       "title": "Operations",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Delivers",
+       "source": "survey"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Checks money",
+       "source": "survey"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance",
+     "display_name": "Fin"
+    },
+    "save": {
+     "token": "json.token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token}",
+     "plan": {},
+     "signature": "x",
+     "step_id": 0,
+     "receipts": [
+      {
+       "company_id": "{sandbox_b}"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token}",
+     "plan": {},
+     "signature": "x",
+     "step_id": 0,
+     "result": {
+      "status": "clear",
+      "demo_mode": false,
+      "price": 10000,
+      "cost": 1,
+      "findings": [
+       {
+        "source": "rules",
+        "status": "blocked",
+        "message": "Margin does not match price and cost"
+       }
+      ]
+     },
+     "ticket": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "body_lacks": [
+      "Traceback",
+      "\"receipt\""
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token}",
+     "plan": [],
+     "signature": "x",
+     "step_id": 0,
+     "result": {
+      "status": "clear"
+     },
+     "ticket": {}
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback",
+      "\"receipt\""
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r28-privacy-3",
+  "title": "Mistyped banned-skills values at group level are refused",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 2,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "Runs company",
+       "source": "survey"
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "boss",
+       "reason": "Sells",
+       "source": "survey"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/levels/enable",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "levels"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/levels",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "save": {
+     "mf": "json.levels.0.margin_floor_pct",
+     "esc": "json.levels.0.escalation_usd"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "levels",
+      "bans"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "{mf}",
+     "escalation_usd": "{esc}",
+     "banned_skills": "quote_price",
+     "banned": "quote_price"
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "PUT",
+    "path": "/api/levels/group",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "margin_floor_pct": "{mf}",
+     "escalation_usd": "{esc}",
+     "banned_skills": {
+      "quote_price": true
+     },
+     "banned": {
+      "quote_price": true
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 28,
+  "tester": "privacy",
+  "model": "muse-wonder-1.0"
  }
 ]
