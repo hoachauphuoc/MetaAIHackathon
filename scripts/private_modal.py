@@ -48,7 +48,9 @@ MIN_CONTAINERS = int(os.environ.get("GLIMMER_MIN_CONTAINERS", "0"))  # read at d
 image = (modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.12")
          .entrypoint([])
          .uv_pip_install(f"vllm=={VLLM_VERSION}", "huggingface_hub[hf_xet]")
-         .env({"HF_XET_HIGH_PERFORMANCE": "1"}))
+         .env({"HF_XET_HIGH_PERFORMANCE": "1",
+               "VLLM_SERVER_DEV_MODE": "1",  # without it vLLM has no /sleep and /wake_up (404) and startup fails in a loop
+               "TORCHINDUCTOR_COMPILE_THREADS": "1"}))  # Modal's advice for snapshot compatibility
 hf_cache = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
 vllm_cache = modal.Volume.from_name("vllm-cache", create_if_missing=True)
 app = modal.App("muse-glimmer-private")
@@ -127,7 +129,7 @@ def check():
     key = os.environ.get("VLLM_API_KEY")
     if not key:
         raise SystemExit("Set VLLM_API_KEY in this shell to the same value as the secret, then rerun.")
-    body = json.dumps({"model": MODEL, "max_tokens": 40,
+    body = json.dumps({"model": MODEL, "max_tokens": 400,
                        "messages": [{"role": "user", "content": "Reply with the single word: ready"}]}).encode()
     request = urllib.request.Request(url + "/v1/chat/completions", body,
                                      {"Content-Type": "application/json", "Authorization": f"Bearer {key}"})
@@ -141,4 +143,4 @@ def check():
             # Modal answers 303 "See Other" while the container starts; urllib gives up after 10 of them, so ask again.
             if e.code != 303 or time.time() - start > 20 * MINUTES:
                 raise
-    print(f"{int(time.time() - start)} s to first answer: {answer.strip()!r}")
+    print(f"{int(time.time() - start)} s to first answer: {(answer or '(no text: reasoning used the tokens)').strip()!r}")
