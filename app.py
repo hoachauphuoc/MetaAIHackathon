@@ -429,11 +429,11 @@ def create_app(db_path=None):
     def compare_route():
         body = body_json()
         person = db.person_by_token(str(body.get("token") or ""))
+        if body.get("message") is not None and not isinstance(body.get("message"), str):
+            return jsonify(error="bad_message", message="Message must be text."), 400
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
             raise LookupError("This role has no assistant yet.")
-        if body.get("message") is not None and not isinstance(body.get("message"), str):
-            return jsonify(error="bad_message", message="Message must be text."), 400
         return jsonify(chat.compare(kit, body.get("message") or "",
                                     lambda: db.spend_model_call(person["sandbox_id"]),
                                     personal_schema(db.get_company(person["sandbox_id"]) or {}, body.get("token"))))

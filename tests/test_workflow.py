@@ -175,6 +175,16 @@ def test_prompt_injection_cannot_lower_the_rules_status(monkeypatch):
     assert any(f["source"] == "rules" for f in out["findings"])
 
 
+def test_clear_verdict_with_findings_needs_a_human_check(monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse(
+        verdict={"status": "clear", "findings": ["margin does not match price and cost"],
+                 "summary": "Looks fine."}))
+    out = run(plan_for(), "quote", {})["result"]
+    assert out["status"] == "needs_human_check"
+    assert any(f["status"] == "needs_human_check" and f["source"] == "rules"
+               and "returned 'clear' with findings" in f["message"] for f in out["findings"])
+
+
 def test_blocked_step_cannot_be_approved(monkeypatch):
     monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Hanoi-Haiphong", "pallets": 10}))
     plan = plan_for()

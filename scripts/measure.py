@@ -34,6 +34,7 @@ import datetime
 import json
 import os
 import re
+import statistics
 import sys
 import time
 
@@ -104,7 +105,7 @@ def set1():
         rows = list(pool.map(one, COMPANIES))
     return {"passed_first_try": sum(r[0] for r in rows), "of": len(rows),
             "cost_usd": round(sum(r[1] for r in rows), 4),
-            "median_latency_s": sorted(r[2] for r in rows)[len(rows) // 2] / 1000}
+            "median_latency_s": statistics.median([r[2] for r in rows]) / 1000}
 
 
 CLINIC_AND_SOFTWARE = [
@@ -126,7 +127,7 @@ def set13():
         rows = list(pool.map(one, CLINIC_AND_SOFTWARE))
     return {"passed_first_try": sum(r[0] for r in rows), "of": len(rows),
             "cost_usd": round(sum(r[1] for r in rows), 4),
-            "median_latency_s": sorted(r[2] for r in rows)[len(rows) // 2] / 1000}
+            "median_latency_s": statistics.median([r[2] for r in rows]) / 1000}
 
 
 def set2(private=False):
@@ -221,7 +222,7 @@ def set12():
             "false_alarms": sum(k == "consistent" and s not in (None, "clear") for k, s in rows),
             "did_not_finish": sum(s is None for _, s in rows),
             "why_not_finished": sorted({c["demo_reason"] for c in calls if c["demo_mode"]}),
-            "median_latency_s": times[len(times) // 2] / 1000,
+            "median_latency_s": statistics.median(times) / 1000,
             "cost_usd": round(sum(c["cost_usd"] for c in calls), 4)}
     return res
 
@@ -283,7 +284,7 @@ def set3():
             "customer_or_notes_changed": sum(
                 r[1]["values"]["customer"] != r[3]["customer"] or r[1]["values"]["notes"] != r[3]["notes"]
                 for r in answered),
-            "median_latency_s": round(sorted(r[2] for r in rows)[len(rows) // 2], 1)}
+            "median_latency_s": round(statistics.median([r[2] for r in rows]), 1)}
 
 
 KITS = {
@@ -367,8 +368,8 @@ def set5():
                 any(w in json.dumps(r["schema"]).lower() for w in rules.FORBIDDEN_FIELD_WORDS) for r in own),
             "forms_with_a_money_rule": sum(any(x["kind"] in ("not_below", "min_margin") for x in r["schema"]["rules"])
                                            for r in own),
-            "median_fields": sorted(len(r["schema"]["fields"]) for r in own)[len(own) // 2] if own else 0,
-            "median_latency_s": round(sorted(t for _, t in rows)[len(rows) // 2], 1),
+            "median_fields": statistics.median([len(r["schema"]["fields"]) for r in own]) if own else 0,
+            "median_latency_s": round(statistics.median([t for _, t in rows]), 1),
             "cost_usd": round(sum(r.get("cost_usd", 0) for r in own), 4)}
 
 
@@ -423,7 +424,7 @@ def read_sheets(images):
             "fields_exact": sum(sum(m.values()) for m in matches), "fields_total": sum(len(m) for m in matches),
             "sheets_fully_correct": sum(all(m.values()) for m in matches),
             "misread_by_field": {k: sum(not m[k] for m in matches) for k in matches[0]},
-            "median_latency_s": round(sorted(t for _, t, _ in rows)[len(rows) // 2], 1)}
+            "median_latency_s": round(statistics.median([t for _, t, _ in rows]), 1)}
 
 
 def set6():
@@ -494,7 +495,7 @@ def set9():
             "smudged_flagged_unreadable": sum(h["flagged"] for h in hidden),
             "smudged_filled_with_a_guess": sum(not h["empty"] for h in hidden),
             "smudged_guess_right_by_luck": sum(h["right_by_luck"] for h in hidden),
-            "median_latency_s": round(sorted(r["latency"] for r in rows)[len(rows) // 2], 1),
+            "median_latency_s": round(statistics.median([r["latency"] for r in rows]), 1),
             "cost_usd": round(sum(spent), 4)}
 
 
@@ -543,7 +544,7 @@ def set7():
             "model_lines_dropped_or_replaced": sum(r["replaced_lines"] for r, _ in rows),
             "people_names_in_output": sum(text.count(n) for n in BRIEF_PEOPLE),
             "link_tokens_in_output": text.count("person-"),
-            "median_latency_s": round(sorted(t for _, t in rows)[len(rows) // 2], 1),
+            "median_latency_s": round(statistics.median([t for _, t in rows]), 1),
             "cost_usd": round(sum(spent), 4)}
 
 
@@ -662,7 +663,7 @@ def set8():
             n = r["seen"].count(s) + r["answer"].count(s)
             if n:
                 leaks[s] = leaks.get(s, 0) + n
-    median = lambda xs: sorted(xs)[len(xs) // 2]  # noqa: E731
+    median = statistics.median
     return {"questions": len(rows), "with_tools_correct": sum(r["correct"] for r in rows),
             "pasted_documents_correct": sum(b["correct"] for b in base),
             "document_questions_that_read": sum(r["read"] for r in rows if r["doc"]),

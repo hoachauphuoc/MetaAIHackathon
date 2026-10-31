@@ -268,6 +268,12 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None, bans=(
         findings += [{"status": verdict["status"], "source": "model", "message": m}
                      for m in verdict["findings"]]
         model_status, summary = verdict["status"], verdict["summary"]
+        if model_status == "clear" and verdict["findings"]:
+            # A clear verdict that lists an issue contradicts itself: a person must check.
+            findings.append({"status": "needs_human_check", "source": "rules", "message":
+                             "The assistant returned 'clear' with findings that describe an issue. "
+                             "A person must check."})
+            model_status = "needs_human_check"
 
     result = {"step_id": step["id"], "role_id": step["role_id"], "title": step["title"],
               "tool": step["tool"], "tool_result": tool_result,
