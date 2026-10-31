@@ -301,6 +301,15 @@ def create_app(db_path=None):
     def chat_route():
         body = body_json()
         person = db.person_by_token(str(body.get("token") or ""))
+        # Bad types must fail closed, not be stringified into a model prompt; a gone token still answers 410 first.
+        message = body.get("message")
+        history = body.get("history")
+        if message is not None and not isinstance(message, str):
+            return jsonify(error="bad_message", message="Message must be text."), 400
+        if history is not None and (not isinstance(history, list) or any(
+                not isinstance(t, dict) or not isinstance(t.get("role"), str)
+                or not isinstance(t.get("content"), str) for t in history)):
+            return jsonify(error="bad_history", message="History must be a list of turns."), 400
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
             raise LookupError("This role has no assistant yet.")
@@ -420,6 +429,8 @@ def create_app(db_path=None):
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
             raise LookupError("This role has no assistant yet.")
+        if body.get("message") is not None and not isinstance(body.get("message"), str):
+            return jsonify(error="bad_message", message="Message must be text."), 400
         return jsonify(chat.compare(kit, body.get("message") or "",
                                     lambda: db.spend_model_call(person["sandbox_id"]),
                                     personal_schema(db.get_company(person["sandbox_id"]) or {}, body.get("token"))))
@@ -534,6 +545,11 @@ def create_app(db_path=None):
         blocked = lambda: db.spend_model_call(me["sandbox_id"])  # noqa: E731
         if not isinstance(body.get("values", {}), dict):
             return jsonify(error="bad_values", message="Values must be an object."), 400
+        # A mistyped target or date is a bad request, not a refusal or a crash.
+        if not isinstance(body.get("to_role"), str):
+            return jsonify(error="bad_to_role", message="to_role must be a string."), 400
+        if body.get("due") is not None and not isinstance(body.get("due"), str):
+            return jsonify(error="bad_due", message="due must be a date string."), 400
         package = handoffs.send(
             me["sandbox_id"], {**me, "token": me["token"]}, body.get("to_role"),
             body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
