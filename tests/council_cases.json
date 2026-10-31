@@ -29414,5 +29414,1954 @@
   "tester": "abuse",
   "model": "muse-spark-1.3",
   "note": "loop7: corrected wrong setup - case omitted POST /api/assistants, so plan correctly 422ed with no plan key and harness crashed on save. Now plan succeeds before the ban, and stepping it after the ban must refuse 409 (stale version and/or banned), with no tool_result."
+ },
+ {
+  "id": "r23-isolation-1",
+  "title": "10-pallet order with pallets=1 must never be clear",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "md"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-11-20",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "save": {
+     "qresult": "result",
+     "qticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   }
+  ],
+  "round": 23,
+  "tester": "isolation",
+  "model": "muse-spark-1.3",
+  "note": "Corrected in loop 8: the original case could not reach the step it claimed to test (no Ops role/assistant, numeric step_id, and 'modes' is the public/private choice, not model arguments; HTTP cases under FAKE_AI cannot inject model tool arguments). Rewritten as a valid signed-plan flow asserting the step is never clear; valid-but-different model arguments are covered directly by tests/test_workflow.py::test_valid_but_different_*."
+ },
+ {
+  "id": "r23-isolation-2",
+  "title": "quote route different from signed order must never be clear",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "md"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-11-20",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "save": {
+     "qresult": "result",
+     "qticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   }
+  ],
+  "round": 23,
+  "tester": "isolation",
+  "model": "muse-spark-1.3",
+  "note": "Corrected in loop 8: the original case could not reach the step it claimed to test (no Ops role/assistant, numeric step_id, and 'modes' is the public/private choice, not model arguments; HTTP cases under FAKE_AI cannot inject model tool arguments). Rewritten as a valid signed-plan flow asserting the step is never clear; valid-but-different model arguments are covered directly by tests/test_workflow.py::test_valid_but_different_*."
+ },
+ {
+  "id": "r23-isolation-3",
+  "title": "finance price 10000 cost 1 vs quote 1800 1500 must never be clear",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "md"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-11-20",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "save": {
+     "qresult": "result",
+     "qticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "result": "{qresult}",
+     "ticket": "{qticket}"
+    },
+    "save": {
+     "qreceipt": "receipt"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "receipt"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "schedule",
+     "receipts": {
+      "quote": {
+       "result": "{qresult}",
+       "receipt": "{qreceipt}"
+      }
+     }
+    },
+    "save": {
+     "sresult": "result",
+     "sticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "schedule",
+     "result": "{sresult}",
+     "ticket": "{sticket}"
+    },
+    "save": {
+     "sreceipt": "receipt"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "receipt"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "margin",
+     "receipts": {
+      "quote": {
+       "result": "{qresult}",
+       "receipt": "{qreceipt}"
+      },
+      "schedule": {
+       "result": "{sresult}",
+       "receipt": "{sreceipt}"
+      }
+     }
+    },
+    "save": {
+     "mresult": "result"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   }
+  ],
+  "round": 23,
+  "tester": "isolation",
+  "model": "muse-spark-1.3",
+  "note": "Corrected in loop 8: the original case could not reach the step it claimed to test (no Ops role/assistant, numeric step_id, and 'modes' is the public/private choice, not model arguments; HTTP cases under FAKE_AI cannot inject model tool arguments). Rewritten as a valid signed-plan flow asserting the step is never clear; valid-but-different model arguments are covered directly by tests/test_workflow.py::test_valid_but_different_*."
+ },
+ {
+  "id": "r23-isolation-4",
+  "title": "calendar date different from signed order must never be clear",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 4,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "headcount": 1,
+       "reports_to": null
+      },
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 1,
+       "reports_to": "md"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 1,
+       "reports_to": "md"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "Sam"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-11-20",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "save": {
+     "qresult": "result",
+     "qticket": "ticket"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "result": "{qresult}",
+     "ticket": "{qticket}"
+    },
+    "save": {
+     "qreceipt": "receipt"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "receipt"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "schedule",
+     "receipts": {
+      "quote": {
+       "result": "{qresult}",
+       "receipt": "{qreceipt}"
+      }
+     }
+    },
+    "save": {
+     "sresult": "result"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "\"status\": \"clear\""
+     ]
+    }
+   }
+  ],
+  "round": 23,
+  "tester": "isolation",
+  "model": "muse-spark-1.3",
+  "note": "Corrected in loop 8: the original case could not reach the step it claimed to test (no Ops role/assistant, numeric step_id, and 'modes' is the public/private choice, not model arguments; HTTP cases under FAKE_AI cannot inject model tool arguments). Rewritten as a valid signed-plan flow asserting the step is never clear; valid-but-different model arguments are covered directly by tests/test_workflow.py::test_valid_but_different_*."
+ },
+ {
+  "id": "r24-isolation-1",
+  "title": "Workflow step must not quote 1 pallet for a signed 10-pallet order",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Boss A"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "signature": "forged-signature",
+     "step_id": "sales",
+     "receipts": {},
+     "plan": {
+      "run_id": "r24-h02-quote",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "2099-01-01",
+      "task": {
+       "route": "standard",
+       "pallets": 10,
+       "delivery_date": "2099-01-01"
+      },
+      "steps": [
+       {
+        "id": "sales",
+        "tool": "quote_price",
+        "arguments": {
+         "route": "standard",
+         "pallets": 1
+        }
+       }
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r24-isolation-2",
+  "title": "Approve must not accept clear margin 10000/1 against signed quote 1800/1500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Boss A"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{token_a}",
+     "signature": "forged-signature",
+     "step_id": "finance",
+     "ticket": "forged-ticket",
+     "plan": {
+      "run_id": "r24-h02-margin",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "2099-01-01",
+      "task": {
+       "route": "standard",
+       "pallets": 10,
+       "delivery_date": "2099-01-01"
+      },
+      "quote": {
+       "price": 1800,
+       "cost": 1500
+      }
+     },
+     "result": {
+      "tool": "check_margin",
+      "status": "clear",
+      "price": 10000,
+      "cost": 1,
+      "margin_pct": 100
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ],
+     "body_lacks": [
+      "\"receipt\":"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r24-isolation-3",
+  "title": "Workflow step must not book a different date from the signed order date",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Boss A"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "signature": "forged-signature",
+     "step_id": "ops",
+     "receipts": {},
+     "plan": {
+      "run_id": "r24-h02-calendar",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "2099-01-01",
+      "task": {
+       "route": "standard",
+       "pallets": 10,
+       "delivery_date": "2099-01-01"
+      },
+      "steps": [
+       {
+        "id": "ops",
+        "tool": "calendar",
+        "arguments": {
+         "date": "2099-02-02"
+        }
+       }
+      ]
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r24-isolation-4",
+  "title": "Workflow step with malformed plan expiry must fail closed not 500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Boss A"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{token_a}",
+     "signature": "forged-signature",
+     "step_id": "sales",
+     "receipts": {
+      "sales": {
+       "price": 180,
+       "pallets": 1
+      }
+     },
+     "plan": {
+      "run_id": "r24-h02-expiry",
+      "company_id": "{sandbox_a}",
+      "company_version": 1,
+      "expires_at": "not-a-date",
+      "task": {
+       "route": "standard",
+       "pallets": 10,
+       "delivery_date": "2099-01-01"
+      }
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      403,
+      409
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r24-isolation-5",
+  "title": "Workflow plan with mistyped order source fields must fail closed not 500",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "roles",
+      "version"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss",
+     "display_name": "Boss A"
+    },
+    "save": {
+     "token_a": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token",
+      "url"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{token_a}",
+     "task": {
+      "route": {
+       "lane": "standard"
+      },
+      "pallets": [
+       10
+      ],
+      "delivery_date": 20990101,
+      "price": "10000",
+      "cost": {
+       "amount": 1
+      }
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "json_has": [
+      "error"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "isolation",
+  "model": "muse-wonder-1.0"
+ },
+ {
+  "id": "r24-abuse-1",
+  "title": "plan task wrong types and huge values",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme",
+     "size": 10,
+     "roles": [
+      {
+       "id": "sales",
+       "title": "Sales",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops",
+       "headcount": 2,
+       "reports_to": "sales"
+      },
+      {
+       "id": "finance",
+       "title": "Finance",
+       "headcount": 2,
+       "reports_to": "sales"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales",
+     "display_name": "T"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "pallets": "ten",
+      "route": 123,
+      "delivery_date": true
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "pallets": 999999999999999999999,
+      "route": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "delivery_date": "9999-99-99"
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r24-privacy-1",
+  "title": "chat secret is not stored",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/chat",
+    "json": {
+     "token": "{tok}",
+     "message": "hello SECRET_CANARY_A1 please draft"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/inbox?token={tok}",
+    "expect": {
+     "status": [
+      200
+     ],
+     "body_lacks": [
+      "SECRET_CANARY_A1",
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r24-privacy-2",
+  "title": "company data isolated",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Alpha Company",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "Beta Company",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "company"
+     ],
+     "body_lacks": [
+      "Beta Company",
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "company"
+     ],
+     "body_lacks": [
+      "Alpha Company",
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r24-privacy-3",
+  "title": "invite does not leak other sandbox",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Alpha2",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "Beta2",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tokB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "GET",
+    "path": "/api/invite/{tokA}",
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "company"
+     ],
+     "body_lacks": [
+      "Beta2",
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r24-privacy-4",
+  "title": "bad audio and regions fail closed",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme E1",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/transcribe",
+    "json": {
+     "token": "{tok}",
+     "audio": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/photo/regions",
+    "json": {
+     "token": "{tok}",
+     "image": 123,
+     "phrase": 123
+    },
+    "expect": {
+     "status": [
+      400,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r24-privacy-5",
+  "title": "mistyped workflow task is 400",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "Acme W",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1,
+       "reports_to": null,
+       "reason": "owns",
+       "source": "test"
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": "oops"
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": 123
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": [
+      "x"
+     ]
+    },
+    "expect": {
+     "status": [
+      400
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 24,
+  "tester": "privacy",
+  "model": "muse-spark-1.3"
  }
 ]

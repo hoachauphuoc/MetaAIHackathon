@@ -203,6 +203,33 @@ def test_bad_tool_arguments_are_retried_once_then_taken_from_the_package(monkeyp
     assert len([t for t in result["trace"] if t["tool"] == "quote_price"]) == 2
 
 
+def test_valid_but_different_quote_arguments_are_recomputed_and_flagged(monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Hanoi-Haiphong", "pallets": 1}))
+    result = run(plan_for(), "quote", {})["result"]
+    assert result["tool_result"]["price"] == 1800  # signed 10-pallet order, not the model's 1 pallet
+    assert result["status"] == "needs_human_check" and result["demo_mode"] is True
+    assert any("did not match the signed" in f["message"] for f in result["findings"])
+
+
+def test_valid_but_different_margin_arguments_are_recomputed_and_flagged(monkeypatch):
+    plan = plan_for()
+    receipts = approve_all(plan, 2)
+    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"price": 10000, "cost": 1}))
+    result = run(plan, "margin", receipts)["result"]
+    assert result["tool_result"]["margin_pct"] == 16.7  # signed quote 1800/1500, not 10000/1
+    assert result["status"] == "needs_human_check" and result["demo_mode"] is True
+
+
+def test_valid_but_different_calendar_date_is_recomputed_and_flagged(monkeypatch):
+    plan = plan_for()
+    receipts = approve_all(plan, 1)
+    monkeypatch.setattr(muse, "complete", FakeMuse(
+        tool_args={"title": "Deliver to Acme", "date": "2026-12-25"}))
+    result = run(plan, "schedule", receipts)["result"]
+    assert result["tool_result"]["date"] == "2026-11-20"
+    assert result["status"] == "needs_human_check" and result["demo_mode"] is True
+
+
 def test_muse_down_gives_labelled_demo_result_with_human_check(monkeypatch):
     monkeypatch.setattr(muse, "complete", lambda *a, **k: reply(demo_mode=True, demo_reason="TimeoutError"))
     result = run(plan_for(), "quote", {})["result"]

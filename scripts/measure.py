@@ -235,7 +235,7 @@ def set10():
 
     def chosen(i):
         values = clean_package(i)
-        out, from_package = workflow.call_tool(step, values, asker(True), lambda: None, [])
+        out, from_package, _mismatched = workflow.call_tool(step, values, asker(True), lambda: None, [])
         return not from_package and out["price"] == values["price"] and out["cost"] == values["cost"]
     with concurrent.futures.ThreadPoolExecutor(5) as pool:
         picked = list(pool.map(chosen, range(10)))

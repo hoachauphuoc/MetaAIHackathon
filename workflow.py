@@ -128,10 +128,19 @@ def tool_arguments(step, values):
 ARGS_FROM_ORDER = "the model did not call the tool, so code took its arguments from the order"
 
 
+def _args_match_source(step, chosen, values):
+    # Valid types are not enough: the values must be the signed order's and the approved quote's.
+    try:
+        args = json.loads(chosen) if isinstance(chosen, str) else dict(chosen)
+        return _as_browser_sends(args) == _as_browser_sends(tool_arguments(step, values))
+    except Exception:
+        return False
+
+
 def call_tool(step, values, ask, blocked, trace):
     """Let the model pick the arguments through function calling; code runs the tool. If the
     model gives none that work, the arguments come from the package and the step is flagged."""
-    name, error = step["tool"], None
+    name, error, mismatched = step["tool"], None, False
     for _ in range(2):  # one retry, with the tool's error in the prompt
         if blocked():
             break
@@ -155,10 +164,13 @@ def call_tool(step, values, ask, blocked, trace):
                 raise ValueError("wrong tool")
             # The arguments the model picked go on the trace, so the page can show them before anyone approves.
             trace[-1]["arguments"] = chosen["arguments"]
-            return tools.run(name, chosen["arguments"]), False
+            if not _args_match_source(step, chosen["arguments"], values):
+                mismatched = True
+                raise ValueError("arguments do not match the signed order")
+            return tools.run(name, chosen["arguments"]), False, False
         except ValueError as e:
             error = str(e)
-    return tools.run(name, tool_arguments(step, values)), True
+    return tools.run(name, tool_arguments(step, values)), True, mismatched
 
 
 def soft_check(step, values, rules_status, ask, blocked, trace):
@@ -232,12 +244,16 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None, bans=(
             return out
         return muse.complete(muse.SPARK, messages, **kw)
 
-    tool_result, args_from_package = call_tool(step, values, ask, blocked, trace)
+    tool_result, args_from_package, mismatched = call_tool(step, values, ask, blocked, trace)
     if step["tool"] == "quote_price":
         values.update(price=tool_result["price"], cost=tool_result["cost"])
     if step["tool"] == "check_margin":
         values["margin_pct"] = tool_result["margin_pct"]
     floor, findings = rules.check_package(values, params, today)
+    if mismatched:
+        findings.append({"status": "needs_human_check", "source": "rules", "message":
+                         "Tool arguments did not match the signed order/quote. "
+                         "Recomputed from signed source. A person must check."})
     verdict, why_not = soft_check(step, values, floor, ask, blocked, trace)
     if verdict is None:
         label = {"Private mode unavailable": "Private mode unavailable. ",
@@ -255,9 +271,11 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None, bans=(
 
     result = {"step_id": step["id"], "role_id": step["role_id"], "title": step["title"],
               "tool": step["tool"], "tool_result": tool_result,
-              "status": rules.combine_status(floor, model_status), "findings": findings,
+              "status": rules.combine_status(rules.combine_status(floor, model_status),
+                                             "needs_human_check" if mismatched else "clear"),
+              "findings": findings,
               "summary": summary, "private": private,
-              "demo_mode": verdict is None or args_from_package,
+              "demo_mode": verdict is None or args_from_package or mismatched,
               "company_id": plan.get("company_id", ""), "company_version": plan.get("company_version", 0),
               "demo_reason": why_not or (ARGS_FROM_ORDER if args_from_package else None),
               "trace": trace}
