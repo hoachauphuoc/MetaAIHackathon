@@ -93,7 +93,7 @@ rules alone pass every one of them, so the catch below is the model layer's, not
 | Model check did not finish | 0 of 20 |
 | False alarms on the consistent packages (model layer, and final gate) | 1 of 10 |
 
-One run, small and synthetic, Spark only; the Glimmer leg (`set11p`) has not been run. A person
+One run, small and synthetic, Spark only; the Glimmer leg is a separate run, set 11p below. A person
 still decides every handoff: the model layer raises a flag, it never clears a package the rules
 blocked.
 

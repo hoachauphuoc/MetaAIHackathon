@@ -305,6 +305,9 @@ time at the company:
 
 ## What each role stops doing by hand
 
+This is the design intent: which hand steps the app takes over. The time it saves is measured only where a stopwatch
+ran (the "Timed runs" tile and the setup time in docs/MEASURED.md); nothing else here has a saving behind it.
+
 - **Sales** no longer retypes a quote: the form is filled from the order, and code computes the price and margin.
 - **Operations** no longer copies an approved package into a sheet: the approved export and the calendar file are built by code from the signed steps.
 - **Finance** no longer re-checks the margin with a calculator: code computes it, and the model only writes the note.
