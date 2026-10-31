@@ -52,6 +52,11 @@ def create_app(db_path=None):
         db.require_sandbox(sandbox_id)
         return sandbox_id
 
+    def body_json():
+        """The JSON body as an object; a string, number or list body counts as no body, never as a crash."""
+        data = request.get_json(silent=True)
+        return data if isinstance(data, dict) else {}
+
     @app.after_request
     def security_headers(response):
         response.headers["Content-Security-Policy"] = (
@@ -88,7 +93,7 @@ def create_app(db_path=None):
     def muse_switch():
         """Lets a visitor see the labelled demo mode on demand (golden path step 9)."""
         sandbox_id = current_sandbox()
-        db.set_muse_off(sandbox_id, bool((request.get_json(silent=True) or {}).get("off")))
+        db.set_muse_off(sandbox_id, bool(body_json().get("off")))
         return jsonify(ok=True)
 
     @app.get("/api/survey/demo")
@@ -101,7 +106,7 @@ def create_app(db_path=None):
     @app.post("/api/chart")
     def make_chart():
         sandbox_id = current_sandbox()
-        answers = (request.get_json(silent=True) or {}).get("answers") or {}
+        answers = body_json().get("answers") or {}
         if request.args.get("stream") == "1":
             def events():
                 try:
@@ -120,7 +125,7 @@ def create_app(db_path=None):
     @app.post("/api/chart/validate")
     def validate_chart():
         current_sandbox()
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         errors = rules.validate_chart(body.get("roles") or [], body.get("size") or 0)
         return jsonify(ok=not errors, errors=errors)
 
@@ -128,7 +133,7 @@ def create_app(db_path=None):
     def accept_chart():
         """Accept locks this version of the chart; a changed chart must be accepted again."""
         sandbox_id = current_sandbox()
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         roles, size = body.get("roles") or [], body.get("size") or 0
         errors = rules.validate_chart(roles, size)
         if errors:
@@ -159,7 +164,9 @@ def create_app(db_path=None):
         """A proposal only: nothing is stored until the owner accepts it."""
         sandbox_id = current_sandbox()
         company = accepted_company(sandbox_id)
-        answers = (request.get_json(silent=True) or {}).get("answers") or {}
+        answers = body_json().get("answers") or {}
+        if not isinstance(answers, dict):
+            return jsonify(error="bad_answers", message="Answers must be an object."), 400
         return jsonify(handoff_schema.generate(answers, company["roles"],
                                                lambda: db.spend_model_call(sandbox_id)))
 
@@ -171,7 +178,7 @@ def create_app(db_path=None):
     def private_prewarm():
         # Only someone already in a sandbox (an invite holder, or an owner who started a demo) can wake the paid GPU;
         # the request carries no order data.
-        token = (request.get_json(silent=True) or {}).get("token")
+        token = body_json().get("token")
         db.person_by_token(str(token)) if token else current_sandbox()
         return jsonify({"started": muse.prewarm(), **muse.private_status()})
 
@@ -186,7 +193,7 @@ def create_app(db_path=None):
         """The owner accepts a form; the server validates again whatever the browser sends."""
         sandbox_id = current_sandbox()
         company = accepted_company(sandbox_id)
-        schema = (request.get_json(silent=True) or {}).get("schema")
+        schema = body_json().get("schema")
         errors = rules.validate_handoff_schema(schema)
         if errors:
             return jsonify(error="invalid_form", errors=errors), 400
@@ -215,8 +222,11 @@ def create_app(db_path=None):
         """A proposal from a photo of the paper form; stored only through the accept route."""
         sandbox_id = current_sandbox()
         accepted_company(sandbox_id)
-        body = request.get_json(silent=True) or {}
-        industry = handoff_schema.clean_text((body.get("answers") or {}).get("industry"), 40).lower()
+        body = body_json()
+        answers = body.get("answers") or {}
+        if not isinstance(answers, dict):
+            return jsonify(error="bad_answers", message="Answers must be an object."), 400
+        industry = handoff_schema.clean_text(answers.get("industry"), 40).lower()
         return jsonify(vision.form_from_image(body.get("image"), industry,
                                               lambda: db.spend_model_call(sandbox_id)))
 
@@ -228,7 +238,7 @@ def create_app(db_path=None):
     def make_assistant():
         sandbox_id = current_sandbox()
         company = accepted_company(sandbox_id)
-        role_id = (request.get_json(silent=True) or {}).get("role_id")
+        role_id = body_json().get("role_id")
         role = next((r for r in company["roles"] if r["id"] == role_id), None)
         if role is None:
             raise LookupError("No such role.")
@@ -258,7 +268,7 @@ def create_app(db_path=None):
 
     @app.post("/api/people/<int:person_id>/offboard")
     def offboard(person_id):
-        if not db.offboard(current_sandbox(), person_id):
+        if person_id >= 2**63 or not db.offboard(current_sandbox(), person_id):  # SQLite integers stop at 2**63 - 1
             raise LookupError("No such person.")
         return jsonify(ok=True)
 
@@ -266,7 +276,7 @@ def create_app(db_path=None):
     def make_invite():
         sandbox_id = current_sandbox()
         company = accepted_company(sandbox_id)
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         role = next((r for r in company["roles"] if r["id"] == body.get("role_id")), None)
         if role is None:
             raise LookupError("No such role.")
@@ -289,7 +299,7 @@ def create_app(db_path=None):
 
     @app.post("/api/chat")
     def chat_route():
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         person = db.person_by_token(str(body.get("token") or ""))
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
@@ -333,7 +343,7 @@ def create_app(db_path=None):
                         headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     def workflow_body():
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         return body, db.person_by_token(str(body.get("token") or ""))
 
     @app.post("/api/workflow/plan")
@@ -341,9 +351,12 @@ def create_app(db_path=None):
         body, person = workflow_body()
         company = db.get_company(person["sandbox_id"]) or {}
         kits = db.get_assistants(person["sandbox_id"])
+        task = body.get("task")
+        if not isinstance(task, dict):
+            return jsonify(error="bad_task", message="Task must be an object."), 400
         try:
-            plan, errors = workflow.make_plan(body.get("task") or {}, company.get("roles", []), kits)
-        except ValueError as e:
+            plan, errors = workflow.make_plan(task, company.get("roles", []), kits)
+        except (ValueError, TypeError, AttributeError) as e:
             return jsonify(error="bad_task", message=str(e)), 400
         if errors:
             return jsonify(error="invalid_plan", errors=errors), 422
@@ -353,13 +366,17 @@ def create_app(db_path=None):
     @app.post("/api/workflow/step")
     def workflow_step():
         body, person = workflow_body()
-        plan = body.get("plan") or {}
+        plan = body.get("plan")
+        if not isinstance(plan, dict) or not isinstance(body.get("receipts", {}), dict):
+            return jsonify(error="bad_plan", message="Plan must be an object."), 400
         try:
             workflow.verify_plan(plan, body.get("signature"))
             out = workflow.run_step(
                 plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
                 effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]),
                 modes=body.get("modes") if isinstance(body.get("modes"), dict) else None)
+        except (TypeError, AttributeError) as e:
+            return jsonify(error="bad_step", message=str(e)), 400
         except PermissionError as e:
             return jsonify(error="not_approved", message=str(e)), 409
         except (StopIteration, KeyError):
@@ -369,10 +386,14 @@ def create_app(db_path=None):
     @app.post("/api/workflow/approve")
     def workflow_approve():
         body, _ = workflow_body()
+        if not isinstance(body.get("plan"), dict) or not isinstance(body.get("result"), dict):
+            return jsonify(error="bad_plan", message="Plan and result must be objects."), 400
         try:
-            workflow.verify_plan(body.get("plan") or {}, body.get("signature"))
+            workflow.verify_plan(body["plan"], body.get("signature"))
             receipt = workflow.approve(body["plan"], body.get("step_id"), body.get("result"),
                                        body.get("ticket"))
+        except (TypeError, AttributeError, KeyError) as e:
+            return jsonify(error="bad_plan", message=str(e)), 400
         except PermissionError as e:
             return jsonify(error="forged", message=str(e)), 403
         except ValueError as e:
@@ -382,7 +403,7 @@ def create_app(db_path=None):
     @app.post("/api/onboarding")
     def onboarding_plan():
         """The plan goes back to the person's browser only; the server keeps no copy and no progress."""
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         person = db.person_by_token(str(body.get("token") or ""))
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
@@ -394,7 +415,7 @@ def create_app(db_path=None):
 
     @app.post("/api/compare")
     def compare_route():
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         person = db.person_by_token(str(body.get("token") or ""))
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         if kit is None:
@@ -404,7 +425,7 @@ def create_app(db_path=None):
                                     personal_schema(db.get_company(person["sandbox_id"]) or {}, body.get("token"))))
 
     def me_and_context():
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         token = str(body.get("token") or request.args.get("token") or "")
         me = {**db.person_by_token(token), "token": token}
         company = db.get_company(me["sandbox_id"]) or {"roles": []}
@@ -485,7 +506,7 @@ def create_app(db_path=None):
         index = next((i for i, u in enumerate(levels) if u["id"] == unit_id), None)
         if index is None:
             return jsonify(error="no_such_unit", message="No such unit in this company."), 404
-        body = request.get_json(silent=True) or {}
+        body = body_json()
         values = {rule: body.get(rule) for rule in rules.LEVEL_RULES}
         values[rules.BANNED] = body.get(rules.BANNED, levels[index].get(rules.BANNED, []))
         errors = rules.level_value_errors(values)
@@ -511,6 +532,8 @@ def create_app(db_path=None):
     def send_handoff():
         body, me, company = me_and_context()
         blocked = lambda: db.spend_model_call(me["sandbox_id"])  # noqa: E731
+        if not isinstance(body.get("values", {}), dict):
+            return jsonify(error="bad_values", message="Values must be an object."), 400
         package = handoffs.send(
             me["sandbox_id"], {**me, "token": me["token"]}, body.get("to_role"),
             body.get("values") or {}, body.get("due"), db, db.get_assistants(me["sandbox_id"]),
@@ -531,6 +554,8 @@ def create_app(db_path=None):
     @app.post("/api/handover")
     def send_handover():
         body, me, company = me_and_context()
+        if not isinstance(body.get("values", {}), dict):
+            return jsonify(error="bad_values", message="Values must be an object."), 400
         package = handoffs.send_handover(me["sandbox_id"], me, body.get("values") or {}, db,
                                          company["roles"], effective_params(company), datetime.date.today())
         return jsonify(view_of(package, me, company)), 201
@@ -577,6 +602,8 @@ def create_app(db_path=None):
         body, me, company = me_and_context()
         today = datetime.date.today()
         schema = effective_schema(company)
+        if not isinstance(body.get("values", {}), dict):
+            return jsonify(error="bad_values", message="Values must be an object."), 400
         status, findings, _ = handoffs.run_check(
             handoffs.clean_values(body.get("values") or {}, schema), effective_params(company), today,
             ask, lambda: db.spend_model_call(me["sandbox_id"]), schema)
@@ -632,6 +659,8 @@ def create_app(db_path=None):
     def resend_package(package_id):
         body, me, company = me_and_context()
         package = package_for(me, package_id)
+        if not isinstance(body.get("values", {}), dict):
+            return jsonify(error="bad_values", message="Values must be an object."), 400
         handoffs.resend(package, me, body.get("values") or {}, body.get("due"), effective_params(company),
                         datetime.date.today(), ask, lambda: db.spend_model_call(me["sandbox_id"]),
                         company["roles"])

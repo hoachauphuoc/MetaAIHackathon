@@ -32,6 +32,8 @@ SYSTEM = (
 
 def clean_answers(answers):
     """Invisible characters could smuggle instructions; headcount must be a real number."""
+    if not isinstance(answers, dict):
+        raise ValueError("answers must be an object of question and answer")
     text = {k: "".join(c for c in str(v)[:500] if c.isprintable() or c == "\n").strip()
             for k, v in answers.items()}
     try:

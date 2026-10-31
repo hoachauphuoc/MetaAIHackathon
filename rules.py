@@ -17,6 +17,8 @@ def validate_chart(roles, company_size, people_by_role=None):
     def err(role_id, field, message):
         errors.append({"role_id": role_id, "field": field, "message": message})
 
+    if not isinstance(roles, list) or not all(isinstance(r, dict) for r in roles):
+        return [{"role_id": None, "field": "roles", "message": "Roles must be a list of roles."}]
     ids = [r.get("id") for r in roles]
     known = set(ids)
     seen = set()
@@ -50,7 +52,9 @@ def validate_chart(roles, company_size, people_by_role=None):
 
     total = sum(r["headcount"] for r in roles
                 if isinstance(r.get("headcount"), int) and not isinstance(r["headcount"], bool))
-    if total > company_size:
+    if isinstance(company_size, bool) or not isinstance(company_size, int) or company_size < 1:
+        err(None, "size", "The company size must be a whole number, at least 1.")
+    elif total > company_size:
         err(None, "headcount", f"The chart needs {total} people but the company has {company_size}.")
 
     for rid, held in (people_by_role or {}).items():
