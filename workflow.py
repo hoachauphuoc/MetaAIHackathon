@@ -178,8 +178,12 @@ def numbers(text):
     return [float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)]
 
 
-def run_step(plan, step_id, receipts, today, params, blocked):
-    """Run one step. `receipts` = {step_id: {"result", "receipt"}} for every earlier step."""
+def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
+    """Run one step. `receipts` = {step_id: {"result", "receipt"}} for every earlier step.
+    `modes` = {step_id: "public" | "private"} is the person's choice for this run. A step left out keeps its default.
+    A step the person sets to Private while the endpoint is not warm sends nothing anywhere: Private never falls back
+    to Standard, and a cold wake-up is only started by the default Finance step or the prewarm button."""
+    chosen = (modes or {}).get(step_id)
     steps = plan["steps"]
     index = next(i for i, s in enumerate(steps) if s["id"] == step_id)
     results = {}
@@ -191,10 +195,14 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     step, trace = steps[index], []
     values = package_values(plan["task"], results)
 
+    private = {"public": False, "private": True}.get(chosen, step["private"])
+    asleep = chosen == "private" and not muse.private_warm()
     starting = []
 
     def ask(messages, **kw):
-        if step["private"]:
+        if private:
+            if asleep:
+                return muse.demo_result("private", muse.PRIVATE_COLD)
             if starting:  # the container is cold: a second wait would run past the request limit
                 return muse.demo_result("private", muse.PRIVATE_STARTING)
             out = muse.complete(None, messages, private=True, **kw)
@@ -212,7 +220,8 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     verdict, why_not = soft_check(step, values, floor, ask, blocked, trace)
     if verdict is None:
         label = {"Private mode unavailable": "Private mode unavailable. ",
-                 muse.PRIVATE_STARTING: "Private mode is starting, which takes about 3 minutes: press Run this step again. "
+                 muse.PRIVATE_STARTING: "Private mode is starting, which takes about 3 minutes: press Run this step again. ",
+                 muse.PRIVATE_COLD: "Private mode is asleep, so nothing was sent. Wake it with the button, or choose Public for this step. "
                  }.get(why_not, "")
         findings.append({"status": "needs_human_check", "source": "model", "message":
                          f"{label}The assistant's check did not finish. A person must check "
@@ -226,7 +235,7 @@ def run_step(plan, step_id, receipts, today, params, blocked):
     result = {"step_id": step["id"], "role_id": step["role_id"], "title": step["title"],
               "tool": step["tool"], "tool_result": tool_result,
               "status": rules.combine_status(floor, model_status), "findings": findings,
-              "summary": summary, "private": step["private"],
+              "summary": summary, "private": private,
               "demo_mode": verdict is None or args_from_package,
               "demo_reason": why_not or (ARGS_FROM_ORDER if args_from_package else None),
               "trace": trace}

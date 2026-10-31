@@ -42,6 +42,7 @@ def check_model(model, private=False):
 
 
 PRIVATE_STARTING = "Private mode starting"
+PRIVATE_COLD = "Private mode asleep"  # a person chose Private for a step while the endpoint is not warm: nothing was sent
 _private_answered_at = None  # when the open-weights endpoint last answered; one number, nothing about who asked"
 # A cold container needs about 3 minutes, so waiting longer cannot help: answer "starting" well inside the
 # 120 s the host allows a request, or the person sees a 504 and no label.
@@ -72,6 +73,11 @@ def private_status():
 _prewarm_at = None
 PREWARM_EVERY_S = 120  # one wake request per server at most this often, whoever opens a page
 WARM_S = 600  # the endpoint idles out 10 minutes after its last answer
+
+
+def private_warm():
+    """True when the open-weights endpoint answered within WARM_S. Nothing is probed, so nothing wakes or bills."""
+    return private_config() is not None and bool(_private_answered_at) and time.time() - _private_answered_at < WARM_S
 
 
 def prewarm():

@@ -27,7 +27,17 @@ function startAgain(message) {
   sandbox = null;
   state = { answers: null, chart: null, accepted: false };
   clear(app, el('section', {},
-    el('h2', {}, 'Welcome'),
+    el('div', { class: 'hero' },
+      el('p', { class: 'eyebrow' }, 'Meta Global AI Developer Hackathon · Indie · Build for Your World'),
+      el('h2', {}, 'A staff of assistants for a team too small to hire.'),
+      el('p', { class: 'lede' }, 'Answer ten questions. Code checks the org. Each role gets its own assistant, ' +
+        'and every handoff waits for a person.'),
+      el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
+        el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
+        el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo')),
+      el('ul', { class: 'trust-row', 'aria-label': 'How it is built' },
+        ['Muse Wonder drafts the org', 'Muse Spark writes the briefs', 'Glimmer Private option', 'No silent fallback']
+          .map((t) => el('li', {}, badge(t, 'info'))))),
     message ? el('p', { class: 'errors', role: 'alert' }, message) : null,
     el('p', { class: 'why' }, el('strong', {}, 'The problem: '), 'staff who fear AI the company can watch paste ' +
       'client work into outside chatbots, and a company can neither ban that nor force its own tool. Here the company ' +
@@ -39,13 +49,25 @@ function startAgain(message) {
       el('li', {}, 'Muse Wonder designs your org chart from the ten answers.'),
       el('li', {}, 'Code checks it against the rules before you can accept it.'),
       el('li', {}, 'Muse Spark writes one assistant per role; work moves between roles only when a person approves.')),
-    el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
-      el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
-      el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo')),
     el('p', { class: 'muted' }, 'The clinic demo runs the same engine in a second industry: its own "Treatment plan quote" ' +
       'form, checked by the same code rules (fee not below cost, margin floor), passed on only when a person approves.'),
     el('p', { class: 'muted', id: 'sandbox-note' }, SANDBOX_NOTE)));
-  timeTile().then((tile) => { if (tile && app.querySelector('h2')?.textContent === 'Welcome') app.append(tile); });
+  recordedDemo().then((demo) => { const hero = app.querySelector('.hero'); if (demo && hero) hero.after(demo); });
+  timeTile().then((tile) => { if (tile && app.querySelector('.hero')) app.append(tile); });
+}
+
+// The recording is a file the owner adds after filming with the Private endpoint warm. Until it exists the page shows
+// nothing, never a broken player. Its date is the file's own Last-Modified, so the label cannot drift from the file.
+const DEMO_VIDEO = '/static/video/welcome.mp4';
+async function recordedDemo() {
+  const head = await fetch(DEMO_VIDEO, { method: 'HEAD' }).catch(() => null);
+  if (!head || !head.ok || !(head.headers.get('Content-Type') || '').startsWith('video/')) return null;
+  const when = new Date(head.headers.get('Last-Modified') || Date.now()).toISOString().slice(0, 10);
+  return el('section', { class: 'recording' }, el('h2', {}, 'Watch the recorded demo'),
+    el('video', { src: DEMO_VIDEO, controls: true, preload: 'none', playsinline: true,
+      'aria-label': 'Recorded demo of the order workflow, with captions burned in' }),
+    el('p', { class: 'muted' }, `A recording from ${when}, filmed while the Private endpoint was warm. A live Private step ` +
+      'that starts cold can take a few minutes, and the live app is the one to trust.'));
 }
 
 async function tryDemo(industry) {
@@ -74,6 +96,17 @@ function showSurvey() {
     inputs[key] = el('input', { id: key, value: state.answers[key] ?? '' });
     form.append(el('label', { for: key }, label), inputs[key]);
   }
+  // Counts what is really typed: the ten answers are the whole input, so the bar is the share filled in.
+  const filled = () => FIELDS.filter(([key]) => inputs[key].value.trim()).length;
+  const meter = el('div', { class: 'meter', role: 'status' }, el('span', {}), el('div', { class: 'bar' }, el('i', {})));
+  const drawMeter = () => {
+    const n = filled();
+    meter.firstChild.textContent = `Company answers: ${n} of ${FIELDS.length} filled in`;
+    meter.querySelector('i').style.width = `${(100 * n) / FIELDS.length}%`;
+  };
+  form.insertBefore(meter, form.children[1]);
+  Object.values(inputs).forEach((i) => i.addEventListener('input', drawMeter));
+  drawMeter();
   const status = el('p', { class: 'progress', role: 'status' });
   // Made once by Muse Image when the app was built and served as a file: an image call during the wait would only
   // add to the wait. The caption says it is not the company's chart; the step line above it is the real progress.

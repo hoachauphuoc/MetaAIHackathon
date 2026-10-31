@@ -3,7 +3,7 @@
 # and three secrets: meta-api-key (the Meta key), workflow-secret (any long random string) and
 # private-api-key (the bearer token of the Modal endpoint, see scripts/private_modal.py).
 param([Parameter(Mandatory)][string]$Project, [string]$Region = "us-central1", [string]$Service = "role-assistants",
-       [string]$PrivateUrl = "https://hoachauphuoc--muse-glimmer-private-serve.us-east.modal.run/v1")
+       [string]$PrivateUrl = "https://hoachauphuoc--muse-glimmer-private-glimmer-serve.us-east.modal.run/v1")
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 # min = max = 1: the demo database lives in memory, so every request must reach the same instance.

@@ -87,3 +87,16 @@ ol.how li { margin: 4px 0; }
 
 /* A drafted email: wrap long lines so a phone never scrolls sideways. */
 pre.reminder { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Landing hero and the survey meter: one promise line, then the proof. */
+.hero { background: var(--hero); color: var(--hero-ink); border-radius: var(--radius); padding: var(--space-3); margin: 0 0 var(--space-2); }
+.hero h2 { font-size: clamp(26px, 6vw, 36px); margin: 4px 0 8px; color: inherit; }
+.eyebrow { margin: 0; font-size: var(--step--1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+.lede { font-size: var(--step-1); margin: 0 0 var(--space-2); }
+.trust-row { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.meter { margin: 0 0 var(--space-2); }
+.meter span { font-weight: 600; }
+.bar { height: 10px; margin-top: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: linear-gradient(120deg, var(--accent), var(--accent-2)); transition: width .2s; }
+.hero .trust-row { margin-top: var(--space-2); }
+.recording video { display: block; width: 100%; max-width: 720px; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius-sm); }

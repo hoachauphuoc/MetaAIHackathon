@@ -233,6 +233,15 @@ function workflowPanel(routes) {
       value: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10) }),
     notes: el('textarea', { id: 'notes' }, ''),
   };
+  // Finance defaults to Private (open-weights, Standard mode). Only a step the person changes is sent as an override:
+  // a step set to Private while the endpoint is asleep sends nothing, and the card says so.
+  const MODE_DEFAULTS = { quote: 'public', schedule: 'public', margin: 'private' };
+  const modePick = Object.fromEntries(Object.entries({ quote: 'Sales: quote', schedule: 'Operations: schedule',
+    margin: 'Finance: margin check' }).map(([id, label]) => [id, el('select', { id: `mode-${id}`, 'aria-label': `Model for ${label}` },
+    el('option', { value: 'public' }, 'Public (Meta API)'), el('option', { value: 'private' }, 'Private (open-weights)'))]));
+  Object.entries(modePick).forEach(([id, sel]) => { sel.value = MODE_DEFAULTS[id]; });
+  const modes = () => Object.fromEntries(Object.entries(modePick).filter(([id, sel]) => sel.value !== MODE_DEFAULTS[id])
+    .map(([id, sel]) => [id, sel.value]));
   const out = el('div');
   const maskBox = el('div');
   const start = el('button', { class: 'primary', onclick: async () => {
@@ -245,7 +254,7 @@ function workflowPanel(routes) {
       clear(out, el('div', { class: 'errors', role: 'alert' }, res.data.message || res.data.errors?.join(' ')));
       return;
     }
-    runner(res.data, out);
+    runner(res.data, out, modes());
   } }, 'Plan this order');
   const ready = el('p', { class: 'muted', role: 'status' });
   const refresh = () => privateReadiness().then((line) => {
@@ -262,6 +271,8 @@ function workflowPanel(routes) {
   el('label', { for: 'pallets' }, 'Pallets'), f.pallets,
   el('label', { for: 'date' }, 'Delivery date'), f.delivery_date,
   el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
+  el('p', { class: 'muted' }, 'Model for each step: Public sends it to the Meta API; Private runs on the open-weights endpoint and only when it is awake.'),
+  ...Object.values(modePick),
   maskBox, el('div', { class: 'row' }, start), out);
   return box;
 }
@@ -269,11 +280,12 @@ function workflowPanel(routes) {
 const WAKE_TRIES = 5;  // about 5 x (35 s wait + 25 s pause): longer than the 166 s cold start measured
 const WAKE_WAIT_S = 25;
 
-function runner({ plan, signature, roles }, out) {
+function runner({ plan, signature, roles }, out, modes = {}) {
   const receipts = {};
+  const isPrivate = (step) => (modes[step.id] ? modes[step.id] === 'private' : step.private);  // the signed plan is not edited
   const items = plan.steps.map((step) => ({ step, node: el('li', { class: 'step waiting' },
     el('strong', {}, `${step.title} `), el('span', { class: 'muted' }, roles[step.role_id] || step.role_id,
-      step.private ? ' (Private mode)' : ''))}));
+      isPrivate(step) ? ' (Private mode)' : ''))}));
   clear(out, el('ol', { class: 'steps' }, items.map((i) => i.node)));
   runStep(0);
 
@@ -282,9 +294,9 @@ function runner({ plan, signature, roles }, out) {
     const { step, node } = items[index];
     node.className = 'step current';
     const progress = el('p', { class: 'progress', role: 'status' },
-      step.private ? 'Working in Private mode... (up to 40 seconds)' : 'Working... (about 10 seconds)');
+      isPrivate(step) ? 'Working in Private mode... (up to 40 seconds)' : 'Working... (about 10 seconds)');
     node.append(progress);
-    const base = { token, plan, signature, step_id: step.id };
+    const base = { token, plan, signature, step_id: step.id, modes };
     const res = await api('/api/workflow/step', { method: 'POST', body: { ...base, receipts } });
     progress.remove();
     if (!res.ok) { node.append(el('p', { class: 'errors', role: 'alert' }, res.data.message)); return; }

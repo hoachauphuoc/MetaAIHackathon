@@ -358,7 +358,8 @@ def create_app(db_path=None):
             workflow.verify_plan(plan, body.get("signature"))
             out = workflow.run_step(
                 plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
-                effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]))
+                effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]),
+                modes=body.get("modes") if isinstance(body.get("modes"), dict) else None)
         except PermissionError as e:
             return jsonify(error="not_approved", message=str(e)), 409
         except (StopIteration, KeyError):

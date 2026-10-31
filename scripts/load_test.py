@@ -17,7 +17,7 @@ PROVIDERS = {
     "meta": ("https://api.meta.ai/v1", "muse-spark-1.3", lambda: os.environ.get("META_API_KEY_FILE")),
     "baseten": ("https://inference.baseten.co/v1", "meta-models/muse-spark-open-1026",
                 lambda: os.environ.get("BASETEN_API_KEY_FILE", "C:/Users/phuochoa/.bjt/Baseten.txt")),
-    "glimmer": ("https://hoachauphuoc--muse-glimmer-private-serve.us-east.modal.run/v1", "meta-models/Muse-Glimmer-30B",
+    "glimmer": ("https://hoachauphuoc--muse-glimmer-private-glimmer-serve.us-east.modal.run/v1", "meta-models/Muse-Glimmer-30B",
                 lambda: os.environ.get("PRIVATE_API_KEY_FILE")),
 }
 PROMPT = "Reply with the single word: ok"

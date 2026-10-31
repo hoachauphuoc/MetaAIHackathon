@@ -353,3 +353,43 @@ def test_the_tool_arguments_the_model_chose_are_on_the_trace_for_the_page_to_sho
     assert call and "arguments" in call[0] and call[0]["arguments"]
     js = (Path(__file__).parent.parent / "static" / "join.js").read_text(encoding="utf-8")
     assert "Chosen by" in js and "Code ran it." in js
+
+
+def test_private_chosen_while_asleep_sends_nothing_anywhere(monkeypatch):
+    calls = []
+    monkeypatch.setattr(muse, "complete", lambda model, messages, private=False, **kw: calls.append(private) or reply())
+    monkeypatch.setattr(muse, "private_warm", lambda: False)
+    plan = plan_for()
+    out = run(plan, "quote", {}, modes={"quote": "private"})["result"]
+    assert calls == [] and out["demo_mode"] is True and out["private"] is True
+    assert any("asleep" in f["message"] and "nothing was sent" in f["message"] for f in out["findings"])
+
+
+def test_private_chosen_while_warm_runs_on_the_private_endpoint(monkeypatch):
+    fake = FakeMuse()
+    monkeypatch.setattr(muse, "complete", fake)
+    monkeypatch.setattr(muse, "private_warm", lambda: True)
+    plan = plan_for()
+    out = run(plan, "quote", {}, modes={"quote": "private"})["result"]
+    assert out["private"] is True and fake.private_calls == 2
+
+
+def test_public_chosen_for_finance_never_touches_the_private_endpoint(monkeypatch):
+    fake = FakeMuse()
+    monkeypatch.setattr(muse, "complete", fake)
+    plan = plan_for()
+    out = run(plan, "margin", approve_all(plan, 2), modes={"margin": "public"})["result"]
+    assert out["private"] is False and fake.private_calls == 0
+
+
+def test_private_warm_needs_a_recent_answer(monkeypatch):
+    monkeypatch.setenv("PRIVATE_PROVIDER", "baseten")
+    monkeypatch.setenv("PRIVATE_BASE_URL", "https://x.invalid")
+    monkeypatch.setenv("PRIVATE_MODEL", "m")
+    monkeypatch.setenv("PRIVATE_API_KEY_FILE", "k")
+    monkeypatch.setattr(muse, "_private_answered_at", None)
+    assert muse.private_warm() is False
+    monkeypatch.setattr(muse, "_private_answered_at", muse.time.time() - 5)
+    assert muse.private_warm() is True
+    monkeypatch.setattr(muse, "_private_answered_at", muse.time.time() - muse.WARM_S - 1)
+    assert muse.private_warm() is False
