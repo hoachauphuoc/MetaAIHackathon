@@ -364,7 +364,7 @@ def create_app(db_path=None):
         if not isinstance(task, dict):
             return jsonify(error="bad_task", message="Task must be an object."), 400
         try:
-            plan, errors = workflow.make_plan(task, company.get("roles", []), kits)
+            plan, errors = workflow.make_plan(task, company.get("roles", []), kits, person["sandbox_id"], company.get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
         except (ValueError, TypeError, AttributeError) as e:
             return jsonify(error="bad_task", message=str(e)), 400
         if errors:
@@ -379,7 +379,7 @@ def create_app(db_path=None):
         if not isinstance(plan, dict) or not isinstance(body.get("receipts", {}), dict):
             return jsonify(error="bad_plan", message="Plan must be an object."), 400
         try:
-            workflow.verify_plan(plan, body.get("signature"))
+            workflow.verify_plan(plan, body.get("signature"), person["sandbox_id"], (db.get_company(person["sandbox_id"]) or {}).get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
             out = workflow.run_step(
                 plan, body.get("step_id"), body.get("receipts") or {}, datetime.date.today(),
                 effective_params(db.get_company(person["sandbox_id"]) or {}), lambda: db.spend_model_call(person["sandbox_id"]),
@@ -394,11 +394,11 @@ def create_app(db_path=None):
 
     @app.post("/api/workflow/approve")
     def workflow_approve():
-        body, _ = workflow_body()
+        body, person = workflow_body()
         if not isinstance(body.get("plan"), dict) or not isinstance(body.get("result"), dict):
             return jsonify(error="bad_plan", message="Plan and result must be objects."), 400
         try:
-            workflow.verify_plan(body["plan"], body.get("signature"))
+            workflow.verify_plan(body["plan"], body.get("signature"), person["sandbox_id"], (db.get_company(person["sandbox_id"]) or {}).get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
             receipt = workflow.approve(body["plan"], body.get("step_id"), body.get("result"),
                                        body.get("ticket"))
         except (TypeError, AttributeError, KeyError) as e:
@@ -505,6 +505,7 @@ def create_app(db_path=None):
                      "escalation_usd": tools.PARAMS["escalation_usd"], rules.BANNED: []}
             company["levels"] = [{"id": "group", "name": "Group", **start},
                                  {"id": "subsidiary", "name": "Subsidiary", **start}]
+            company["version"] = company.get("version", 0) + 1  # rules changed: old plans must be planned again
             db.save_company(sandbox_id, company)
         return jsonify(levels=company["levels"]), 201
 
@@ -526,6 +527,7 @@ def create_app(db_path=None):
         if errors:
             return refusal(errors)
         levels[index] = {**levels[index], **values}
+        company["version"] = company.get("version", 0) + 1  # rules changed: old plans must be planned again
         db.save_company(sandbox_id, company)
         banned = rules.ban_provenance(levels)
         for role_id, kit in db.get_assistants(sandbox_id).items():  # a ban reaches assistants already made

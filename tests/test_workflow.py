@@ -260,6 +260,30 @@ def test_http_run_requires_approval_before_the_next_step(client, monkeypatch):
     assert ok.status_code == 200
 
 
+def test_http_plan_from_another_sandbox_and_stale_plan_are_refused(client, monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse())
+    ha, token_a = sales_token(client)
+    _, token_b = sales_token(client)
+    planned = client.post("/api/workflow/plan", json={"token": token_a, "task": TASK}).json
+    assert planned["plan"]["company_id"]
+    assert planned["plan"]["company_version"] >= 1 and planned["plan"]["expires_at"]
+    base = {"plan": planned["plan"], "signature": planned["signature"]}
+    cross = client.post("/api/workflow/step", json={**base, "token": token_b, "step_id": "quote"})
+    assert cross.status_code in (403, 409)
+    # Replacing the chart in the same sandbox invalidates the old plan; a fresh plan still works.
+    client.post("/api/company", json={"company": "Acme", "roles": ROLES, "size": 10}, headers=ha)
+    stale = client.post("/api/workflow/step", json={**base, "token": token_a, "step_id": "quote"})
+    assert stale.status_code in (403, 409)
+    fresh = client.post("/api/workflow/plan", json={"token": token_a, "task": TASK}).json
+    ok = client.post("/api/workflow/step", json={
+        "token": token_a, "plan": fresh["plan"], "signature": fresh["signature"], "step_id": "quote"})
+    assert ok.status_code == 200
+    cross_approve = client.post("/api/workflow/approve", json={
+        "token": token_b, "plan": fresh["plan"], "signature": fresh["signature"],
+        "step_id": "quote", "result": ok.json["result"], "ticket": ok.json["ticket"]})
+    assert cross_approve.status_code in (403, 409)
+
+
 def test_http_forged_plan_is_refused(client):
     _, token = sales_token(client)
     planned = client.post("/api/workflow/plan", json={"token": token, "task": TASK}).json

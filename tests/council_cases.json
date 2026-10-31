@@ -26005,5 +26005,2644 @@
   "round": 17,
   "tester": "privacy",
   "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r18-abuse-1",
+  "title": "A plan from A must not run as B with int step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tokA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tokB}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": 0,
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 18,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r18-abuse-2",
+  "title": "A plan from A must not run as B with string step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tokA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tokB}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "0",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 18,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r18-abuse-3",
+  "title": "A plan from A must not run as B with named step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tokA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tokB}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "sales",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 18,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r18-abuse-4",
+  "title": "Old plan must not run after chart replaced",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A2",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": 0,
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 18,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r18-abuse-5",
+  "title": "Old ticket must not approve after chart replaced",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tok}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    },
+    "save": {
+     "res": "result",
+     "tick": "ticket"
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A2",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tok}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "result": "{res}",
+     "ticket": "{tick}"
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 18,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r19-rules-1",
+  "title": "A plan from A must not run in B",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tokB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tokA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "planA": "plan",
+     "sigA": "signature",
+     "sidA": "plan.steps.0.id"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tokB}",
+     "plan": "{planA}",
+     "signature": "{sigA}",
+     "step_id": "{sidA}",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "Traceback"
+     ]
+    }
+   }
+  ],
+  "round": 19,
+  "tester": "rules",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only/missing-assistant company could never plan (422 is correct, validate_plan requires sales/ops/finance steps with assistants), so the case crashed saving a plan that was never issued and never reached its intended rejection. Setup now builds a valid sales/ops/finance company with assistants; the original rejection expectation is kept."
+ },
+ {
+  "id": "r20-abuse-1",
+  "title": "replay A plan from B step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tB}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ]
+    }
+   }
+  ],
+  "round": 20,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only company could never plan (422 is correct, validate_plan requires sales/ops/finance steps), so it never reached the cross-company/stale-plan bug. Setup now builds a valid sales/ops/finance company with assistants in both/each sandbox; expectation kept: cross-company or stale use must be rejected, never 200."
+ },
+ {
+  "id": "r20-abuse-2",
+  "title": "replay A ticket approve from B",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "company": "B",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_b}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tB": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tA}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    },
+    "save": {
+     "result": "result",
+     "ticket": "ticket"
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tB}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "result": "{result}",
+     "ticket": "{ticket}"
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ],
+     "body_lacks": [
+      "receipt"
+     ]
+    }
+   }
+  ],
+  "round": 20,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only company could never plan (422 is correct, validate_plan requires sales/ops/finance steps), so it never reached the cross-company/stale-plan bug. Setup now builds a valid sales/ops/finance company with assistants in both/each sandbox; expectation kept: cross-company or stale use must be rejected, never 200."
+ },
+ {
+  "id": "r20-abuse-3",
+  "title": "old plan after chart replaced",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/assistants",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "finance"
+    },
+    "expect": {
+     "status": [
+      200,
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "sales"
+    },
+    "save": {
+     "tA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ],
+     "json_has": [
+      "token"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A2",
+     "size": 10,
+     "roles": [
+      {
+       "id": "md",
+       "title": "MD",
+       "reports_to": null,
+       "headcount": 1
+      },
+      {
+       "id": "sales",
+       "title": "Sales Lead",
+       "reports_to": "md",
+       "headcount": 2
+      },
+      {
+       "id": "ops",
+       "title": "Ops Lead",
+       "reports_to": "sales",
+       "headcount": 2
+      },
+      {
+       "id": "finance",
+       "title": "Finance Lead",
+       "reports_to": "ops",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tA}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": {
+      "customer": "Acme",
+      "route": "Hanoi-Haiphong",
+      "pallets": 10,
+      "delivery_date": "2026-12-15",
+      "notes": ""
+     }
+    },
+    "save": {
+     "plan": "plan",
+     "sig": "signature"
+    },
+    "expect": {
+     "status": [
+      200
+     ],
+     "json_has": [
+      "plan",
+      "signature"
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tA}",
+     "plan": "{plan}",
+     "signature": "{sig}",
+     "step_id": "quote",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      200
+     ]
+    }
+   }
+  ],
+  "round": 20,
+  "tester": "abuse",
+  "model": "muse-spark-1.3",
+  "note": "Corrected fixture (loop 6): the original boss-only company could never plan (422 is correct, validate_plan requires sales/ops/finance steps), so it never reached the cross-company/stale-plan bug. Setup now builds a valid sales/ops/finance company with assistants in both/each sandbox; expectation kept: cross-company or stale use must be rejected, never 200."
+ },
+ {
+  "id": "r20-abuse-4",
+  "title": "mistyped plan receipt step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tA}",
+     "plan": [],
+     "signature": [],
+     "step_id": [],
+     "receipts": []
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/approve",
+    "json": {
+     "token": "{tA}",
+     "plan": "x",
+     "signature": 1,
+     "step_id": [],
+     "result": [],
+     "ticket": []
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": []
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      422
+     ]
+    }
+   }
+  ],
+  "round": 20,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
+ },
+ {
+  "id": "r20-abuse-5",
+  "title": "offboarded token plan step",
+  "steps": [
+   {
+    "method": "POST",
+    "path": "/api/company",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "company": "A",
+     "size": 1,
+     "roles": [
+      {
+       "id": "boss",
+       "title": "Boss",
+       "headcount": 1
+      }
+     ]
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "boss"
+    },
+    "save": {
+     "tA": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/people/1/offboard",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {},
+    "expect": {
+     "status": [
+      200,
+      404,
+      410
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/plan",
+    "json": {
+     "token": "{tA}",
+     "task": {
+      "pallets": 1
+     }
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      410,
+      422
+     ]
+    }
+   },
+   {
+    "method": "POST",
+    "path": "/api/workflow/step",
+    "json": {
+     "token": "{tA}",
+     "plan": {},
+     "signature": "x",
+     "step_id": "x",
+     "receipts": {}
+    },
+    "expect": {
+     "status": [
+      400,
+      401,
+      403,
+      404,
+      409,
+      410,
+      422
+     ]
+    }
+   }
+  ],
+  "round": 20,
+  "tester": "abuse",
+  "model": "muse-spark-1.3"
  }
 ]

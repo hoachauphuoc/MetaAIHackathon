@@ -4,6 +4,7 @@ The plan and every approved result are signed, so the server refuses step N+1 un
 was approved and a client cannot edit a price between steps. Models choose tool arguments and
 write words; code computes numbers and rules set the status floor.
 """
+import datetime
 import hashlib
 import hmac
 import json
@@ -75,11 +76,13 @@ def clean_task(raw):
             "delivery_date": text("delivery_date", 10), "notes": text("notes", 1000)}
 
 
-def make_plan(raw_task, roles, kits):
+def make_plan(raw_task, roles, kits, company_id="", company_version=0, today=None):
     """Return (plan, errors). Edges are the handoffs the assistants declared."""
     task = clean_task(raw_task)
     edges = {(role_id, h["to_role"]) for role_id, kit in kits.items() for h in kit["handoffs"]}
-    plan = {"run_id": secrets.token_urlsafe(8), "task": task, "steps": STEPS}
+    plan = {"run_id": secrets.token_urlsafe(8), "task": task, "steps": STEPS,
+            "company_id": company_id, "company_version": company_version,
+            "expires_at": ((today or datetime.date.today()) + datetime.timedelta(days=7)).isoformat()}
     # Briefs are written in parallel: name the missing one instead of reporting a missing handoff.
     titles = {r["id"]: r.get("title", r["id"]) for r in roles}
     waiting = [titles[s["role_id"]] for s in STEPS if s["role_id"] in titles and s["role_id"] not in kits]
@@ -189,6 +192,8 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
     results = {}
     for earlier in steps[:index]:
         got = receipts.get(earlier["id"]) or {}
+        if plan.get("company_id") and (got.get("result") or {}).get("company_id") != plan["company_id"]:
+            raise PermissionError("This receipt belongs to a different company.")
         if not valid(got.get("receipt"), "receipt", plan["run_id"], earlier["id"], got.get("result")):
             raise PermissionError(f"Step '{earlier['title']}' has not been approved.")
         results[earlier["id"]] = got["result"]
@@ -237,6 +242,7 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
               "status": rules.combine_status(floor, model_status), "findings": findings,
               "summary": summary, "private": private,
               "demo_mode": verdict is None or args_from_package,
+              "company_id": plan.get("company_id", ""), "company_version": plan.get("company_version", 0),
               "demo_reason": why_not or (ARGS_FROM_ORDER if args_from_package else None),
               "trace": trace}
     return {"result": result, "ticket": sign("ticket", plan["run_id"], step["id"], result)}
@@ -244,6 +250,8 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None):
 
 def approve(plan, step_id, result, ticket):
     """A human pressed Approve. A blocked step can never be approved."""
+    if plan.get("company_id") and result.get("company_id") != plan["company_id"]:
+        raise PermissionError("This result belongs to a different company.")
     if not valid(ticket, "ticket", plan["run_id"], step_id, result):
         raise PermissionError("This result was not produced by the server.")
     if result["status"] == "blocked":
@@ -251,6 +259,18 @@ def approve(plan, step_id, result, ticket):
     return sign("receipt", plan["run_id"], step_id, result)
 
 
-def verify_plan(plan, signature):
+def verify_plan(plan, signature, company_id=None, company_version=None, today=None):
     if not valid(signature, "plan", plan.get("run_id"), "-", plan):
         raise PermissionError("This plan was not issued by the server.")
+    if company_id is not None:
+        # Fail closed: a plan issued before binding, or for another company, must be planned again.
+        if plan.get("company_id") != company_id:
+            raise PermissionError("forged: this plan belongs to a different company. Plan again.")
+        if company_version is not None and plan.get("company_version") != company_version:
+            raise PermissionError("stale: the company changed. Plan again.")
+        try:
+            expires = datetime.date.fromisoformat(str(plan.get("expires_at") or ""))
+        except ValueError:
+            raise PermissionError("stale: this plan has no expiry. Plan again.")
+        if expires < (today or datetime.date.today()):
+            raise PermissionError("expired: this plan has expired. Plan again.")
