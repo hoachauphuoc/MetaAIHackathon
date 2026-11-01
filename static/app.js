@@ -26,7 +26,7 @@ export function chartLabel(chart) {
 let sandbox = localStorage.getItem('sandbox');
 let state = { answers: null, chart: null, accepted: false };
 
-const FOUNDER_STORY = 'https://github.com/hoachauphuoc/MetaAIHackathon#founders-story-why-role-assistants';
+const FOUNDER_STORY = 'https://github.com/hoachauphuoc/MetaAIHackathon#founders-story-why-role-assistant-foundry';
 // Said where a demo starts, not only on /trust: a stranger should not build on a sandbox that a restart can wipe.
 const SANDBOX_NOTE = 'This is a demo sandbox: it is kept for 24 hours and is lost if the server restarts.';
 
@@ -41,7 +41,6 @@ function startAgain(message) {
       el('p', { class: 'lede' }, 'Answer ten questions. Code checks the org. Each role gets its own assistant, ' +
         'and every handoff waits for a person.'),
       el('div', { class: 'row' }, el('button', { class: 'primary', onclick: tryDemo }, 'Try the demo company'),
-        el('button', { onclick: () => tryDemo('clinic') }, 'Try the clinic demo'),
         el('button', { onclick: () => tryDemo('software') }, 'Try the software studio demo')),
       el('ul', { class: 'trust-row', 'aria-label': 'How it is built' },
         ['Muse Wonder drafts the org', 'Muse Spark writes the briefs', 'Glimmer Private option', 'No silent fallback']
@@ -57,8 +56,6 @@ function startAgain(message) {
       el('li', {}, 'Muse Wonder designs your org chart from the ten answers.'),
       el('li', {}, 'Code checks it against the rules before you can accept it.'),
       el('li', {}, 'Muse Spark writes one assistant per role; work moves between roles only when a person approves.')),
-    el('p', { class: 'muted' }, 'The clinic demo runs the same engine in a second industry: its own "Treatment plan quote" ' +
-      'form, checked by the same code rules (fee not below cost, margin floor), passed on only when a person approves.'),
     el('p', { class: 'muted', id: 'sandbox-note' }, SANDBOX_NOTE)));
   recordedDemo().then((demo) => { const hero = app.querySelector('.hero'); if (demo && hero) hero.after(demo); });
   timeTile().then((tile) => { if (tile && app.querySelector('.hero')) app.append(tile); });
@@ -85,7 +82,7 @@ async function tryDemo(industry) {
   localStorage.setItem('sandbox', sandbox);
   // The demo reaches the Private-mode Finance step a few minutes from now; wake the endpoint while the owner reads.
   api('/api/private/prewarm', { method: 'POST', sandbox });
-  state.answers = (await api(`/api/survey/demo${industry === 'clinic' || industry === 'software' ? `?industry=${industry}` : ''}`)).data.answers;
+  state.answers = (await api(`/api/survey/demo${industry === 'software' ? '?industry=software' : ''}`)).data.answers;
   showSurvey();
 }
 

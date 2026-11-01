@@ -1,5 +1,7 @@
 # Role Assistants: Independent Review (SOLIFAN, 2026-10-31), English translation
 
+Product later renamed Role Assistant Foundry
+
 > **Unofficial English translation.** Prepared by the project owner's tooling so that readers who do not read Japanese can follow the report. The Japanese PDF next to this file, `Role_Assistants_Independent_Review_JP_20261031.pdf`, is the original and governs. Nothing was added, softened or removed; layout is simplified. Page markers follow the PDF (6 pages).
 
 ---

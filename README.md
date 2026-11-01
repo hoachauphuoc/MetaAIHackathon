@@ -1,6 +1,8 @@
-# Role Assistants
+# Role Assistant Foundry
 
-**The premise: employees who fear the company's AI is watching them paste customer data into outside chatbots. Role Assistants gives each person an assistant of their own (chat never stored server-side, no per-person metrics) while the company keeps the rules.**
+**An assistant that designs each company's assistants: from ten survey answers, AI drafts the org chart, each role's assistant and the handoff form (the form can also start from a photo of the paper one); code checks every draft against rules, and a person accepts the chart and the form and approves every handoff.**
+
+**The premise:** employees who fear the company's AI is watching them paste customer data into outside chatbots. Role Assistant Foundry gives each person an assistant of their own (chat never stored server-side, no per-person metrics) while the company keeps the rules.
 <sub>The premise is the author's, not a measurement; the nearest external figure is that 48% of privacy and security professionals entered non-public company information into GenAI tools ([Cisco 2024](https://newsroom.cisco.com/c/r/newsroom/en/us/a/y2024/m01/organizations-ban-use-of-generative-ai-over-data-privacy-security-cisco-study.html), external, n = 2,600). From ten survey answers to an assistant for every role took 31.9 s of app time on Meta Muse: app side only, one real-model run, five-role demo company, owner typing excluded ([docs/MEASURED.md](docs/MEASURED.md), "Setup time"). No real company has used it yet: every figure comes from synthetic data and the author's own test cases.</sub>
 
 | 31 of 31 | 9 of 10 vs 2 of 10 | 10 of 10 |
@@ -14,7 +16,7 @@ handoff. Built for the Meta Global AI Developer Hackathon, Indie track, solo, fo
 statement **Build for Your World**: the domain is the small company the author knows firsthand, and
 the time freed is the owner's and each employee's.
 
-**Why this problem:** the author manages software teams and sees it daily; see the [founder's story](#founders-story-why-role-assistants).
+**Why this problem:** the author manages software teams and sees it daily; see the [founder's story](#founders-story-why-role-assistant-foundry).
 
 **What was not possible before:** a ten-person company has no one to set up an assistant per role, and a
 chat window cannot pass a quote from Sales to Operations to Finance under the company's own limits. Here
@@ -57,7 +59,7 @@ This is an agent pipeline, not a chatbot: survey, then Wonder (design), then rul
 then Spark (one assistant brief per role), then the assistants hand work to each other along the chart
 with a person gating every step.
 
-## Founder's story: why Role Assistants
+## Founder's story: why Role Assistant Foundry
 
 **The deadlock.** I manage software development and maintenance teams, and I watch the same standoff
 every week. The company wants AI in the work, but fears leaked client data and uncontrolled cost. Banning
@@ -72,6 +74,8 @@ different hands. My stance, which the design follows: *employees are not a fallb
 they are the essential physical and intellectual interface.* That is why a person approves every handoff and
 no model can remove that gate. It is built for the person using the tool, not for a manager watching a
 screen: the employee gets an assistant for their own role, and nothing in it reports on how they work.
+What is built today is the core that every company shares; industry modules are the direction, not built
+([the core and the modules](#role-assistant-foundry-the-core-and-the-modules)).
 
 - **The company decides** the roles, which skills each role's assistant may use, the margin floors and
   approval limits, and who must approve each handoff. Code enforces these and the server refuses anything
@@ -134,7 +138,7 @@ the approval gate and the status rule are in `tests/test_workflow.py`.
 
 **Operational leverage: setup time.**
 
-| | A per-role AI rollout done the usual way | Role Assistants |
+| | A per-role AI rollout done the usual way | Role Assistant Foundry |
 |---|---|---|
 | Time to a working assistant for every role | Weeks to months of consulting, infrastructure and integration (my experience; not measured) | An owner answering ten questions: I expect 5 to 10 minutes (not measured) |
 | App time on the demo company, from the home page to the first invite link | n/a | 15.3 s in one real-model run, with no typing (set 14, [docs/MEASURED.md](docs/MEASURED.md)) |
@@ -150,11 +154,37 @@ The measured row is the app's side only; the human row is my estimate and is lab
 | Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
 | Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; in the demo the same invited user approves at all three steps) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
 | Private mode on Glimmer (an idle endpoint woke in 166 s before the GPU snapshot, measured once, and in 23 to 31 s after it, measured four times) | Free-text personal working styles (today a private rule is a number) |
-| | Tools and multi-step workflows generated from a declaration for any trade (today the `skills.json` playbooks, the three tools and the Sales -> Operations -> Finance flow are hand-written and logistics-first; clinic and software studio are pre-written templates; any other trade gets the general services form) |
+| | AI routing of the workflow itself: a model choosing which role does which step, from a fixed vocabulary of roles, tools and skills, checked by code (today the Sales -> Operations -> Finance workflow, its three tools and the skill playbooks in `data/skills.json` and `data/playbooks.json` are hand-written and logistics-first; clinic and software studio are pre-written templates; any other trade gets the general services form) |
 
-Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
-its parent's limits but never loosen them, and later into the systems a business already runs. None of that
-second column is claimed as working.
+Where I want it to go. The limit first: today the AI designs the structure around the work (the chart, each
+role's assistant, the handoff form), but the workflow across roles (Sales -> Operations -> Finance), its three
+tools (`quote_price`, `make_calendar_event`, `check_margin` in `workflow.py`) and the skill playbooks are
+hand-written. The next step, not built, is AI routing the workflow itself: a model proposes which role does
+which step, using only roles, tools and skills from a fixed vocabulary, and code checks the route (no loops, no
+orphan steps, no banned skill) before a person approves each step, as the chart is checked today. Beyond that:
+from a five-person company to a group with subsidiaries, each level able to tighten its parent's limits but
+never loosen them, and later into the systems a business already runs. None of that second column is claimed
+as working.
+
+### Role Assistant Foundry: the core and the modules
+
+**Built today, the core that stays fixed for every company:** the org chart, checked by code rules; a role
+assistant and a handoff form per role, drafted by the model; code checks every draft; a person approves every
+step; the server issues an HMAC-protected receipt for each approved step; and Private mode on Glimmer, which
+never falls back silently to another model.
+
+**Built today, hand-written:** the clinic and software-studio templates (chart, form and playbooks) and the
+logistics workflow (Sales -> Operations -> Finance) with its three tools. A person wrote each of them; no model
+assembled them.
+
+**Not built (the direction):** industry modules that plug into the core (no medical module is planned in this
+submission); a model that chooses and assembles modules and workflows for a new company from a fixed vocabulary
+that code checks, as the chart is checked today; and multilingual support. None of this is working today, and
+no speed or cost is claimed for it. The limits that hold today are the demo's: 80 model calls per sandbox, a
+daily spend ceiling, and sandboxes kept in memory for 24 hours and lost on a restart.
+
+*We do not build one assistant. We build the foundry that makes assistants for each company; industry modules
+are the next step.* Not built yet.
 
 ## For judges
 
@@ -170,7 +200,7 @@ second column is claimed as working.
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
-- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the Sales inbox (on the Sales invite page), **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
+- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the Sales inbox (on the Sales invite page), **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the software studio demo** shows another industry on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -300,7 +330,7 @@ time at the company:
    inbox exported as JSON or CSV. Import only fills the form (free-text notes are left out so they
    still pass the masking step), a person checks and sends it, and exported cells that start like
    a spreadsheet formula get a leading quote. **Export approved** adds a second export that holds only handoffs every approver accepted and that were not blocked, with the form's own columns in the form's order, the approval chain and no free-text notes, ready for a sheet or another system to read. No connector, key or outbound call is involved: the person downloads the file. An accepted, unblocked handoff also shows **Open email draft**: a `mailto:` draft with the form's fields and the approval chain (no notes, no model text) that the person sends from their own mail app; past about 1,800 characters there is no link, only **Copy the text** (`tests/js/exchange.test.mjs`).
-15b. **A second industry without training** (one referral path; transfers between clinics are not built): a clinic ("Try the clinic demo", or any industry that says clinic, dental, medical or health) gets its own chart template, a "Treatment plan quote" form (patient reference as a number, not a name; fee, cost, first visit) checked by the same code rules (fee not below cost, margin floor, approval limit, date not in the past), and playbooks that no longer talk about routes and pallets. Retail and services keep their forms; an industry we have no form for still falls back to the services form and the chart says Template. Nothing is trained: the structure is a shipped template, the rules are code, and Muse only writes words. Wonder on 5 synthetic clinics and 5 software companies passed the rules 10 of 10 (`docs/MEASURED.md` set 13, one run). The clinic form is not meant for real patient data.
+15b. **A second industry without training** (one referral path; transfers between clinics are not built): a clinic (an industry in the survey that says clinic, dental, medical or health; there is no demo button for it) gets its own chart template, a "Treatment plan quote" form (patient reference as a number, not a name; fee, cost, first visit) checked by the same code rules (fee not below cost, margin floor, approval limit, date not in the past), and playbooks that no longer talk about routes and pallets. Retail and services keep their forms; an industry we have no form for still falls back to the services form and the chart says Template. Nothing is trained: the structure is a shipped template, the rules are code, and Muse only writes words. Wonder on 5 synthetic clinics and 5 software companies passed the rules 10 of 10 (`docs/MEASURED.md` set 13, one run). The clinic form is not meant for real patient data.
 
 15c. **A code helper for software companies:** a software studio ("Try the software studio demo", or any industry that says software, developer or devops) gets a chart with an Engineering Lead whose assistant holds the skill "Explain, review or draft code for a person to copy and run themselves". Code, not the model, gives that skill to the engineering role only; a level can ban it like any other skill. The assistant has no tool that runs, deploys or pushes (a test lists every tool and fails on such a name), its playbook says to label drafts "Untested draft" and never to repeat a secret, and passwords, cloud keys, vendor tokens and private-key blocks in a pasted message are masked in the browser like personal data. Not measured against the real model beyond one spot check; image generation was cut from this build.
 16. **What is stuck and where:** the sender's inbox lists what they sent that still waits for another

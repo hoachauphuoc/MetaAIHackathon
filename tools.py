@@ -47,7 +47,7 @@ def make_calendar_event(title, date):
         raise ValueError("date must look like 2026-11-20")
     title = "".join(c for c in str(title)[:120] if c.isprintable() and c not in ",;\\")
     stamp = day.strftime("%Y%m%d")
-    ics = ("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Role Assistants//EN\r\nBEGIN:VEVENT\r\n"
+    ics = ("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Role Assistant Foundry//EN\r\nBEGIN:VEVENT\r\n"
            f"UID:{stamp}-{hashlib.sha1(title.encode()).hexdigest()[:8]}@role-assistants\r\nDTSTAMP:{stamp}T000000Z\r\n"
            f"DTSTART;VALUE=DATE:{stamp}\r\nSUMMARY:{title}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n")
     return {"title": title, "date": date, "ics": ics}

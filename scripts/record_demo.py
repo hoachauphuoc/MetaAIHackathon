@@ -69,8 +69,8 @@ FLOW_JS = """
 }
 """
 
-# A title card is the first frame so the recording never opens on an empty page; the story comes first, then the
-# measured number, so the premise is never shown as a measurement.
+# A title card is the first frame so the recording never opens on an empty page; the headline comes first, then the
+# measured number on its own card, so the claim and the measurement are never mixed.
 CARD = """<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;
 justify-content:center;background:#14181f;color:#fff;font-family:system-ui;text-align:center;padding:0 80px">
 <div style="font-size:{big}px;font-weight:800;line-height:1.1">{head}</div>
@@ -128,14 +128,14 @@ def run(base, out):
             card.get_by_role("button", name="Create invite link").click()
             return card.locator("code").inner_text(timeout=30_000)
 
-        card("Your AI. The company's rules.",
-             "Afraid the company's AI is watching them, employees paste customer data into outside chatbots. "
-             "Here the assistant is theirs: chat is never stored on the server, nothing is measured per person.",
-             "The product's premise, not a measured fact", 5, big=76)
+        card("An assistant that designs your assistants",
+             "From ten answers, AI drafts the org chart, each role's assistant and the handoff form. "
+             "Code checks every draft against rules; a person approves.",
+             "Meta Muse drafts; code and a person decide", 5, big=64)
         card("31.9 s", "From ten answers to an AI assistant for every role, on Meta Muse.",
              "App side only, one real-model run, owner typing excluded (docs/MEASURED.md)", 3)
         go(base)
-        say("Role Assistants: each employee's own assistant, inside the company's rules.", 3)
+        say("Role Assistant Foundry: each employee's own assistant, inside the company's rules.", 3)
         page.get_by_role("button", name="Try the demo company").click()
         flow(1)
         say("Ten questions describe the company. Muse Wonder designs the org chart.", 4)
