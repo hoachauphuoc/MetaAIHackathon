@@ -64,7 +64,8 @@ async function recordedDemo() {
   if (!head || !head.ok || !(head.headers.get('Content-Type') || '').startsWith('video/')) return null;
   const when = new Date(head.headers.get('Last-Modified') || Date.now()).toISOString().slice(0, 10);
   return el('section', { class: 'recording' }, el('h2', {}, 'Watch the recorded demo'),
-    el('video', { src: DEMO_VIDEO, controls: true, preload: 'none', playsinline: true,
+    el('video', { src: DEMO_VIDEO, controls: true, preload: 'metadata', playsinline: true,
+      poster: '/static/video/welcome_poster.jpg',
       'aria-label': 'Recorded demo of the order workflow, with captions burned in' }),
     el('p', { class: 'muted' }, `A recording from ${when}, filmed while the Private endpoint was warm. A live Private step ` +
       'that starts cold can take a few minutes, and the live app is the one to trust.'));

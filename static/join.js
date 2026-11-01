@@ -264,7 +264,7 @@ function workflowPanel(routes) {
   });
   refresh();
   box.append(ready, el('p', { class: 'muted' }, 'Unlike a chat, each step is one assistant making a tool call; code ' +
-    'computes the numbers, and the next role starts only with your signed approval. ' +
+    'computes the numbers, and the next role starts only with your approval (a server receipt, HMAC). ' +
     'A blocked step can never be approved.'),
   el('label', { for: 'customer' }, 'Customer'), f.customer,
   el('label', { for: 'route' }, 'Shipping route'), f.route,
@@ -310,7 +310,7 @@ function runner({ plan, signature, roles }, out, modes = {}) {
       receipts[step.id] = { result, receipt: ok.data.receipt };
       node.className = 'step';
       // The server signs what the person approved; the next step runs only with that receipt.
-      node.append(el('p', {}, badge('Approved: signed receipt', 'ok'),
+      node.append(el('p', {}, badge('Approved: server receipt (HMAC)', 'ok'),
         index + 1 < items.length ? ' The next step can start only with it.' : ' The order is complete.'));
       if (index + 1 === items.length) out.append(orderDone(items.map((i) => ({ title: i.step.title,
         role: roles[i.step.role_id] || i.step.role_id, result: receipts[i.step.id].result }))));

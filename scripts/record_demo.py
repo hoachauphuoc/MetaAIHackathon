@@ -6,7 +6,8 @@ Run the app with `scripts/run.ps1 -Real` first. With FAKE_AI the video would sho
 label everywhere, so use it only to rehearse. One browser page is used for every role so the
 recording stays a single file; the person switches by opening the invite links in turn.
 Warm the Private-mode endpoint first (`modal run scripts/private_modal.py`, a few minutes before):
-a cold Glimmer took 166 s to wake when timed, the app waits 60 s, and the take would show "Private mode unavailable".
+a cold Glimmer took 166 s to wake before the GPU snapshot and 23 to 31 s after it, the app waits 35 s a try, and a
+slow wake would put "Private mode starting" in the take.
 """
 import argparse
 import re
@@ -30,6 +31,16 @@ window.caption = (text) => {
 """
 
 
+# A title card is the first frame so the recording never opens on an empty page; the hook is a measured number.
+CARD = """<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;
+justify-content:center;background:#14181f;color:#fff;font-family:system-ui;text-align:center;padding:0 80px">
+<div style="font-size:{big}px;font-weight:800;line-height:1.1">{head}</div>
+<div style="font-size:30px;margin-top:28px;max-width:1000px;line-height:1.35">{body}</div>
+<div style="font-size:20px;margin-top:36px;opacity:.7">{foot}</div></body>"""
+
+LIVE_URL = "https://role-assistants-662084666675.us-central1.run.app"
+
+
 def run(base, out):
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -38,6 +49,12 @@ def run(base, out):
         page = ctx.new_page()
         page.set_default_timeout(150_000)
         shown = ""
+
+        def card(head, body, foot, hold, big=120):
+            # The app's CSP blocks inline styles, so a card must not be set on one of its pages.
+            page.goto("about:blank")
+            page.set_content(CARD.format(head=head, body=body, foot=foot, big=big))
+            page.wait_for_timeout(int(hold * 1000))
 
         def caption(text):
             nonlocal shown
@@ -64,16 +81,21 @@ def run(base, out):
             card.get_by_role("button", name="Create invite link").click()
             return card.locator("code").inner_text(timeout=30_000)
 
+        card("31.9 s", "From ten answers to an AI assistant for every role, on Meta Muse. "
+             "Nothing moves between roles until a person approves.",
+             "App side only, one real-model run, owner typing excluded (docs/MEASURED.md)", 6)
         go(base)
-        say("Role Assistants: an AI assistant for every role in a small company.", 5)
+        say("Role Assistants: an AI assistant for every role in a small company.", 4)
         page.get_by_role("button", name="Try the demo company").click()
         say("Ten questions describe the company. Muse Wonder designs the org chart.", 4)
         page.get_by_role("button", name="Design my org chart").click()
+        caption("Muse Wonder is designing the chart...")
         page.get_by_role("button", name="Accept this chart").wait_for()
         say("Rules check the chart: one top role, no cycles, no more people than the company has.", 6)
         page.get_by_role("button", name="Accept this chart").click()
+        caption("Muse Spark writes a role brief per role. Skills come only from an approved list.")
         page.get_by_role("button", name="Create invite link").first.wait_for()
-        say("Muse Spark writes a role brief per role. Skills come only from an approved list.", 6)
+        page.wait_for_timeout(5000)
         sales_url = link_for("Sales")
         ops_url = link_for("Operations")
 
@@ -86,6 +108,7 @@ def run(base, out):
         page.fill("#send-price", "1000")
         say("Sales sends an order with the price below cost to the Operations team.", 5)
         page.get_by_role("button", name="Send handoff").click()
+        caption("Rules check it first. The price is below the cost.")
         page.get_by_text("Waiting for Operations").first.wait_for()
         look(page.get_by_text("Waiting for Operations"))
         say("Rules check it first. The price is below the cost.", 5)
@@ -132,8 +155,7 @@ def run(base, out):
         approve = page.locator("button:not([disabled])", has_text="Approve and hand over")
         lines = ["Sales quotes the order. The margin is computed by code, not by the model.",
                  "Operations schedules the delivery. Nothing moves until you approve.",
-                 "Finance runs on an open-weights Muse model in Private mode, hosted on Modal. "
-                 "If it is unreachable the step says so and a person must check; it never falls back to the standard API."]
+                 "Finance: open-weights Muse Glimmer 30B on Modal, Private mode. No silent fallback."]
         for line in lines:
             approve.last.wait_for()
             look(approve.last)
@@ -143,6 +165,9 @@ def run(base, out):
 
         go(base.rstrip("/") + "/trust")
         say("What we store: documents and decisions. Never chats, never employee metrics.", 5)
+        card("31 of 31", "end-to-end checks on real models, desktop and phone (set 14, local build). "
+             "778 tests with no model calls. A limited independent review by SOLIFAN: 5 findings, 5 fixed in code.",
+             LIVE_URL, 7, big=110)
         ctx.close()
         browser.close()
 
