@@ -1,7 +1,7 @@
 # Role Assistants
 
-**Ten survey answers in, an AI assistant for every role out: 31.9 s of app time on Meta Muse, and no handoff moves until a person presses Approve.**
-<sub>31.9 s: app side only, one real-model run, five-role demo company, owner typing excluded ([docs/MEASURED.md](docs/MEASURED.md), "Setup time"). No real company has used it yet: every figure comes from synthetic data and the author's own test cases.</sub>
+**The premise: employees who fear the company's AI is watching them paste customer data into outside chatbots. Role Assistants gives each person an assistant of their own (chat never stored server-side, no per-person metrics) while the company keeps the rules.**
+<sub>The premise is the author's, not a measurement; the nearest external figure is that 48% of privacy and security professionals entered non-public company information into GenAI tools ([Cisco 2024](https://newsroom.cisco.com/c/r/newsroom/en/us/a/y2024/m01/organizations-ban-use-of-generative-ai-over-data-privacy-security-cisco-study.html), external, n = 2,600). From ten survey answers to an assistant for every role took 31.9 s of app time on Meta Muse: app side only, one real-model run, five-role demo company, owner typing excluded ([docs/MEASURED.md](docs/MEASURED.md), "Setup time"). No real company has used it yet: every figure comes from synthetic data and the author's own test cases.</sub>
 
 | 31 of 31 | 9 of 10 vs 2 of 10 | 10 of 10 |
 |---|---|---|
@@ -32,8 +32,12 @@ whose treatment-plan quote one role sent and another took and pressed Accept on:
 step listed in [docs/MEASURED.md](docs/MEASURED.md). Set 14 itself had no Private-mode endpoint
 configured, so it does not show Glimmer. The deployed link was also walked on 2026-11-01 with
 `scripts/live_check.py` (set 15, one run, desktop width, Glimmer already awake): Finance answered by
-Muse-Glimmer-30B, the order completed, 39.5 s in total. One command runs
-every test: `powershell -File scripts/check.ps1`.
+Muse-Glimmer-30B, the order completed, 39.5 s in total (set 15, 2026-11-01; the revision was not recorded).
+
+**Tests:** 780 Python test cases (pytest, parametrized cases counted) and 33 JS tests, `powershell -File scripts/check.ps1`.
+The counts come from `FAKE_AI=1 python -m pytest --collect-only -q tests` and `node --test tests/js/*.test.mjs`,
+and `check.ps1` prints both. The independent review's findings and their fixes are in
+[docs/evidence/solifan](docs/evidence/solifan/README.md) (finding-to-fix table).
 
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
 (Private mode). **Layered rules:** a company can split into units (Group, Subsidiary); a unit may
@@ -146,6 +150,7 @@ The measured row is the app's side only; the human row is my estimate and is lab
 | Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
 | Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; in the demo the same invited user approves at all three steps) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
 | Private mode on Glimmer (an idle endpoint woke in 166 s before the GPU snapshot, measured once, and in 23 to 31 s after it, measured four times) | Free-text personal working styles (today a private rule is a number) |
+| | Tools and multi-step workflows generated from a declaration for any trade (today the `skills.json` playbooks, the three tools and the Sales -> Operations -> Finance flow are hand-written and logistics-first; clinic and software studio are pre-written templates; any other trade gets the general services form) |
 
 Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
 its parent's limits but never loosen them, and later into the systems a business already runs. None of that
@@ -165,7 +170,7 @@ second column is claimed as working.
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
-- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the inbox, **Export approved** downloads only handoffs every approver accepted. **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
+- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the inbox, **Export approved** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -182,10 +187,10 @@ second column is claimed as working.
 
 ## Impact
 
-Employees worry about AI at work, and companies leak data into it. The figures below are quoted
-as published. The right-hand column is a design response, enforced by a test: it shows what the product does about each finding, not a measured reduction in worry, leaks or time.
+Employees worry about AI at work, and companies leak data into it. The figures below are external
+figures, linked, not measured by us, and quoted as published. The right-hand column is a design response, enforced by a test: it shows what the product does about each finding, not a measured reduction in worry, leaks or time.
 
-| Finding | Source | Design response (enforced by a test, not measured impact) |
+| Finding (external, linked, not measured by us) | Source | Design response (enforced by a test, not measured impact) |
 |---|---|---|
 | 52% of US workers feel worried about future AI use in the workplace, 36% hopeful (n = 5,273 employed adults, published 25 Feb 2025) | [Pew Research Center](https://www.pewresearch.org/social-trends/2025/02/25/u-s-workers-are-more-worried-than-hopeful-about-future-ai-use-in-the-workplace) | Assistants help with documents; four skills that evaluate, rank, monitor or decide about people are never available |
 | 81% of US adults say AI used to evaluate workers would make workers feel inappropriately watched (fielded 12-18 Dec 2022, n = 11,004 adults) | [Pew Research Center](https://www.pewresearch.org/internet/2023/04/20/ai-in-hiring-and-evaluating-workers-what-americans-think) | No per-person metrics exist anywhere in the data model |
@@ -345,9 +350,9 @@ ran (the "Timed runs" tile and the setup time in docs/MEASURED.md); nothing else
 |---|---|---|
 | `muse-wonder-1.0` | Org chart under a strict JSON schema | 10 of 10 charts passed the rules first try; median 5.9 s; USD 0.0134 per chart |
 | `muse-spark-1.3` | Role briefs (structured output), chat (streaming), tool calls (function calling), handoff checks (structured output), photo reading (vision), morning brief, first-days plan, handover draft | Brief about USD 0.005; chat answer USD 0.0015; fix suggestion median 3.2 s, 9 of 9 answered suggestions left no blocked package; photo reading 60 of 60 fields after the amount-cleaning fix (56 of 60 on the first run), median 3.3 s, USD 0.002 per sheet; morning brief 0 names or invented documents in 70 lines; model layer of the handoff check flagged 10 of 10 contradictions the rules cannot see, 1 false alarm in 10 (set 11, Spark only) |
-| `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not yet run against the real endpoint; no cost is claimed |
-| `muse-image-1.0` | The illustration shown while Wonder designs the chart (`static/img/chart-wait.webp`), made once when the app was built, not during the wait, and captioned as not the company's chart | One generation, 23.3 s, 216 KB WebP; price per image not published to us, so no cost is claimed |
-| `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | Tested with stubbed replies; one unmeasured hand check on a synthetic page, not a measured set; price not published, so no cost is claimed |
+| `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not measured: not yet run against the real endpoint; no cost is claimed |
+| `muse-image-1.0` | The illustration shown while Wonder designs the chart (`static/img/chart-wait.webp`), made once when the app was built, not during the wait, and captioned as not the company's chart | Not measured: one generation; the file on disk is 216 KB WebP (216,048 bytes); price per image not published to us, so no cost is claimed |
+| `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | Not measured: tested with stubbed replies; one hand check on a synthetic page, not a measured set; price not published, so no cost is claimed |
 | `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
@@ -433,7 +438,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
 | Effort | Calls | Why |
 |---|---|---|
 | `minimal` | chat answers, workflow tool calls and the model check, fix suggestions, reading a paper document, the morning brief, reading the person's own documents | Short answers and checks; measured in set 12: `high` was 3.6 times slower, 4.9 times dearer and flagged no more contradictions |
-| `low` | the org chart (Wonder), role briefs, handoff forms, handover draft, first-days plan | Structured output that must follow a schema; a little reasoning helps and the cost stays small |
+| `low` | the org chart (Wonder), role briefs, handoff forms, handover draft, first-days plan | `low` chosen for schema-bound output; not measured (set 12 tested `minimal` and `high` only) |
 
 ## Limits (honest)
 
@@ -447,8 +452,8 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never
   uses the standard API instead. Its schema-forced JSON skips a visible reasoning phase, so it raises harmless points
   more often than Spark.
-- Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in memory for
-  24 hours and are lost on restart.
+- Demo scope: an invite link is the whole credential (no passwords). Sandboxes live in an in-memory
+  SQLite database on the one Cloud Run instance; removed after 24 h and lost on restart.
 - Photo reading was measured on rendered sheets, including phone-degraded ones in handwriting-style
   fonts (set 9), not phone photos of real, creased or handwritten paper; expect misreads there. Photos are not masked for personal data. Web search
   is not used: the `web_search` tool type is rejected (HTTP 400) in the form I tried. Voice input
