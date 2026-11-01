@@ -62,15 +62,26 @@ def main():
             button("Accept this chart").wait_for()
             button("Accept this chart").click()
             button("Create invite link").first.wait_for()
-            card = page.locator(".card", has=page.get_by_role("heading", name="Sales")).first
-            card.get_by_role("button", name="Create invite link").click()
-            link = card.get_by_role("link", name="Open invite link")
-            link.wait_for()
-            page.goto(base + link.get_attribute("href"))
+            hrefs = {}
+            for role in ("Sales", "Operations", "Finance"):
+                card = page.locator(".card", has=page.get_by_role("heading", name=role)).first
+                card.get_by_role("button", name="Create invite link").click()
+                link = card.get_by_role("link", name="Open invite link")
+                link.wait_for()
+                hrefs[role] = link.get_attribute("href")
+            page.goto(base + hrefs["Sales"])
             button("Plan this order").click()
-            for i in range(3):
-                b = button("Approve and hand over").nth(i)
+            # Each role approves its own step on its own invite; the order travels between them as a code.
+            for i, role in enumerate(("Sales", "Operations", "Finance")):
+                if i:
+                    page.goto(base + hrefs[role])
+                    page.fill("#order-code", code)
+                    button("Continue this order").click()
+                b = button("Approve and hand over").first
                 b.wait_for()
+                page.wait_for_function("b => !b.disabled", arg=b.element_handle())
+                if i < 2:
+                    code = page.get_by_label("Order code", exact=True).input_value()
                 b.click()
             page.locator("#order-done").wait_for()
             scripts = cdp.send("Profiler.takePreciseCoverage")["result"]

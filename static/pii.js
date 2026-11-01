@@ -1,6 +1,9 @@
-// Masks personal data in the browser before text is sent to a model. Pattern-based only: it cannot
-// recognise names, and /trust says so. Order matters: longer, more specific patterns first.
-const LABELS = { client: 'CLIENT', secret: 'SECRET', iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', id: 'ID_NUMBER', phone: 'PHONE' };
+// Masks personal data in the browser before text is sent to a model. Masked: emails, phone numbers (US formats and
+// international numbers written with a + country code), payment card numbers (Luhn-checked), US Social Security
+// numbers, IBANs, credentials (private keys, API keys, passwords) and the client names the person lists. Pattern-based
+// only: it cannot recognise unlisted names or other national ID formats, and /trust says so.
+// Order matters: longer, more specific patterns first.
+const LABELS = { client: 'CLIENT', secret: 'SECRET', iban: 'IBAN', email: 'EMAIL', card: 'CARD', ssn: 'SSN', phone: 'PHONE' };
 
 function luhn(digits) {
   let sum = 0;
@@ -27,10 +30,11 @@ const RULES = [
     return d.length >= 13 && d.length <= 19 && luhn(d);
   }],
   ['ssn', /\b\d{3}-\d{2}-\d{4}\b/g, () => true],
-  ['id', /\b\d{12}\b/g, () => true],
-  ['phone', /(?<![\w.])(?:\+|\(|0)[\d ().-]{7,18}\d/g, (m) => {
+  // Separators are required before the last four digits so a bare 10-digit order number is not taken for a phone.
+  ['phone', /(?<![\w.-])(?:(?:\+1|1)[ .-]?)?(?:\(\d{3}\)[ .-]?|\d{3}[ .-])\d{3}[ .-]\d{4}(?![\w-])/g, () => true],
+  ['phone', /(?<![\w.])\+\d[\d ().-]{6,18}\d(?!\w)/g, (m) => {
     const n = digitsOf(m).length;
-    return n >= 9 && n <= 15;
+    return n >= 8 && n <= 15;
   }],
 ];
 

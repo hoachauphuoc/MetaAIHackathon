@@ -13,7 +13,7 @@ import rules
 ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 2},
          {"id": "ops", "title": "Ops Lead", "reports_to": "md", "headcount": 1}]
-GOOD = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10, "price": 1800, "cost": 1500,
+GOOD = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10, "price": 1800, "cost": 1500,
         "delivery_date": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()}
 NOTE = {"subject": "Handover: Sales Lead", "open_work": "- Acme quote: waiting for Ops Lead",
         "tips": "Acme prefers morning calls.", "who_to_ask": "- Ops Lead: pallet quotes"}

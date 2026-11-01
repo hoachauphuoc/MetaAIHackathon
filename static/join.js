@@ -223,7 +223,7 @@ async function privateReadiness() {
     'It sleeps when idle, so the Finance step may say it is starting and retry on its own (about 3 minutes).'];
 }
 
-function workflowPanel(routes) {
+function workflowPanel(routes, myRole) {
   const box = el('section', { id: 'order' }, el('h2', {}, 'New order: Sales, Operations, Finance'));
   const f = {
     customer: el('input', { id: 'customer', value: 'Acme Foods' }),
@@ -254,8 +254,18 @@ function workflowPanel(routes) {
       clear(out, el('div', { class: 'errors', role: 'alert' }, res.data.message || res.data.errors?.join(' ')));
       return;
     }
-    runner(res.data, out, modes());
+    runner(res.data, out, modes(), myRole);
   } }, 'Plan this order');
+  const incoming = el('textarea', { id: 'order-code', rows: '3', 'aria-label': 'Order code from a colleague' });
+  const resume = el('button', { onclick: () => {
+    let state;
+    try { state = JSON.parse(incoming.value); } catch { state = null; }
+    if (!state || !state.plan || !state.signature || !state.roles) {
+      clear(out, el('div', { class: 'errors', role: 'alert' }, 'That is not an order code. Paste the whole code.'));
+      return;
+    }
+    runner(state, out, modes(), myRole);
+  } }, 'Continue this order');
   const ready = el('p', { class: 'muted', role: 'status' });
   const refresh = () => privateReadiness().then((line) => {
     clear(ready, line);
@@ -273,25 +283,47 @@ function workflowPanel(routes) {
   el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
   el('p', { class: 'muted' }, 'Model for each step: Public sends it to the Meta API; Private runs on the open-weights endpoint and only when it is awake.'),
   ...Object.entries(modePick).flatMap(([id, sel]) => [el('label', { for: sel.id }, `${stepNames[id]} runs on`), sel]),
-  maskBox, el('div', { class: 'row' }, start), out);
+  maskBox, el('div', { class: 'row' }, start),
+  el('h3', {}, 'Continue an order'),
+  el('p', { class: 'muted' }, 'A colleague approved an earlier step and sent you the order code for yours.'),
+  incoming, el('div', { class: 'row' }, resume), out);
   return box;
 }
 
 const WAKE_TRIES = 5;  // about 5 x (35 s wait + 25 s pause): longer than the 166 s cold start measured
 const WAKE_WAIT_S = 25;
 
-function runner({ plan, signature, roles }, out, modes = {}) {
-  const receipts = {};
+// Each step is approved by the invite of its own role (the server refuses anyone else with 409 wrong_role), so an order
+// travels between people as a code: the signed plan plus the receipts so far. Pasting it grants nothing the signatures do not.
+function runner({ plan, signature, roles, receipts = {} }, out, modes = {}, myRole = '') {
+  receipts = { ...receipts };
   const isPrivate = (step) => (modes[step.id] ? modes[step.id] === 'private' : step.private);  // the signed plan is not edited
   const items = plan.steps.map((step) => ({ step, node: el('li', { class: 'step waiting' },
     el('strong', {}, `${step.title} `), el('span', { class: 'muted' }, roles[step.role_id] || step.role_id,
       isPrivate(step) ? ' (Private mode)' : ''))}));
   clear(out, el('ol', { class: 'steps' }, items.map((i) => i.node)));
-  runStep(0);
+  items.forEach(({ step, node }) => {
+    if (!receipts[step.id]) return;
+    node.className = 'step';
+    node.append(el('p', {}, badge('Approved: server receipt (HMAC)', 'ok')));
+  });
+  const first = items.findIndex((i) => !receipts[i.step.id]);
+  if (first >= 0) runStep(first);
+  else out.append(orderDone(items.map((i) => ({ title: i.step.title,
+    role: roles[i.step.role_id] || i.step.role_id, result: receipts[i.step.id].result }))));
 
   async function runStep(index, attempt = 0) {
     if (index >= items.length) return;
     const { step, node } = items[index];
+    if (step.role_id !== myRole) {
+      // The role comes from the invite the server knows; the server checks it again when the step is approved.
+      const code = JSON.stringify({ plan, signature, roles, receipts });
+      const box = el('textarea', { readonly: '', rows: '3', 'aria-label': 'Order code' }, code);
+      node.append(el('p', {}, badge(`Waiting for ${roles[step.role_id] || step.role_id}`, 'warn')),
+        el('p', { class: 'muted' }, 'Only that role can approve this step. Send them this order code; they paste it under ' +
+          '"Continue an order" on their own link.'), box);
+      return;
+    }
     node.className = 'step current';
     const progress = el('p', { class: 'progress', role: 'status' },
       isPrivate(step) ? 'Working in Private mode... (up to 40 seconds)' : 'Working... (about 10 seconds)');
@@ -475,7 +507,7 @@ function personalRulesPanel() {
       firstDaysPanel(), inboxPanel(info, token), chatPanel(info), personalRulesPanel(), clientNamesPanel(),
       // The fixed Sales, Operations, Finance order runs on the pallet rate card, so only that form has it.
       ...(ordering
-        ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options)] : []),
+        ? [workflowPanel(info.handoff_schema.fields.find((f) => f.key === 'route').options, info.role?.id)] : []),
       handoverPanel(info.handover_form));
   } catch (e) {
     clear(app, el('section', {}, el('p', { class: 'errors', role: 'alert' },

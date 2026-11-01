@@ -10,18 +10,18 @@ PARAMS = {"margin_floor_pct": 12, "escalation_usd": 50000}
 
 
 def package(**over):
-    base = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10, "price": 1800,
+    base = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10, "price": 1800,
             "cost": 1500, "delivery_date": "2026-11-20"}
     return {**base, **over}
 
 
 def test_quote_is_computed_by_code():
-    q = tools.quote_price("Hanoi-Haiphong", 10)
+    q = tools.quote_price("Chicago-Detroit", 10)
     assert (q["price"], q["cost"], q["margin_pct"]) == (1800, 1500, 16.7)
 
 
-@pytest.mark.parametrize("route,pallets", [("Mars", 5), ("Hanoi-Haiphong", 0), ("Hanoi-Haiphong", True),
-                                           ("Hanoi-Haiphong", "5"), ("Hanoi-Haiphong", 99999)])
+@pytest.mark.parametrize("route,pallets", [("Mars", 5), ("Chicago-Detroit", 0), ("Chicago-Detroit", True),
+                                           ("Chicago-Detroit", "5"), ("Chicago-Detroit", 99999)])
 def test_bad_quote_arguments_raise(route, pallets):
     with pytest.raises(ValueError):
         tools.quote_price(route, pallets)
@@ -43,7 +43,7 @@ def test_run_rejects_unknown_tools_and_extra_arguments():
     with pytest.raises(ValueError):
         tools.run("delete_everything", {})
     with pytest.raises(ValueError):
-        tools.run("quote_price", '{"route": "Hanoi-Haiphong", "pallets": 3, "price": 1}')
+        tools.run("quote_price", '{"route": "Chicago-Detroit", "pallets": 3, "price": 1}')
     with pytest.raises(ValueError):
         tools.run("quote_price", "not json")
 

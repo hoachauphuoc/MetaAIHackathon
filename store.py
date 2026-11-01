@@ -2,6 +2,7 @@
 so one sandbox can never see another's data (principle 6). There is no table for chat.
 """
 import datetime
+import hashlib
 import json
 import os
 import secrets
@@ -38,7 +39,13 @@ CREATE TABLE IF NOT EXISTS packages (
 CREATE TABLE IF NOT EXISTS decisions (
     package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
     kind TEXT NOT NULL, role_id TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', day TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS daily_cost (day TEXT PRIMARY KEY, usd REAL NOT NULL);
+-- Which approver key signed off which step of an order, so one person cannot approve two steps of it.
+-- The key is a hash of the invite's name; no name, role history or count is kept beyond the order.
+CREATE TABLE IF NOT EXISTS approvals (
+    sandbox_id TEXT NOT NULL REFERENCES sandboxes(id) ON DELETE CASCADE,
+    run_id TEXT NOT NULL, step_id TEXT NOT NULL, approver TEXT NOT NULL,
+    PRIMARY KEY (run_id, step_id, approver));
+CREATE TABLE IF NOT EXISTS daily_cost(day TEXT PRIMARY KEY, usd REAL NOT NULL);
 """
 
 
@@ -230,6 +237,18 @@ class Store:
         if row[3] != "active":
             raise PersonLeft(token)
         return {"sandbox_id": row[0], "role_id": row[1], "display_name": row[2]}
+
+    @locked
+    def record_approval(self, sandbox_id, run_id, step_id, display_name):
+        """False when the same person already approved a different step of this order (maker-checker)."""
+        key = hashlib.sha256(f"{sandbox_id}\0{display_name.strip().casefold()}".encode()).hexdigest()
+        if self.db.execute("SELECT 1 FROM approvals WHERE run_id = ? AND approver = ? AND step_id != ?",
+                           (run_id, key, step_id)).fetchone():
+            return False
+        with self.db:
+            self.db.execute("INSERT OR IGNORE INTO approvals VALUES (?, ?, ?, ?)",
+                            (sandbox_id, run_id, step_id, key))
+        return True
 
     @locked
     def save_personal_rules(self, token, values):

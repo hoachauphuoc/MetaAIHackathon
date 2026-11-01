@@ -312,9 +312,22 @@ def run_step(plan, step_id, receipts, today, params, blocked, modes=None, bans=(
     return {"result": result, "ticket": sign("ticket", plan["run_id"], step["id"], result)}
 
 
-def approve(plan, step_id, result, ticket, bans=()):
-    """A human pressed Approve. A blocked step can never be approved."""
+class WrongRole(Exception):
+    """The approver holds another role than the step's; `.role_id` is the role that must approve."""
+
+    def __init__(self, role_id):
+        super().__init__(role_id)
+        self.role_id = role_id
+
+
+def approve(plan, step_id, result, ticket, bans=(), as_role=None):
+    """A human pressed Approve. A blocked step can never be approved.
+    `as_role` is the approver's role from the invite; None skips the check (unit tests of the signing only)."""
     _refuse_if_banned({"tool": result.get("tool"), "role_id": result.get("role_id")}, bans)
+    # The plan is signed, so its step list is the authority on who owns a step, not the client's result.
+    owner = next((s["role_id"] for s in plan.get("steps", []) if s.get("id") == step_id), None)
+    if as_role is not None and owner is not None and as_role != owner:
+        raise WrongRole(owner)
     if plan.get("company_id") and result.get("company_id") != plan["company_id"]:
         raise PermissionError("This result belongs to a different company.")
     if not valid(ticket, "ticket", plan["run_id"], step_id, result):

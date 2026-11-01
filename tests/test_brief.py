@@ -12,7 +12,7 @@ ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 2},
          {"id": "ops", "title": "Ops Lead", "reports_to": "md", "headcount": 2}]
 TODAY = datetime.date.today()
-GOOD = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10, "price": 1800, "cost": 1500,
+GOOD = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10, "price": 1800, "cost": 1500,
         "delivery_date": (TODAY + datetime.timedelta(days=10)).isoformat()}
 
 
@@ -21,7 +21,7 @@ def client():
     return app_module.create_app().test_client()
 
 
-def company(client, names=("Lan Pham", "Duc Tran")):
+def company(client, names=("Dana Reyes", "Marcus Tran")):
     h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
     client.post("/api/company", json={"company": "Acme", "roles": ROLES, "size": 20}, headers=h)
     for role in ("sales", "ops"):
@@ -93,14 +93,14 @@ def test_without_muse_the_brief_is_written_by_code_and_labelled(client, busy):
 def test_invented_ids_and_lines_naming_people_never_reach_the_owner(client, busy, monkeypatch):
     ids = busy["ids"]
     fake(monkeypatch, [{"package_id": ids["fresh"], "line": "Ops Lead should take it today."},
-                       {"package_id": ids["old"], "line": "Duc Tran is slow on this one."},
+                       {"package_id": ids["old"], "line": "Marcus Tran is slow on this one."},
                        {"package_id": "made-up", "line": "Approve the secret order."}])
     r = client.get("/api/owner/brief", headers=busy["h"]).json
     text = json.dumps(r)
     lines = {i["package_id"]: i for items in r["lists"].values() for i in items}
     assert lines[ids["fresh"]] == {**lines[ids["fresh"]], "line": "Ops Lead should take it today.", "written_by": "muse"}
     assert lines[ids["old"]]["written_by"] == "code" and r["replaced_lines"] == 2
-    for word in ("Duc Tran", "Lan Pham", "made-up", "secret", busy["sales"], busy["ops"]):
+    for word in ("Marcus Tran", "Dana Reyes", "made-up", "secret", busy["sales"], busy["ops"]):
         assert word not in text
 
 
@@ -113,7 +113,7 @@ def test_the_model_sees_documents_and_roles_but_no_people(client, busy, monkeypa
                 "text": json.dumps({"lines": []}), "cost_usd": 0.001}
     monkeypatch.setattr(muse, "complete", complete)
     client.get("/api/owner/brief", headers=busy["h"])
-    for word in ("Duc Tran", "Lan Pham", busy["sales"], busy["ops"], "from_person", "claimed_by"):
+    for word in ("Marcus Tran", "Dana Reyes", busy["sales"], busy["ops"], "from_person", "claimed_by"):
         assert word not in seen[0]
     assert "Old Mill" in seen[0] and "Ops Lead" in seen[0]
 

@@ -4,7 +4,7 @@
     "fields": [
       {"key": "customer", "label": "Customer", "noun": "customer", "type": "text", "required": true, "options": []},
       {"key": "route", "label": "Shipping route", "noun": "route", "type": "choice", "required": true,
-       "options": ["Hanoi-Haiphong", "Hanoi-Danang", "Haiphong-Hochiminh", "Danang-Hochiminh"]},
+       "options": ["Chicago-Detroit", "Chicago-Phoenix", "Detroit-Atlanta", "Phoenix-Atlanta"]},
       {"key": "pallets", "label": "Pallets", "noun": "pallets", "type": "integer", "required": true, "options": []},
       {"key": "price", "label": "Price (USD)", "noun": "price", "type": "money", "required": true, "options": []},
       {"key": "cost", "label": "Cost (USD)", "noun": "cost", "type": "money", "required": true, "options": []},

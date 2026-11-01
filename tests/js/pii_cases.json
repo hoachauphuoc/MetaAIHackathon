@@ -2,7 +2,7 @@
   "pii": [
     [
       "email",
-      "Contact lan.nguyen@harborlane.vn about the quote."
+      "Contact dana.reyes@harborlane.com about the quote."
     ],
     [
       "email",
@@ -22,27 +22,43 @@
     ],
     [
       "phone",
-      "Call +84 912 345 678 tomorrow"
-    ],
-    [
-      "phone",
-      "Phone: 0912.345.678"
-    ],
-    [
-      "phone",
-      "ring (024) 3825 1234 after lunch"
-    ],
-    [
-      "phone",
-      "+1 (415) 555-0132 is the dock"
-    ],
-    [
-      "phone",
-      "my mobile 091 234 5678"
-    ],
-    [
-      "phone",
       "+44 20 7946 0958 for the UK depot"
+    ],
+    [
+      "phone",
+      "Call 415-555-0132 tomorrow"
+    ],
+    [
+      "phone",
+      "Phone: (415) 555-0132"
+    ],
+    [
+      "phone",
+      "ring 415.555.0132 after lunch"
+    ],
+    [
+      "phone",
+      "+1 415 555 0132 is the dock"
+    ],
+    [
+      "phone",
+      "1-800-555-0199 is the help line"
+    ],
+    [
+      "phone",
+      "my mobile +1 (415) 555-0132"
+    ],
+    [
+      "phone",
+      "+49 30 901820 is the Berlin office"
+    ],
+    [
+      "phone",
+      "Dial +81 3-1234-5678 for Tokyo"
+    ],
+    [
+      "phone",
+      "Sydney: +61 2 9374 4000"
     ],
     [
       "card",
@@ -73,18 +89,6 @@
       "ssn: 123-45-6789"
     ],
     [
-      "id",
-      "CCCD 001204012345"
-    ],
-    [
-      "id",
-      "ID number 079201001234"
-    ],
-    [
-      "id",
-      "citizen id 038099001122"
-    ],
-    [
       "iban",
       "IBAN GB82 WEST 1234 5698 7654 32"
     ],
@@ -98,11 +102,11 @@
     ],
     [
       "name",
-      "Ask Nguyen Van An to sign"
+      "Ask Maria Lopez to sign"
     ],
     [
       "name",
-      "Mrs. Tran approved it"
+      "Mrs. Patel approved it"
     ],
     [
       "name",
@@ -134,11 +138,11 @@
     ]
   ],
   "clean": [
-    "Quote 12 pallets Hanoi-Haiphong for USD 2160",
+    "Quote 12 pallets Oakland-Reno for USD 2160",
     "Order 20261120 ships on 2026-11-20",
-    "PO-77812345 total 1,234,567 VND",
+    "PO-77812345 total USD 1,234,567",
     "Margin is 16.7 percent",
-    "Truck 29C-123.45 is late",
+    "Truck 7ABC123 is late",
     "Invoice 000123 due in 30 days",
     "Weight 12500 kg on 8 pallets",
     "Call me tomorrow at 9:30",
@@ -148,6 +152,9 @@
     "Ship by 15/11/2026",
     "Explain how a JWT token expires.",
     "Why does my password reset email arrive late?",
-    "The token budget is 4000 per call."
+    "The token budget is 4000 per call.",
+    "ID number 079201001234",
+    "Order 4155550132 shipped",
+    "Meeting 2026-11-04 at 14:30, total $1,250.00"
   ]
 }

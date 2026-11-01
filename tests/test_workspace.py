@@ -13,7 +13,7 @@ import workspace
 ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 3},
          {"id": "ops", "title": "Ops Lead", "reports_to": "md", "headcount": 3}]
-GOOD = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10, "price": 1800, "cost": 1500,
+GOOD = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10, "price": 1800, "cost": 1500,
         "delivery_date": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()}
 
 
@@ -22,7 +22,7 @@ def client():
     return app_module.create_app().test_client()
 
 
-def company(client, names=("Lan Pham", "Duc Tran", "Mai Nguyen")):
+def company(client, names=("Dana Reyes", "Marcus Tran", "Priya Nair")):
     h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
     client.post("/api/company", json={"company": "Acme", "roles": ROLES, "size": 20}, headers=h)
     for role in ("sales", "ops"):
@@ -63,7 +63,7 @@ def test_list_returned_documents_gives_the_reason_and_nothing_about_people(clien
     assert out["count"] == 1 and out["documents"][0]["title"] == "Acme Foods"
     assert out["documents"][0]["returned_because"] == "Confirm the delivery window"
     text = json.dumps(out)
-    for secret in (team["sales"], team["sales2"], team["ops"], "Lan Pham", "Duc Tran", "Mai Nguyen"):
+    for secret in (team["sales"], team["sales2"], team["ops"], "Dana Reyes", "Marcus Tran", "Priya Nair"):
         assert secret not in text
 
 

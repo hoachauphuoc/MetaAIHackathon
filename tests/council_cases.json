@@ -26239,7 +26239,7 @@
      "token": "{tokA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -26522,7 +26522,7 @@
      "token": "{tokA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -26805,7 +26805,7 @@
      "token": "{tokA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -26977,7 +26977,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -27191,7 +27191,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -27537,7 +27537,7 @@
      "token": "{tokA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -27821,7 +27821,7 @@
      "token": "{tA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -28101,7 +28101,7 @@
      "token": "{tA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -28294,7 +28294,7 @@
      "token": "{tA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -28384,7 +28384,7 @@
      "token": "{tA}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-12-15",
       "notes": ""
@@ -29532,7 +29532,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": ""
@@ -29698,7 +29698,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": ""
@@ -29859,12 +29859,31 @@
    },
    {
     "method": "POST",
+    "path": "/api/invites",
+    "headers": {
+     "X-Sandbox": "{sandbox_a}"
+    },
+    "json": {
+     "role_id": "ops",
+     "display_name": "Olga"
+    },
+    "save": {
+     "ops_tok": "token"
+    },
+    "expect": {
+     "status": [
+      201
+     ]
+    }
+   },
+   {
+    "method": "POST",
     "path": "/api/workflow/plan",
     "json": {
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": ""
@@ -29962,7 +29981,7 @@
     "method": "POST",
     "path": "/api/workflow/approve",
     "json": {
-     "token": "{tok}",
+     "token": "{ops_tok}",
      "plan": "{plan}",
      "signature": "{sig}",
      "step_id": "schedule",
@@ -30135,7 +30154,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": ""
@@ -35232,7 +35251,7 @@
      "token": "{tok_a}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": "Regular"
@@ -35417,7 +35436,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": "Regular"
@@ -35497,7 +35516,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": "Regular"
@@ -35726,7 +35745,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": "Regular"
@@ -35875,7 +35894,7 @@
      "token": "{tok}",
      "task": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "delivery_date": "2026-11-20",
       "notes": "Regular"
@@ -36065,7 +36084,7 @@
      "to_role": "ops",
      "values": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "price": 1800,
       "cost": 1500,
@@ -36115,7 +36134,7 @@
      "token": "{tok}",
      "values": {
       "customer": "Acme",
-      "route": "Hanoi-Haiphong",
+      "route": "Chicago-Detroit",
       "pallets": 10,
       "price": 1800,
       "cost": 1500,

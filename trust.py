@@ -16,12 +16,14 @@ STORED = {
                 "who sent and who holds it, its check result. Company records, kept for the sandbox. "
                 "A handover a leaving person chose to send is one of them: their own words about open work.",
     "decisions": "Accept or return decisions on a document: the role that acted, the reason, the date.",
+    "approvals": "Which hashed invite name approved which step of which order, so one person cannot approve two steps "
+                 "of the same order. No role history, counts or content.",
     "daily_cost": "Dollars spent per day across the service. No who, no what.",
 }
 
 NEVER_STORED = [
     "Chat messages and chat history: they stay in your browser and are sent for each answer only.",
-    "Workflow orders, tool results and approvals: they stay in your browser.",
+    "Workflow orders and tool results: they stay in your browser.",
     "A suggested fix for a returned package: shown to the sender once and never saved. Only the "
     "version the sender chooses to resend is stored.",
     "Photos of paper documents: sent to the model once to fill the form, then dropped. If you ask to cover "
@@ -30,7 +32,7 @@ NEVER_STORED = [
     "A spoken job note: the recording is turned into text by the speech model once and dropped; only the text "
     "reaches the message box, where you read and fix it before anything else happens. The text is then masked "
     "in your browser like a pasted message. Nothing is kept.",
-    "A customer message pasted to fill a form: emails and phone numbers are masked in your browser first, "
+    "A customer message pasted to fill a form: emails and phone numbers (US formats or with a + country code) are masked in your browser first, "
     "the rest is sent to the model once to fill the form, then dropped. Nothing is kept; you check every field.",
     "What the chat assistant read to answer you: it can only read your own documents, nothing "
     "it reads is kept, and it cannot claim, accept, return or send anything.",
@@ -51,10 +53,14 @@ LIMITS = [
     "while free credits are in use may be used for product improvement. Do not enter real company "
     "data here; a paid account does not carry that term.",
     "Sandboxes are deleted after 24 hours and may be lost earlier if the service restarts.",
-    "Emails, phone numbers, card numbers and ID numbers are masked in your browser before the "
-    "notes of a handoff or a chat message are sent to a model. Names cannot be detected, and the "
-    "other form fields are not masked, so keep personal names out of them. A handover is masked "
-    "field by field. Photos are not masked: cover names and phone numbers before taking one.",
+    "Emails, phone numbers (US formats and international numbers written with a + country code), payment card "
+    "numbers (checksum-verified), US Social Security numbers, IBANs, passwords and API keys, and the client names you "
+    "list are masked in your browser before the notes of a handoff or a chat message are sent to a model. Other "
+    "national ID formats, unlisted personal names and photos are not masked, and the other form fields are not "
+    "masked either, so keep personal names out of them. A handover is masked field by field. Cover names and phone "
+    "numbers before taking a photo.",
+    "Other national ID formats (passports, non-US ID numbers) and phone numbers written in a national format "
+    "without a + country code (except US formats) are not masked.",
     "Reading a photo can go wrong. The values only fill the form; the person checks every field "
     "and the rules check them again. A field the model says it cannot read is left empty and marked.",
     "The code helper (software companies) explains, reviews and drafts code. It has no tool that runs, deploys or pushes "

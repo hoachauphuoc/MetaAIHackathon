@@ -10,7 +10,7 @@ ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 2},
          {"id": "ops", "title": "Ops Lead", "reports_to": "md", "headcount": 3},
          {"id": "finance", "title": "Finance Lead", "reports_to": "md", "headcount": 2}]
-GOOD = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10, "price": 1800, "cost": 1500,
+GOOD = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10, "price": 1800, "cost": 1500,
         "delivery_date": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()}
 
 
@@ -385,7 +385,7 @@ def test_start_again_clears_stale_dates_and_recomputes_the_rate_card_and_lists_e
     pid = send(client, team["sales"], values={"price": 1, "cost": 1, "pallets": 10}).json["id"]
     got = client.post(f"/api/handoffs/{pid}/again", json={"token": team["sales"]}).json
     assert got["values"]["delivery_date"] == "" and got["values"]["customer"] == "Acme"
-    rate = tools.quote_price("Hanoi-Haiphong", 10)
+    rate = tools.quote_price("Chicago-Detroit", 10)
     assert got["values"]["price"] == rate["price"] and got["values"]["cost"] == rate["cost"]
     assert any("Delivery date cleared" in c for c in got["changes"])
     assert any("Price recomputed" in c for c in got["changes"])

@@ -24,8 +24,7 @@ the app's side of that setup took 31.9 s in one measured run, and work moves bet
 calls whose numbers code computes from the signed order and quote (model-returned arguments
 that differ are recomputed from that source and flagged `needs_human_check`), each step unlocked
 only after a person presses Approve and the server issues an HMAC-protected receipt for the
-approved result (a server-issued receipt, not a personal signature; in the demo the same invited
-user approves at all three steps).
+approved result (a server-issued receipt, not a personal signature; each step is approved by the invite of its role and the order moves between roles as a code).
 
 **Checked end to end (set 14, one run):** a hidden browser on the real Muse models (a local build of
 this repo, not the deployed link) finished the whole freight order on desktop and on a 375 px phone
@@ -81,7 +80,7 @@ What is built today is the core that every company shares; industry modules are 
   approval limits, and who must approve each handoff. Code enforces these and the server refuses anything
   looser, naming the rule.
 - **The employee keeps** the chat (held in their own browser, with a button to clear it; the server has no
-  table of messages and its logs hold token counts and cost only), and **My private rules**, stricter limits
+  table of messages and its logs hold token counts, cost, model, timing and error type, never message text), and **My private rules**, stricter limits
   for their own assistant, readable only with their link and never by the owner. Nothing records how a person works.
 
 **Why now.** Giving every role its own assistant, with permissions per level, used to mean consultants and
@@ -114,9 +113,12 @@ a few minutes of clicking, but only the 31.9 s is measured.
    model, so a slow or failed model call can delay a note but cannot change a price, a limit or an approval.
    The one slow part is the Private-mode endpoint, which sleeps when idle; warming it before use is the cost
    saving and the speed fix (see Limits).
-5. **Privacy first, scoped honestly.** Emails, phone, card and ID numbers are masked in the browser before any
-   model sees them (names and photos are not), chat history stays in the employee's own browser, and server
-   logs hold token counts and cost only. Nothing is stored about how a person works.
+5. **Privacy first, scoped honestly.** Emails, phone numbers (US formats and international numbers written with a
+   + country code), payment card numbers (checksum-verified), US Social Security numbers, IBANs, passwords and API
+   keys, and the client names you list are masked in the browser before the text goes to a model. Other national ID
+   formats, unlisted personal names and photos are not masked. Chat history is stored in the employee's browser.
+   Server logs record token counts, cost, model, timing and error type only, never message text. Nothing about how
+   a person works is stored.
 
 **Adoption cost for an employee is close to zero.** Nothing is installed: an invite link opens the assistant in
 the browser, on a laptop or on a 375 px phone (set 14 walked the whole path at both sizes), so the first use
@@ -151,8 +153,8 @@ The measured row is the app's side only; the human row is my estimate and is lab
 |---|---|
 | Chart from ten questions, checked by code | Divisions, departments, teams and individual levels (today: Group and Subsidiary) |
 | One assistant and invite link per role | Admin-set spending caps (today: a per-sandbox call limit for the demo) |
-| Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
-| Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; in the demo the same invited user approves at all three steps) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
+| Browser-side masking of emails, phones, cards, US SSNs, IBANs, secrets and listed client names (not other ID formats, not unlisted names, not photos) | Native desktop and phone apps |
+| Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; each step is approved by the invite of its role and the order moves between roles as a code) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
 | Private mode on Glimmer (an idle endpoint woke in 166 s before the GPU snapshot, measured once, and in 23 to 31 s after it, measured four times) | Free-text personal working styles (today a private rule is a number) |
 | | AI routing of the workflow itself: a model choosing which role does which step, from a fixed vocabulary of roles, tools and skills, checked by code (today the Sales -> Operations -> Finance workflow, its three tools and the skill playbooks in `data/skills.json` and `data/playbooks.json` are hand-written and logistics-first; clinic and software studio are pre-written templates; any other trade gets the general services form) |
 
@@ -191,7 +193,7 @@ are the next step.* Not built yet.
 - **Try it:** open https://role-assistants-662084666675.us-central1.run.app, press **Try the demo company**, then
   **Design my org chart**. Nothing to sign up for.
 - **Fast path (a short click path; the app's own setup took 31.9 s in one measured run, the rest is your clicking):** accept the chart, wait for the assistants (one per role; four or five for the demo company, depending on the chart Wonder designs), press
-  **Create invite link** on Sales, open it, press **Plan this order**, approve the three steps.
+  **Create invite link** on Sales, Operations and Finance, open Sales, press **Plan this order**, approve the Sales step, then paste the order code under **Continue an order** on the Operations and Finance links.
   Above the order form a line says whether Private mode is set up and whether Glimmer answered in the last ten
   minutes (probably warm) or not (may be asleep); the server only reports its last answer, it never probes the endpoint.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
@@ -210,8 +212,7 @@ are the next step.* Not built yet.
 - **Agentic use, bounded on purpose:** in the order workflow the model chooses the arguments of a tool call
   (`quote_price`, `check_margin`, `make_calendar_event`), code computes every number from the signed order and quote (model-returned arguments that differ are recomputed from that source and flagged `needs_human_check`), the rules can only raise a
   step's status, and the next role starts only after a person presses Approve and the server issues
-  an HMAC-protected receipt for the approved result (not a personal signature; in the demo the same
-  invited user approves at all three steps); a blocked step cannot be
+  an HMAC-protected receipt for the approved result (not a personal signature; each step is approved by the invite of its role and the order moves between roles as a code); a blocked step cannot be
   approved. The autonomy is the tool choice; the approval gate is the product, and no model can remove it
   (`tests/test_workflow.py`).
 
@@ -259,14 +260,15 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    message. The server stores nothing. The assistant's prompt carries a hand-written playbook for
    the role (`data/playbooks.json`) and the company's real rules from `data/params.json` (margin
    floor, approval limit, rate card; cost only for roles that may see it). Measured: 9 of 10
-   rule-based questions answered correctly against 2 of 10 with the plain prompt. Before anything is sent, emails, phone numbers, card
-   numbers, ID numbers and IBANs are masked in the browser, with a preview. Personal names and photos are
+   rule-based questions answered correctly against 2 of 10 with the plain prompt. Before anything is sent, emails, phone numbers (US formats and
+   numbers with a + country code), card numbers, US Social Security numbers, IBANs, secrets and listed client names
+   are masked in the browser, with a preview. Other national ID formats, unlisted personal names and photos are
    not masked (see Limits). **Compare with generic
    AI** asks the same question of the role assistant and of a plain assistant, side by side.
 6. **Team workflow (Sales, Operations, Finance):** each step lets the model choose a tool's
    arguments by function calling; **code computes every number** (`tools.py`) from the signed order and quote; model-returned arguments that differ are recomputed from that source and flagged `needs_human_check`. A two-layer check
    follows: rules set a floor, then the model reads the package (customer notes are untrusted
-   text) and may only raise the status. A person presses Approve; the server then issues an HMAC-protected receipt for the approved result (a server-issued receipt, not a personal signature; in the demo the same invited user approves at all three steps) and
+   text) and may only raise the status. A person presses Approve; the server then issues an HMAC-protected receipt for the approved result (a server-issued receipt, not a personal signature; each step is approved by the invite of its role and the order moves between roles as a code) and
    refuses step N+1 without a valid receipt for step N. A blocked step cannot be approved.
 
 7. **Inbox and Today:** a person sends a quote package to another role along a declared handoff.
@@ -338,7 +340,7 @@ time at the company:
    team, with its age and whether someone took it (never who), and a reminder draft per row. The
    draft is built by code from the package's own fields and is only copied; nothing is sent.
 17. **Customer message to form:** paste a customer's message and Spark fills the company's form.
-   Emails and phone numbers are masked in the browser first, the message is treated as data, a
+   Emails and phone numbers (US formats or with a + country code) are masked in the browser first, the message is treated as data, a
    field the model could not read is emptied by code, the rules check the result, and the person
    checks and sends. Nothing is stored.
 18. **Start from a past quote:** a new draft from one of the sender's own handoffs. Dates are
@@ -371,7 +373,7 @@ ran (the "Timed runs" tile and the setup time in docs/MEASURED.md); nothing else
 |---|---|
 | Numbers come from code, never from a model: they come from the signed order and quote, and model-returned arguments that differ are recomputed from that source and flagged `needs_human_check` | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
 | After a person presses Approve the server issues an HMAC-protected receipt (not a personal signature); a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
-| Names you list are masked in the browser; pattern masking alone does not find names | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`); the pattern rules do not detect names (`docs/MEASURED.md`, set 2 and the browser masking table) |
+| Names you list are masked in the browser; pattern masking alone does not find names | `listed client names are masked as whole words, in any case` (`tests/js/client_names.test.mjs`); the pattern rules do not detect names (`docs/MEASURED.md`, set 2 and the browser masking tables, latest: "PII masking scope US and international") |
 | The calendar file is built by code and refused without a date | `test_a_calendar_file_is_built_by_code_and_refused_without_a_date` |
 | Every browser module parses before it reaches a browser | `test_every_browser_module_parses` |
 
@@ -409,7 +411,7 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
 | Handover: private draft, own team, leaver cannot accept | `tests/test_handover.py` |
 | Chat tools: read-only, scoped to the person, no tokens or names, notes are data | `tests/test_workspace.py` |
-| Emails, phone, card and ID numbers, IBANs masked in the browser (not names, not photos) | `tests/js/pii.test.mjs` |
+| Emails, phones (US and + country code), cards, US SSNs, IBANs, secrets masked in the browser (not other ID formats, not unlisted names, not photos) | `tests/js/pii.test.mjs` |
 | Model text never becomes HTML | `scripts/check.ps1` fails on `innerHTML` and similar |
 
 OWASP Top 10 for LLM applications, as applied here:
@@ -506,7 +508,9 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   personal names into them (also stated on `/trust`).
 - Not built: Shadow/Assist/Primary modes, handoffs to a named person, manager assignment, parallel
   approval, org advisor. (Handoff JSON/CSV import and export are built; see "How it works".)
-- PII masking is pattern-based and cannot detect names (shown to the user and on `/trust`).
+- PII masking is pattern-based and cannot detect unlisted names (shown to the user and on `/trust`).
+- Other national ID formats (passports, non-US ID numbers) and phone numbers written in a national format without a
+  + country code (except US formats) are not masked.
 
 ## Run it
 

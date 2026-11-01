@@ -10,7 +10,7 @@ import tools
 import workflow
 
 TODAY = datetime.date(2026, 11, 1)
-TASK = {"customer": "Acme", "route": "Hanoi-Haiphong", "pallets": 10,
+TASK = {"customer": "Acme", "route": "Chicago-Detroit", "pallets": 10,
         "delivery_date": "2026-11-20", "notes": "Regular customer."}
 ROLES = [{"id": "md", "title": "MD", "reports_to": None, "headcount": 1},
          {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 2},
@@ -40,7 +40,7 @@ class FakeMuse:
         verdict = self.private_verdict if private else self.verdict
         if kw.get("tools"):
             name = kw["tools"][0]["function"]["name"]
-            args = self.tool_args or {"quote_price": {"route": "Hanoi-Haiphong", "pallets": 10},
+            args = self.tool_args or {"quote_price": {"route": "Chicago-Detroit", "pallets": 10},
                                       "make_calendar_event": {"title": "Deliver", "date": "2026-11-20"},
                                       "check_margin": {"price": 1800, "cost": 1500}}[name]
             return reply(tool_calls=[{"name": name, "arguments": json.dumps(args)}])
@@ -186,7 +186,7 @@ def test_clear_verdict_with_findings_needs_a_human_check(monkeypatch):
 
 
 def test_blocked_step_cannot_be_approved(monkeypatch):
-    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Hanoi-Haiphong", "pallets": 10}))
+    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Chicago-Detroit", "pallets": 10}))
     plan = plan_for()
     out = run(plan, "quote", {})
     out["result"]["status"] = "blocked"
@@ -214,7 +214,7 @@ def test_bad_tool_arguments_are_retried_once_then_taken_from_the_package(monkeyp
 
 
 def test_valid_but_different_quote_arguments_are_recomputed_and_flagged(monkeypatch):
-    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Hanoi-Haiphong", "pallets": 1}))
+    monkeypatch.setattr(muse, "complete", FakeMuse(tool_args={"route": "Chicago-Detroit", "pallets": 1}))
     result = run(plan_for(), "quote", {})["result"]
     assert result["tool_result"]["price"] == 1800  # signed 10-pallet order, not the model's 1 pallet
     assert result["status"] == "needs_human_check" and result["demo_mode"] is True
@@ -486,3 +486,65 @@ def test_private_warm_needs_a_recent_answer(monkeypatch):
     assert muse.private_warm() is True
     monkeypatch.setattr(muse, "_private_answered_at", muse.time.time() - muse.WARM_S - 1)
     assert muse.private_warm() is False
+
+
+# --- one role approves each step ----------------------------------------------------------
+def three_invites(client, names=(None, None, None)):
+    h, _ = sales_token(client)
+    tokens = {role: client.post("/api/invites", json={"role_id": role, **({"display_name": n} if n else {})},
+                                headers=h).json["token"] for role, n in zip(("sales", "ops", "finance"), names)}
+    planned = client.post("/api/workflow/plan", json={"token": tokens["sales"], "task": TASK}).json
+    return tokens, {"plan": planned["plan"], "signature": planned["signature"]}
+
+
+def step_and_approve(client, token, base, step_id, receipts=None):
+    out = client.post("/api/workflow/step", json={"token": token, **base, "step_id": step_id,
+                                                  "receipts": receipts or {}}).json
+    return out, client.post("/api/workflow/approve", json={
+        "token": token, **base, "step_id": step_id, "result": out["result"], "ticket": out["ticket"]})
+
+
+def test_http_each_role_approves_its_own_step_end_to_end(client, monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse())
+    tokens, base = three_invites(client)
+    receipts = {}
+    for step in workflow.STEPS:
+        out, ok = step_and_approve(client, tokens[step["role_id"]], base, step["id"], receipts)
+        assert ok.status_code == 200, ok.json
+        receipts[step["id"]] = {"result": out["result"], "receipt": ok.json["receipt"]}
+    assert set(receipts) == {"quote", "schedule", "margin"}
+
+
+def test_http_another_role_cannot_approve_and_the_message_names_the_role(client, monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse())
+    tokens, base = three_invites(client)
+    out, wrong = step_and_approve(client, tokens["ops"], base, "quote")
+    assert wrong.status_code == 409
+    assert wrong.json["error"] == "wrong_role" and wrong.json["required_role"] == "sales"
+    assert "Sales" in wrong.json["message"] and "receipt" not in wrong.json
+    # the refusal is not sticky: the right role approves the same result
+    fine = client.post("/api/workflow/approve", json={
+        "token": tokens["sales"], **base, "step_id": "quote", "result": out["result"], "ticket": out["ticket"]})
+    assert fine.status_code == 200
+
+
+def test_http_the_same_person_holding_two_roles_cannot_approve_two_steps(client, monkeypatch):
+    monkeypatch.setattr(muse, "complete", FakeMuse())
+    tokens, base = three_invites(client, ("Dana Lee", "dana lee ", "Sam Ng"))
+    first, ok = step_and_approve(client, tokens["sales"], base, "quote")
+    assert ok.status_code == 200
+    receipts = {"quote": {"result": first["result"], "receipt": ok.json["receipt"]}}
+    _, second = step_and_approve(client, tokens["ops"], base, "schedule", receipts)
+    assert second.status_code == 409 and second.json["error"] == "wrong_role"
+    assert second.json["reason"] == "same_person"
+    # the same person may approve the same step again (a re-run), only a second step is refused
+    assert step_and_approve(client, tokens["sales"], base, "quote")[1].status_code == 200
+
+
+def test_workflow_approve_unit_rejects_a_role_that_does_not_own_the_step():
+    plan = plan_for()
+    out = run(plan, "schedule", approve_all(plan, 1))
+    with pytest.raises(workflow.WrongRole) as e:
+        workflow.approve(plan, "schedule", out["result"], out["ticket"], as_role="finance")
+    assert e.value.role_id == "ops"
+    assert workflow.approve(plan, "schedule", out["result"], out["ticket"], as_role="ops")

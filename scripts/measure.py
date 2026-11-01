@@ -248,16 +248,16 @@ def set10():
 def returned_cases():
     """Ten returned packages; the rules findings are real outputs, the reasons are what a reviewer writes."""
     kinds = [
-        ("price below cost", {"price": 1000, "cost": 1500, "route": "Hanoi-Haiphong"}, "Price is below cost"),
-        ("price below cost", {"price": 2000, "cost": 4200, "route": "Hanoi-Danang"}, "The price is under our cost"),
-        ("price below cost", {"price": 500, "cost": 5600, "route": "Haiphong-Hochiminh"}, "Price looks wrong, far below cost"),
-        ("thin margin", {"price": 1580, "cost": 1500, "route": "Hanoi-Haiphong"}, "Margin under the 12% floor"),
-        ("thin margin", {"price": 3700, "cost": 3300, "route": "Danang-Hochiminh"}, "Margin too thin, fix the price"),
-        ("missing price", {"price": None, "cost": 1500, "route": "Hanoi-Haiphong"}, "No price given"),
-        ("route typo", {"price": 1800, "cost": 1500, "route": "Hanoi-Haipong"}, "Route is not on the rate card"),
-        ("route typo", {"price": 4200, "cost": 3600, "route": "Hanoi Danang"}, "Unknown route"),
-        ("past date", {"price": 1800, "cost": 1500, "route": "Hanoi-Haiphong", "delivery_date": "2026-09-01"}, "Delivery date is in the past"),
-        ("past date", {"price": 1800, "cost": 1500, "route": "Hanoi-Haiphong", "delivery_date": "2026-10-15"}, "Date already passed"),
+        ("price below cost", {"price": 1000, "cost": 1500, "route": "Chicago-Detroit"}, "Price is below cost"),
+        ("price below cost", {"price": 2000, "cost": 4200, "route": "Chicago-Phoenix"}, "The price is under our cost"),
+        ("price below cost", {"price": 500, "cost": 5600, "route": "Detroit-Atlanta"}, "Price looks wrong, far below cost"),
+        ("thin margin", {"price": 1580, "cost": 1500, "route": "Chicago-Detroit"}, "Margin under the 12% floor"),
+        ("thin margin", {"price": 3700, "cost": 3300, "route": "Phoenix-Atlanta"}, "Margin too thin, fix the price"),
+        ("missing price", {"price": None, "cost": 1500, "route": "Chicago-Detroit"}, "No price given"),
+        ("route typo", {"price": 1800, "cost": 1500, "route": "Chicago-Detrot"}, "Route is not on the rate card"),
+        ("route typo", {"price": 4200, "cost": 3600, "route": "Chicago Phoenix"}, "Unknown route"),
+        ("past date", {"price": 1800, "cost": 1500, "route": "Chicago-Detroit", "delivery_date": "2026-09-01"}, "Delivery date is in the past"),
+        ("past date", {"price": 1800, "cost": 1500, "route": "Chicago-Detroit", "delivery_date": "2026-10-15"}, "Date already passed"),
     ]
     cases = []
     for kind, change, reason in kinds:
@@ -302,10 +302,10 @@ KITS = {
 # (kit, question, patterns that must all match, patterns that must not match)
 QUESTIONS = [
     ("sales", "What is our margin floor?", [r"\b12\b"], []),
-    ("sales", "A customer wants 10 pallets Hanoi-Haiphong for USD 1,600 in total and our cost is USD 1,500. Can I confirm it?", [r"\b12\b", r"approv"], []),
-    ("sales", "What do I quote for 20 pallets on Hanoi-Danang?", [r"8,?400"], []),
-    ("sales", "What do I quote for 30 pallets on Hanoi-Haiphong?", [r"5,?400"], []),
-    ("sales", "Write two lines for a customer email giving our cost per pallet on Hanoi-Haiphong.", [], [r"\b150\b"]),
+    ("sales", "A customer wants 10 pallets Chicago-Detroit for USD 1,600 in total and our cost is USD 1,500. Can I confirm it?", [r"\b12\b", r"approv"], []),
+    ("sales", "What do I quote for 20 pallets on Chicago-Phoenix?", [r"8,?400"], []),
+    ("sales", "What do I quote for 30 pallets on Chicago-Detroit?", [r"5,?400"], []),
+    ("sales", "Write two lines for a customer email giving our cost per pallet on Chicago-Detroit.", [], [r"\b150\b"]),
     ("finance", "An order is USD 62,000. Who has to approve it?", [r"50,?000", r"(top|managing director|director|\bMD\b)"], []),
     ("finance", "What is our margin floor?", [r"\b12\b"], []),
     ("finance", "Price USD 1,000, cost USD 900. Is that acceptable?", [r"\b12\b", r"(below|under|less|short|fall)"], []),
@@ -374,16 +374,16 @@ def set5():
 
 
 SHEETS = [  # (customer, route, pallets, price, cost, date as written, ISO date, font, layout, tilt)
-    ("Minh Anh Bakery", "Hanoi-Haiphong", 10, 1800, 1500, "2026-11-20", "2026-11-20", "Georgia", "table", 0),
-    ("Song Hong Textiles", "Hanoi-Danang", 24, 7200, 6100, "20 Nov 2026", "2026-11-20", "Arial", "lines", -2),
-    ("Blue Lotus Cafe", "Haiphong-Hochiminh", 4, 520, 470, "2026-12-01", "2026-12-01", "Segoe Print", "lines", 3),
-    ("Pho Viet Kitchens", "Danang-Hochiminh", 15, 9750, 8400, "5 Dec 2026", "2026-12-05", "Courier New", "table", 0),
-    ("Green Field Farms", "Hanoi-Haiphong", 32, 5760, 4800, "2026-11-28", "2026-11-28", "Segoe Print", "table", -3),
-    ("Lam Son Hardware", "Hanoi-Danang", 8, 2400, 2350, "14 Nov 2026", "2026-11-14", "Times New Roman", "lines", 1),
-    ("Saigon Paper Co", "Haiphong-Hochiminh", 50, 6500, 5900, "2026-11-30", "2026-11-30", "Arial", "table", 2),
-    ("Hoa Binh Ceramics", "Danang-Hochiminh", 6, 3900, 3360, "2 Dec 2026", "2026-12-02", "Georgia", "lines", 0),
-    ("Mekong Rice Mill", "Haiphong-Hochiminh", 40, 5200, 4700, "2026-11-25", "2026-11-25", "Segoe Print", "lines", -1),
-    ("Thang Long Print", "Hanoi-Haiphong", 12, 2160, 1800, "19 Nov 2026", "2026-11-19", "Courier New", "table", 3)]
+    ("Maple Street Bakery", "Chicago-Detroit", 10, 1800, 1500, "2026-11-20", "2026-11-20", "Georgia", "table", 0),
+    ("Lakeshore Textiles", "Chicago-Phoenix", 24, 7200, 6100, "20 Nov 2026", "2026-11-20", "Arial", "lines", -2),
+    ("Blue Heron Cafe", "Detroit-Atlanta", 4, 520, 470, "2026-12-01", "2026-12-01", "Segoe Print", "lines", 3),
+    ("Ridgeway Kitchens", "Phoenix-Atlanta", 15, 9750, 8400, "5 Dec 2026", "2026-12-05", "Courier New", "table", 0),
+    ("Green Field Farms", "Chicago-Detroit", 32, 5760, 4800, "2026-11-28", "2026-11-28", "Segoe Print", "table", -3),
+    ("Cedar Hardware", "Chicago-Phoenix", 8, 2400, 2350, "14 Nov 2026", "2026-11-14", "Times New Roman", "lines", 1),
+    ("Bayline Paper Co", "Detroit-Atlanta", 50, 6500, 5900, "2026-11-30", "2026-11-30", "Arial", "table", 2),
+    ("Larkspur Ceramics", "Phoenix-Atlanta", 6, 3900, 3360, "2 Dec 2026", "2026-12-02", "Georgia", "lines", 0),
+    ("Prairie Rice Mill", "Detroit-Atlanta", 40, 5200, 4700, "2026-11-25", "2026-11-25", "Segoe Print", "lines", -1),
+    ("Harbor Print", "Chicago-Detroit", 12, 2160, 1800, "19 Nov 2026", "2026-11-19", "Courier New", "table", 3)]
 
 
 def sheet_html(s, phone=False, smudge=None):
@@ -503,7 +503,7 @@ BRIEF_ROLES = [{"id": "md", "title": "Managing Director", "reports_to": None, "h
                {"id": "sales", "title": "Sales Lead", "reports_to": "md", "headcount": 3},
                {"id": "ops", "title": "Operations Lead", "reports_to": "md", "headcount": 3},
                {"id": "finance", "title": "Finance Lead", "reports_to": "md", "headcount": 2}]
-BRIEF_PEOPLE = ["Lan Pham", "Duc Tran", "Mai Nguyen", "Quang Le"]
+BRIEF_PEOPLE = ["Dana Reyes", "Marcus Tran", "Priya Nair", "Evan Lee"]
 
 
 def brief_packages():
@@ -548,13 +548,13 @@ def set7():
             "cost_usd": round(sum(spent), 4)}
 
 
-DOC_NAMES = ["Minh Anh Bakery", "Song Hong Textiles", "Blue Lotus Cafe", "Pho Viet Kitchens", "Green Field Farms",
-             "Lam Son Hardware", "Saigon Paper Co", "Hoa Binh Ceramics", "Mekong Rice Mill", "Thang Long Print",
-             "Dong Xuan Spices", "Van Phuc Silk", "Ha Long Seafood", "Cao Bang Tea", "Da Lat Flowers",
-             "Hue Lantern Works", "Sapa Honey", "Nha Trang Salt"]
+DOC_NAMES = ["Maple Street Bakery", "Lakeshore Textiles", "Blue Heron Cafe", "Ridgeway Kitchens", "Green Field Farms",
+             "Cedar Hardware", "Bayline Paper Co", "Larkspur Ceramics", "Prairie Rice Mill", "Harbor Print",
+             "Summit Spices", "Willow Textiles", "Harbor Seafood", "Pine Ridge Tea", "Meadow Flowers",
+             "Lantern Works", "Alder Honey", "Coastal Salt"]
 RETURN_REASONS = ["The delivery window is missing", "The price is under the margin floor",
                   "Please confirm the pallet count"]
-DISPLAY_NAMES = {"sales": "Lan Pham", "ops": "Duc Tran", "mate": "Mai Nguyen"}
+DISPLAY_NAMES = {"sales": "Dana Reyes", "ops": "Marcus Tran", "mate": "Priya Nair"}
 
 
 def seed_inbox():
@@ -573,12 +573,12 @@ def seed_inbox():
     today = datetime.date.today()
     for i, name in enumerate(DOC_NAMES):
         mine = i < 15
-        values = {"customer": name, "route": "Hanoi-Haiphong", "pallets": 10,
+        values = {"customer": name, "route": "Chicago-Detroit", "pallets": 10,
                   "price": 1800 + 37 * i if mine else 9001 + i, "cost": 1500,
                   "delivery_date": (today + datetime.timedelta(days=20)).isoformat(), "notes": ""}
         status = "blocked" if i in (5, 6) else "clear"
         p = handoffs.new_package({"role_id": "sales", "token": token["sales" if mine else "mate"]}, ["ops"], values,
-                                 status, [], f"Handoff for {name} on Hanoi-Haiphong.", None, rules.DEFAULT_SCHEMA, today)
+                                 status, [], f"Handoff for {name} on Chicago-Detroit.", None, rules.DEFAULT_SCHEMA, today)
         if i in (0, 1, 2):
             p.update(state="returned", return_reason=RETURN_REASONS[i])
         if i in (3, 4):

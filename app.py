@@ -31,6 +31,9 @@ def sse(event, data):
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+DEFAULT_INVITE_NAME = "Team member"
+
+
 def create_app(db_path=None):
     app = Flask(__name__)
     app.config["STORE"] = store.Store(db_path or os.environ.get("DB_PATH", ":memory:"))
@@ -280,7 +283,7 @@ def create_app(db_path=None):
         role = next((r for r in company["roles"] if r["id"] == body.get("role_id")), None)
         if role is None:
             raise LookupError("No such role.")
-        name = str(body.get("display_name") or "").strip()[:80] or "Team member"
+        name = str(body.get("display_name") or "").strip()[:80] or DEFAULT_INVITE_NAME
         token = db.add_person(sandbox_id, role["id"], name, role["headcount"])
         if token is None:
             return jsonify(error="role_full", message=f"{role['title']} has no free seat."), 409
@@ -403,7 +406,18 @@ def create_app(db_path=None):
             workflow.verify_plan(body["plan"], body.get("signature"), person["sandbox_id"], (db.get_company(person["sandbox_id"]) or {}).get("version", 0), datetime.datetime.now(datetime.timezone.utc).date())
             company = db.get_company(person["sandbox_id"]) or {}
             receipt = workflow.approve(body["plan"], body.get("step_id"), body.get("result"),
-                                       body.get("ticket"), bans=rules.ban_provenance(company.get("levels")))
+                                       body.get("ticket"), bans=rules.ban_provenance(company.get("levels")),
+                                       as_role=person["role_id"])
+            # An invite made without a name cannot be told apart from another one, so only named people are checked.
+            if person["display_name"] != DEFAULT_INVITE_NAME and not db.record_approval(
+                    person["sandbox_id"], body["plan"].get("run_id"), body.get("step_id"), person["display_name"]):
+                return jsonify(error="wrong_role", reason="same_person",
+                               message="You already approved another step of this order. "
+                                       "A different person must approve this one."), 409
+        except workflow.WrongRole as e:
+            title = next((r["title"] for r in company.get("roles", []) if r["id"] == e.role_id), e.role_id)
+            return jsonify(error="wrong_role", reason="other_role", required_role=e.role_id,
+                           message=f"This step must be approved by {title}."), 409
         except (TypeError, AttributeError, KeyError) as e:
             return jsonify(error="bad_plan", message=str(e)), 400
         except PermissionError as e:

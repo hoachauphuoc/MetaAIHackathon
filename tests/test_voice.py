@@ -59,10 +59,10 @@ def test_a_good_recording_is_accepted_at_both_rates():
 def test_the_recording_is_sent_once_and_only_text_comes_back_and_nothing_is_stored(client, token, monkeypatch):
     sent = []
     monkeypatch.setattr(muse, "transcribe", lambda wav, **k: sent.append(wav) or {
-        "demo_mode": False, "demo_reason": None, "text": " Ten pallets Hanoi to Haiphong. "})
+        "demo_mode": False, "demo_reason": None, "text": " Ten pallets Chicago to Detroit. "})
     before = counts(client)
     r = client.post("/api/transcribe", json={"token": token, "audio": wav_url()})
-    assert r.status_code == 200 and r.json == {"text": "Ten pallets Hanoi to Haiphong.", "demo_mode": False,
+    assert r.status_code == 200 and r.json == {"text": "Ten pallets Chicago to Detroit.", "demo_mode": False,
                                                "demo_reason": None}
     assert len(sent) == 1 and sent[0][:4] == b"RIFF"
     assert counts(client) == before

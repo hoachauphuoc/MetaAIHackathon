@@ -150,7 +150,7 @@ def test_prompt_carries_the_role_playbook_and_the_real_company_rules():
     sales = chat.system_prompt(None, {"role_id": "sales", "role_title": "Sales", "goal": "g",
                                        "jobs": ["a"], "limits": ["l"]})
     assert f"{tools.PARAMS['margin_floor_pct']}%" in sales and "USD 50,000" in sales
-    assert "Hanoi-Haiphong USD 180 per pallet" in sales and "cost 150" not in sales
+    assert "Chicago-Detroit USD 180 per pallet" in sales and "cost 150" not in sales
     assert "Never share internal cost or margin with a customer" in sales
     finance = chat.system_prompt(None, {"role_id": "finance", "role_title": "Finance Lead", "goal": "g",
                                          "jobs": ["a"], "limits": ["l"]})

@@ -137,7 +137,7 @@ def test_the_package_keeps_the_form_it_was_sent_with(client):
     for r in ("sales", "ops"):
         client.post("/api/assistants", json={"role_id": r}, headers=h)
     sales = client.post("/api/invites", json={"role_id": "sales"}, headers=h).json["token"]
-    values = {"customer": "A", "route": "Hanoi-Haiphong", "pallets": 3, "price": 600, "cost": 450,
+    values = {"customer": "A", "route": "Chicago-Detroit", "pallets": 3, "price": 600, "cost": 450,
               "delivery_date": NEXT_WEEK}
     pid = client.post("/api/handoffs", json={"token": sales, "to_role": "ops", "values": values}).json["id"]
     client.post("/api/handoff-schema", json={"schema": rules.SCHEMAS["services"]}, headers=h)

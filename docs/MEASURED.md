@@ -446,3 +446,16 @@ A load test of the endpoint, not evidence about users. Tokens are the Meta API's
 | Tokens used | 6,800 |
 
 A load test of the endpoint while warm, not evidence about users. The GPU is billed by the second, so this run's cost is the time it kept the endpoint awake, not the tokens.
+
+
+## PII masking scope US and international (no model, 2026-11-01)
+
+The Vietnamese 12-digit ID rule and the national-format phone rule were removed. Phones are now US formats (with a separator before the last four digits) and `+` country-code numbers with 8 to 15 digits. `node --test tests/js/pii.test.mjs` on `tests/js/pii_cases.json`, 52 sentences written by the project author, so they test the patterns, not an independent sample.
+
+| Result | Value |
+|---|---|
+| Detectable personal items (emails, US and international phones, cards with a valid checksum, SSN, IBAN, secrets) found with the right type | 30 of 30 |
+| Names (not detectable by patterns) | 0 of 4 found, by design, stated on `/trust` |
+| Ordinary business numbers (prices, order numbers, dates, plates, a 12-digit ID number, a bare 10-digit order number) wrongly masked | 0 of 18 |
+
+Other national ID formats and national-format phone numbers without a `+` country code are not masked.

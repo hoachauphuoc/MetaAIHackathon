@@ -52,7 +52,7 @@ def test_forms_cannot_describe_people(word):
 
 
 def test_logistics_wording_is_unchanged():
-    values = {"customer": "A", "route": "Hanoi-Haiphong", "pallets": 1, "price": 1000.0, "cost": 1500.0,
+    values = {"customer": "A", "route": "Chicago-Detroit", "pallets": 1, "price": 1000.0, "cost": 1500.0,
               "delivery_date": "2026-10-01"}
     status, findings = rules.check_package(values, PARAMS, TODAY)
     messages = [f["message"] for f in findings]
@@ -76,7 +76,7 @@ def test_a_services_form_is_checked_with_its_own_words_and_the_owners_thresholds
 
 
 def test_a_choice_outside_its_options_is_blocked():
-    values = {"customer": "A", "route": "Hanoi-Haipong", "pallets": 1, "price": 2000.0, "cost": 1500.0,
+    values = {"customer": "A", "route": "Chicago-Detrot", "pallets": 1, "price": 2000.0, "cost": 1500.0,
               "delivery_date": "2026-12-01"}
     status, findings = rules.check_package(values, PARAMS, TODAY)
     assert status == "blocked" and "route is not one of the choices" in findings[0]["message"]

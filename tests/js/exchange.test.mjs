@@ -14,7 +14,7 @@ test('a JSON file may wrap its record in values and unknown keys are dropped', (
 });
 
 test('notes are never imported, so free text always passes the masking step', () => {
-  assert.deepEqual(readRecord('{"customer":"Z","notes":"call 0912345678"}', schema), { customer: 'Z' });
+  assert.deepEqual(readRecord('{"customer":"Z","notes":"call 415-555-0132"}', schema), { customer: 'Z' });
 });
 
 test('a file with no matching field is refused and names the fields expected', () => {
@@ -44,8 +44,8 @@ test('the approved export keeps only accepted packages that were not blocked', (
 
 test('the approved export never carries free-text notes and keeps the form column order', () => {
   const p = done('a', 'accepted', 'clear');
-  p.values.notes = 'call 0912345678';
-  assert.ok(!toApprovedCsv([p], schema).includes('0912345678'));
+  p.values.notes = 'call 415-555-0132';
+  assert.ok(!toApprovedCsv([p], schema).includes('415-555-0132'));
   assert.deepEqual(Object.keys(JSON.parse(toApprovedJson([p], schema))[0].values), ['customer', 'pallets', 'price']);
 });
 
@@ -58,10 +58,10 @@ const form = { title: 'Quote', title_field: 'customer', fields: [{ key: 'custome
 test('only an accepted, unblocked handoff gets an email draft, built from the form fields and the approval chain', () => {
   assert.equal(approvedMailDraft(done('a', 'sent', 'clear'), form), null);
   assert.equal(approvedMailDraft(done('b', 'accepted', 'blocked'), form), null);
-  const draft = approvedMailDraft(done('Acme', 'accepted', 'clear', { values: { customer: 'Acme', pallets: 3, notes: 'call 0912345678' } }), form);
+  const draft = approvedMailDraft(done('Acme', 'accepted', 'clear', { values: { customer: 'Acme', pallets: 3, notes: 'call 415-555-0132' } }), form);
   assert.match(decodeURIComponent(draft.href), /^mailto:\?subject=Approved: Acme&body=Approved: Acme/);
   assert.ok(draft.text.includes('Pallets: 3') && draft.text.includes('Approved by: Operations, then Finance'));
-  assert.equal(draft.text.includes('0912345678'), false);
+  assert.equal(draft.text.includes('415-555-0132'), false);
 });
 
 test('a draft too long for a mail link has the text to copy and no link', () => {
@@ -72,13 +72,13 @@ test('a draft too long for a mail link has the text to copy and no link', () => 
 
 test('an approved order draft carries only code-computed numbers and the approvals, plus the calendar file', async () => {
   const { approvedOrderDraft } = await import('../../static/exchange.js');
-  const step = (title, role, tool_result) => ({ title, role, result: { tool_result, summary: 'model words 0912345678' } });
+  const step = (title, role, tool_result) => ({ title, role, result: { tool_result, summary: 'model words 415-555-0132' } });
   const draft = approvedOrderDraft([step('Quote the order', 'Sales', { price: 2160, cost: 1800 }),
     step('Schedule the delivery', 'Operations', { title: 'Delivery: Acme', date: '2026-11-13', ics: 'BEGIN:VCALENDAR' }),
     step('Check the margin', 'Finance', { margin_pct: 16.7 })]);
   assert.match(decodeURIComponent(draft.href), /^mailto:\?subject=Approved order: Delivery: Acme&body=/);
   assert.ok(draft.text.includes('Price: USD 2160') && draft.text.includes('Margin: 16.7%') && draft.text.includes('Delivery: 2026-11-13'));
   assert.ok(draft.text.includes('Approved steps: Quote the order (Sales), then Schedule the delivery (Operations), then Check the margin (Finance)'));
-  assert.equal(draft.text.includes('0912345678'), false);  // nothing a model wrote
+  assert.equal(draft.text.includes('415-555-0132'), false);  // nothing a model wrote
   assert.equal(draft.ics, 'BEGIN:VCALENDAR');
 });
