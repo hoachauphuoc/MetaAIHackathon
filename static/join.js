@@ -236,8 +236,8 @@ function workflowPanel(routes) {
   // Finance defaults to Private (open-weights, Standard mode). Only a step the person changes is sent as an override:
   // a step set to Private while the endpoint is asleep sends nothing, and the card says so.
   const MODE_DEFAULTS = { quote: 'public', schedule: 'public', margin: 'private' };
-  const modePick = Object.fromEntries(Object.entries({ quote: 'Sales: quote', schedule: 'Operations: schedule',
-    margin: 'Finance: margin check' }).map(([id, label]) => [id, el('select', { id: `mode-${id}`, 'aria-label': `Model for ${label}` },
+  const stepNames = { quote: 'Sales: quote the order', schedule: 'Operations: schedule the delivery', margin: 'Finance: check the margin' };
+  const modePick = Object.fromEntries(Object.entries(stepNames).map(([id, label]) => [id, el('select', { id: `mode-${id}`, 'aria-label': `Model for ${label}` },
     el('option', { value: 'public' }, 'Public (Meta API)'), el('option', { value: 'private' }, 'Private (open-weights)'))]));
   Object.entries(modePick).forEach(([id, sel]) => { sel.value = MODE_DEFAULTS[id]; });
   const modes = () => Object.fromEntries(Object.entries(modePick).filter(([id, sel]) => sel.value !== MODE_DEFAULTS[id])
@@ -272,7 +272,7 @@ function workflowPanel(routes) {
   el('label', { for: 'date' }, 'Delivery date'), f.delivery_date,
   el('label', { for: 'notes' }, 'Notes from the customer (untrusted text)'), f.notes,
   el('p', { class: 'muted' }, 'Model for each step: Public sends it to the Meta API; Private runs on the open-weights endpoint and only when it is awake.'),
-  ...Object.values(modePick),
+  ...Object.entries(modePick).flatMap(([id, sel]) => [el('label', { for: sel.id }, `${stepNames[id]} runs on`), sel]),
   maskBox, el('div', { class: 'row' }, start), out);
   return box;
 }
