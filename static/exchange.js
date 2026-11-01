@@ -112,6 +112,9 @@ export function download(name, text, type) {
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([text], { type }));
   link.download = name;
+  // A detached link, or a URL revoked in the same tick, can drop the download in Firefox and Safari.
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(link.href);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }

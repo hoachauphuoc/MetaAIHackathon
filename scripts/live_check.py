@@ -2,10 +2,13 @@
 
 Usage: python scripts/live_check.py <url>      (needs requirements-dev.txt: Playwright and its Chromium)
 Demo company -> chart -> accept -> Sales invite -> plan an order -> approve all three steps, then reads the Finance
-step: which model answered and whether the order completed. Real models answer, so it spends a few cents of the
-deployed app's credit; warm Private mode first (scripts/warm_glimmer.py) or the Finance step will say it is starting.
-Exit code 1 when any step fails, the order does not complete, no model answered the Finance step, or a
-Demo mode label (template brief, Private mode starting) is visible on the invite page or the finished order.
+step: which model answered and whether the order completed, and clicks Export approved (CSV) in the Sales inbox.
+A second pass at phone width (375 px) runs chart, accept and invite creation again. Real models answer, so it spends
+a few cents of the deployed app's credit; warm Private mode first (scripts/warm_glimmer.py) or the Finance step will
+say it is starting.
+Exit code 1 when any step fails, the order does not complete, no model answered the Finance step, the chart carries
+no provenance label, the export does not download, or a Demo mode label (template brief, Private mode starting) is
+visible on the invite page or the finished order.
 """
 import re
 import sys
@@ -13,14 +16,14 @@ import time
 
 from playwright.sync_api import sync_playwright
 
+CHART_LABELS = ("Designed by Muse Wonder", "Template")
+EXPORT_TIMEOUT_MS = 30_000
+
 
 def main(url):
     base, failed = url.rstrip("/"), False
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 1280, "height": 900})
-        page.set_default_timeout(240_000)
-        button = lambda name: page.get_by_role("button", name=name)  # noqa: E731
         t0 = time.time()
 
         def step(what, action):
@@ -33,14 +36,35 @@ def main(url):
                 failed = True
                 print(f"FAIL  {time.time() - start:6.1f} s  {what}: {type(e).__name__}: {str(e)[:200]}")
 
-        invite = {}
+        def owner_path(page, invite, width):
+            button = lambda name: page.get_by_role("button", name=name)  # noqa: E731
 
-        def make_invite():
-            card = page.locator(".card", has=page.get_by_role("heading", name="Sales")).first
-            card.get_by_role("button", name="Create invite link").click()
-            link = card.get_by_role("link", name="Open invite link")
-            link.wait_for()
-            invite["href"] = link.get_attribute("href")
+            def chart_label():
+                origin = page.locator(".chart-origin .badge").first.inner_text()
+                if origin not in CHART_LABELS:
+                    raise RuntimeError(f"the chart says {origin!r}, not one of {CHART_LABELS}")
+                print(f"      chart label: {origin}")
+
+            def make_invite():
+                card = page.locator(".card", has=page.get_by_role("heading", name="Sales")).first
+                card.get_by_role("button", name="Create invite link").click()
+                link = card.get_by_role("link", name="Open invite link")
+                link.wait_for()
+                invite["href"] = link.get_attribute("href")
+
+            step(f"open the home page ({width} px)", lambda: page.goto(base))
+            step("start the demo company", lambda: button("Try the demo company").click())
+            step("Wonder designs the chart", lambda: (button("Design my org chart").click(),
+                                                      button("Accept this chart").wait_for()))
+            step("the chart says who drew it", chart_label)
+            step("accept the chart", lambda: (button("Accept this chart").click(),
+                                              button("Create invite link").first.wait_for()))
+            step("create the Sales invite", make_invite)
+
+        page = browser.new_page(viewport={"width": 1280, "height": 900}, accept_downloads=True)
+        page.set_default_timeout(240_000)
+        button = lambda name: page.get_by_role("button", name=name)  # noqa: E731
+        invite = {}
 
         def approve_all():
             for i in range(3):
@@ -56,13 +80,20 @@ def main(url):
             if notes:
                 raise RuntimeError(f"{where} shows {notes[0]!r}")
 
-        step("open the home page", lambda: page.goto(base))
-        step("start the demo company", lambda: button("Try the demo company").click())
-        step("Wonder designs the chart", lambda: (button("Design my org chart").click(),
-                                                  button("Accept this chart").wait_for()))
-        step("accept the chart", lambda: (button("Accept this chart").click(),
-                                          button("Create invite link").first.wait_for()))
-        step("create the Sales invite", make_invite)
+        def export_approved():
+            # The download is built in the page from /api/inbox; an empty export still has the header line.
+            with page.expect_download(timeout=EXPORT_TIMEOUT_MS) as got:
+                button("Export approved (CSV)").click(timeout=EXPORT_TIMEOUT_MS)
+            download = got.value
+            if download.failure():
+                raise RuntimeError(f"the download failed: {download.failure()}")
+            with open(download.path(), encoding="utf-8") as f:
+                lines = f.read().splitlines()
+            if download.suggested_filename != "approved-handoffs.csv" or not lines:
+                raise RuntimeError(f"got {download.suggested_filename!r} with {len(lines)} lines")
+            print(f"      {download.suggested_filename}: {len(lines) - 1} approved handoffs")
+
+        owner_path(page, invite, 1280)
         step("plan an order", lambda: (page.goto(base + invite["href"]), button("Plan this order").click(),
                                        button("Approve and hand over").first.wait_for()))
         step("no Demo mode label on the invite page or the plan", lambda: no_demo_label("the invite page"))
@@ -72,9 +103,14 @@ def main(url):
         model = re.search(r"Answered by (\S+)", finance)  # the badges share one line with the status
         answered = f"Answered by {model.group(1)}" if model else "no model answered"
         print(f"Finance: {answered}; order complete: {'The order is complete' in finance}")
-        print(f"total {time.time() - t0:.1f} s")
+        step("Export approved (CSV) in the Sales inbox downloads a file", export_approved)
         # The point of the path is the Private-mode answer: a Finance step no model answered is a failure here.
         failed = failed or "The order is complete" not in finance or model is None
+
+        phone = browser.new_page(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
+        phone.set_default_timeout(240_000)
+        owner_path(phone, {}, 375)
+        print(f"total {time.time() - t0:.1f} s")
         browser.close()
     return 1 if failed else 0
 
