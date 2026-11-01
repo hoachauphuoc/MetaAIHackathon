@@ -10,6 +10,8 @@ a cold Glimmer took 166 s to wake before the GPU snapshot and 23 to 31 s after i
 slow wake would put "Private mode starting" in the take.
 """
 import argparse
+import base64
+import pathlib
 import re
 
 from playwright.sync_api import sync_playwright
@@ -30,6 +32,42 @@ window.caption = (text) => {
 };
 """
 
+# The flow strip in the top-left corner tells a viewer which of the seven steps is on screen. The app's CSP allows
+# img-src data:, so the picture rides in as a data URL; pointer-events:none keeps every click on the page below it.
+FLOW_PNG = "data:image/png;base64," + base64.b64encode(
+    (pathlib.Path(__file__).parent / "demo_assets" / "flow_base.png").read_bytes()).decode()
+# Card edges in flow_base.png as fractions of its width; every card spans the same height.
+FLOW_CARDS = [(0.020, 0.134), (0.163, 0.277), (0.305, 0.419), (0.445, 0.560),
+              (0.586, 0.701), (0.727, 0.841), (0.867, 0.981)]
+FLOW_JS = """
+([src, cards, step]) => {
+  document.getElementById('demo-flow')?.remove();
+  const box = document.createElement('div');
+  box.id = 'demo-flow';
+  box.style.cssText = 'position:fixed;left:8px;top:8px;width:420px;z-index:99999;pointer-events:none;' +
+    'border:1px solid rgba(255,255,255,.7);border-radius:6px;overflow:hidden;opacity:.93;' +
+    'box-shadow:0 2px 10px rgba(0,0,0,.35);line-height:0';
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'width:100%;display:block';
+  box.append(img);
+  cards.forEach(([left, right], i) => {
+    if (i + 1 > step) return;
+    const mark = document.createElement('div');
+    const done = i + 1 < step;
+    mark.style.cssText = `position:absolute;left:${left * 100}%;width:${(right - left) * 100}%;top:16%;height:69%;` +
+      'box-sizing:border-box;border-radius:5px;display:flex;align-items:flex-start;justify-content:flex-end;' +
+      (done ? 'background:rgba(10,14,20,.55)'
+            : 'border:3px solid #ffd23f;box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 12px #ffd23f');
+    if (done) {
+      mark.textContent = '\\u2713';
+      mark.style.cssText += ';color:#5be37d;font:800 16px system-ui;line-height:1;padding:3px 4px';
+    }
+    box.append(mark);
+  });
+  document.body.append(box);
+}
+"""
 
 # A title card is the first frame so the recording never opens on an empty page; the story comes first, then the
 # measured number, so the premise is never shown as a measurement.
@@ -50,6 +88,7 @@ def run(base, out):
         page = ctx.new_page()
         page.set_default_timeout(150_000)
         shown = ""
+        step = 0
 
         def card(head, body, foot, hold, big=120):
             # The app's CSP blocks inline styles, so a card must not be set on one of its pages.
@@ -63,6 +102,11 @@ def run(base, out):
             page.evaluate(CAPTION_JS)
             page.evaluate("t => window.caption(t)", text)
 
+        def flow(n):
+            nonlocal step
+            step = n
+            page.evaluate(FLOW_JS, [FLOW_PNG, FLOW_CARDS, n])
+
         def say(text, hold):
             caption(text)
             page.wait_for_timeout(int(hold * 1000))
@@ -72,6 +116,8 @@ def run(base, out):
             page.goto(url)
             if shown:
                 caption(shown)
+            if step:
+                flow(step)
 
         def look(locator):
             locator.first.evaluate("e => e.scrollIntoView({block: 'center'})")
@@ -91,12 +137,15 @@ def run(base, out):
         go(base)
         say("Role Assistants: each employee's own assistant, inside the company's rules.", 3)
         page.get_by_role("button", name="Try the demo company").click()
+        flow(1)
         say("Ten questions describe the company. Muse Wonder designs the org chart.", 4)
         page.get_by_role("button", name="Design my org chart").click()
+        flow(2)
         caption("Muse Wonder is designing the chart...")
         page.get_by_role("button", name="Accept this chart").wait_for()
         say("Rules check the chart: one top role, no cycles, no more people than the company has.", 6)
         page.get_by_role("button", name="Accept this chart").click()
+        flow(3)
         caption("Muse Spark is writing a role brief per role...")
         page.get_by_role("button", name="Create invite link").first.wait_for()
         # Wait for the cards before naming them, or the caption runs ahead of the screen.
@@ -113,6 +162,7 @@ def run(base, out):
         look(refusal)
         say("A Subsidiary tries to lower the Group's margin floor. Code refuses it and names the rule.", 5)
 
+        step = 4
         go(sales_url)
         look(page.get_by_text("Your messages are not stored on the server"))
         say("A salesperson opens their own link. Chat is stored only in this browser.", 4)
@@ -130,6 +180,7 @@ def run(base, out):
         look(page.get_by_text("Waiting for Operations"))
         say("Rules set the floor; the model may only raise it. The price is below cost, so it stays blocked.", 5)
 
+        step = 5
         go(ops_url)
         page.get_by_role("button", name="Take it").first.wait_for()
         page.get_by_role("button", name="Take it").first.click()
@@ -148,6 +199,8 @@ def run(base, out):
             # Step i's own button, enabled: a match on "any enabled Approve" could still find the step just clicked,
             # skip the wait and put the next caption up while the previous answer is on screen.
             caption(line)
+            if i == len(lines) - 1:
+                flow(6)
             approve = page.get_by_role("button", name="Approve and hand over").nth(i)
             approve.wait_for()
             page.wait_for_function("b => !b.disabled", arg=approve.element_handle())
@@ -158,6 +211,7 @@ def run(base, out):
         look(page.locator("#order-done"))
         say("The order is complete. Every step was approved by a person.", 4)
 
+        step = 7
         go(base.rstrip("/") + "/trust")
         say("What we store: documents and decisions. Never chats, never employee metrics.", 5)
         # The test line is the README's word for word; change both together (check.ps1 prints the counts).
