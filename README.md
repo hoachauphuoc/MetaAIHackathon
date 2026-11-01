@@ -34,9 +34,9 @@ configured, so it does not show Glimmer. The deployed link was also walked on 20
 `scripts/live_check.py` (set 15, one run, desktop width, Glimmer already awake): Finance answered by
 Muse-Glimmer-30B, the order completed, 39.5 s in total (set 15, 2026-11-01; the revision was not recorded).
 
-**Tests:** 780 Python test cases (pytest, parametrized cases counted) and 33 JS tests, `powershell -File scripts/check.ps1`.
-The counts come from `FAKE_AI=1 python -m pytest --collect-only -q tests` and `node --test tests/js/*.test.mjs`,
-and `check.ps1` prints both. The independent review's findings and their fixes are in
+**Tests:** 321 Python test functions (784 cases with parametrization) and 36 JS tests, `powershell -File scripts/check.ps1`.
+The counts come from `grep -c "def test_" tests/*.py` (functions), `FAKE_AI=1 python -m pytest --collect-only -q tests | tail -3`
+(cases) and `node --test tests/js/*.test.mjs`, and `check.ps1` prints all three. The independent review's findings and their fixes are in
 [docs/evidence/solifan](docs/evidence/solifan/README.md) (finding-to-fix table).
 
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
@@ -170,7 +170,7 @@ second column is claimed as working.
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
-- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the inbox, **Export approved** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
+- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the Sales inbox (on the Sales invite page), **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the clinic demo** and **Try the software studio demo** show other industries on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -370,6 +370,9 @@ Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 | A person approves every handoff; the model cannot lower a rules status | `tests/test_workflow.py`, `tests/test_tools_and_gate.py` |
 | Private never falls back to the standard API | `tests/test_workflow.py`, `tests/test_trust.py` |
 | Handoffs: maker-checker, claim, blocked cannot be accepted, leaver gets 410 | `tests/test_handoffs.py` |
+| Handoff check: an empty or unreadable answer is retried once with more room; a second failure goes to a person, and the rules floor still decides | `tests/test_handoffs.py` |
+| Sales inbox **Export approved**: only handoffs every approver accepted and that were not blocked, no notes | `tests/js/exchange.test.mjs` |
+| The org chart says who drew it: "Designed by Muse Wonder", or "Template" when Wonder failed | `tests/js/chart_label.test.mjs` |
 | Photos: type checked by bytes, never stored, values re-checked by rules, unreadable fields emptied by code | `tests/test_vision.py` |
 | Morning brief: lists by rules, no names, no invented documents, owner only | `tests/test_brief.py` |
 | First-days plan: kit skills only, nothing stored | `tests/test_onboarding.py` |
@@ -394,7 +397,7 @@ OWASP Top 10 for LLM applications, as applied here:
   **not** part of this repository.
 - Every line of code, every test, the UI and the demo were built from **27 Oct 2026 00:09 ET**
   (first commit `04ef41b`) to 4 Nov 2026. All times here are US Eastern (ET).
-- 93 commits as of 1 Nov 2026, `04ef41b` to `209d2ad` (`git rev-list --count HEAD`;
+- Commits run from `04ef41b` onward; see `git log` (`git rev-list --count HEAD` gives the count;
   `git log --reverse --format='%h %aI %s'` shows each commit's time).
 - AI-assisted development: the code was written with Claude Code; the product itself runs on Meta
   Muse models.
