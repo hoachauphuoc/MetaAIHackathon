@@ -390,11 +390,12 @@ OWASP Top 10 for LLM applications, as applied here:
 
 ## Building period (built during the hackathon)
 
-- Repository history starts on **2026-10-27 11:09 (UTC+7)**, inside the Oct 27 to Nov 4 building
-  period. All code, tests and data in this repository were written from that point.
-- Design notes and a throw-away interface prototype were drafted on 2026-10-26 before the kickoff.
-  They are **not** in this repository and no code from them was copied; the interface was rewritten
-  from scratch. Only the general visual direction was reused.
+- The idea and planning notes were written on 26 Oct 2026, before the building period. They are
+  **not** part of this repository.
+- Every line of code, every test, the UI and the demo were built from **27 Oct 2026 00:09 ET**
+  (first commit `04ef41b`) to 4 Nov 2026. All times here are US Eastern (ET).
+- 93 commits as of 1 Nov 2026, `04ef41b` to `209d2ad` (`git rev-list --count HEAD`;
+  `git log --reverse --format='%h %aI %s'` shows each commit's time).
 - AI-assisted development: the code was written with Claude Code; the product itself runs on Meta
   Muse models.
 

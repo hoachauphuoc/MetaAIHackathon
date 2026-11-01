@@ -164,8 +164,9 @@ def run(base, out):
         card("31 of 31", "end-to-end checks on real models, desktop and phone (set 14, local build).<br>"
              "780 Python test cases (pytest, parametrized cases counted) and 33 JS tests, "
              "<code>powershell -File scripts/check.ps1</code>.<br>"
-             "SOLIFAN independent review: 5 findings, each fixed (docs/evidence/solifan).",
-             LIVE_URL, 7, big=110)
+             "SOLIFAN independent review: 5 findings, each fixed (docs/evidence/solifan).<br>"
+             "Idea notes: 26 Oct. All code and this demo: built 27 Oct - 4 Nov 2026 (ET).",
+             LIVE_URL, 8, big=110)
         ctx.close()
         browser.close()
 

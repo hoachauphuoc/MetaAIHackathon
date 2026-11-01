@@ -79,14 +79,14 @@ future delivery date. The cost is a person looking at a package that was fine, n
 A cold start took 166 s in the one timed run below (the app waits 35 s a try), so the endpoint must be warmed before use.
 Cost is GPU time, not tokens, so it is not comparable with the Spark rows. One run, synthetic data.
 
-Cold start, timed once: `python scripts/warm_glimmer.py 45`, 2026-10-30 10:33 (Vietnam time), right after a deploy, on an
+Cold start, timed once: `python scripts/warm_glimmer.py 45`, 2026-10-29 23:33 ET (2026-10-30 10:33 Vietnam time), right after a deploy, on an
 endpoint that had been idle. Four tries timed out at the app's 35 s limit (`Private mode starting`), the fifth
 answered in 2 s: 166 s from the first request to the first answer. Tries were about 40 s apart, so the model was
 ready somewhere in the last gap; 166 s is the upper bound a person waits. One run.
 
-Cold start with the GPU memory snapshot, timed four times on 2026-11-01 (Vietnam time) with a one-sentence prompt sent
-straight to the deployed endpoint (the app was not involved): first answer after 31 s (08:10, after about nine hours
-without a request), 23 s (08:35), 23 s (08:50) and 27 s (09:05), the last three each 15 minutes after the previous
+Cold start with the GPU memory snapshot, timed four times on the evening of 2026-10-31 ET (morning of 2026-11-01 Vietnam time) with a one-sentence prompt sent
+straight to the deployed endpoint (the app was not involved): first answer after 31 s (21:10 ET, after about nine hours
+without a request), 23 s (21:35 ET), 23 s (21:50 ET) and 27 s (22:05 ET), the last three each 15 minutes after the previous
 request. Every request was answered on its first try. A warm endpoint answered the same prompt in 4 s (one run,
 2026-10-31), so the wake itself is roughly 19 to 27 s. Not confirmed: that the container was asleep each time (no
 access to the Modal dashboard from the test machine), the timing from a user's browser, and any prompt longer than one
@@ -357,7 +357,7 @@ Attack and layout checks, all passed: One sandbox never reads another's company;
 One run, synthetic data. Glimmer finds more contradictions than the rules but raises false alarms on 4 of 10 clean packages, which a person then checks. It is not a measured accuracy claim beyond this set.
 ## Live check on the deployed judge path (X07, X08)
 
-`python scripts/live_check.py <deployed link>`, 2026-10-30 17:22 (Vietnam time), revision role-assistants-00025-xn8, Glimmer warm from a 5 s wake at 17:22:31.
+`python scripts/live_check.py <deployed link>`, 2026-10-30 06:22 ET (17:22 Vietnam time), revision role-assistants-00025-xn8, Glimmer warm from a 5 s wake at 06:22:31 ET.
 
 | Step | Seconds |
 |---|---|
