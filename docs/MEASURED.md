@@ -370,6 +370,27 @@ One run, synthetic data. Glimmer finds more contradictions than the rules but ra
 | Approve the three steps (Finance in Private mode) | 12.3 |
 
 Finance answered by meta-models/Muse-Glimmer-30B; the order completed. Total 40.0 s. One run.
+
+## Set 15: the deployed link walked with the real models (one run, 2026-11-01)
+
+`python scripts/live_check.py <deployed link>` against the deployed Cloud Run service, on the build with the
+home-page poster and the "server receipt (HMAC)" wording. A hidden desktop Chromium (1280x900) with the real
+models. Exit code 0.
+
+| Step | Seconds |
+|---|---|
+| Open the home page | 2.9 |
+| Start the demo company | 0.1 |
+| Wonder designs the chart | 5.2 |
+| Accept the chart | 3.9 |
+| Create the Sales invite | 0.6 |
+| Plan an order | 4.7 |
+| Approve the three steps (Finance in Private mode) | 22.0 |
+
+Finance answered by meta-models/Muse-Glimmer-30B; the order completed. Total 39.5 s.
+
+Caveats: one run; Glimmer was already awake, so this is not a cold start; desktop width only (no phone
+width); it spends model credit; run by the author. The revision number was not recorded.
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
 `python scripts/load_test.py 100 meta-models/muse-spark-open-1026 baseten`, one fixed 5-token prompt, sequential.

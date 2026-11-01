@@ -29,8 +29,10 @@ user approves at all three steps).
 this repo, not the deployed link) finished the whole freight order on desktop and on a 375 px phone
 (chart, assistants, invite, plan, three approvals), the Levels refusal, `/trust`, and a clinic company
 whose treatment-plan quote one role sent and another took and pressed Accept on: 31 of 31 checks, each
-step listed in [docs/MEASURED.md](docs/MEASURED.md). That run had no Private-mode endpoint configured,
-so it does not show Glimmer. One command runs
+step listed in [docs/MEASURED.md](docs/MEASURED.md). Set 14 itself had no Private-mode endpoint
+configured, so it does not show Glimmer. The deployed link was also walked on 2026-11-01 with
+`scripts/live_check.py` (set 15, one run, desktop width, Glimmer already awake): Finance answered by
+Muse-Glimmer-30B, the order completed, 39.5 s in total. One command runs
 every test: `powershell -File scripts/check.ps1`.
 
 **Models:** Muse Wonder (org chart), Muse Spark (assistants, chat, forms), Muse Glimmer 30B on Modal
