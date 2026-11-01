@@ -200,7 +200,7 @@ are the next step.* Not built yet.
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
-- **Then the rules (about one more minute):** on the owner page, under **5. Levels**, press **Split into Group and Subsidiary** and set the Group approval limit to 40000 and the Subsidiary to 45000: the save is refused, naming the rule and the Group's value. On the invite page, **My private rules** refuses a margin floor below the company's the same way. In the Sales inbox (on the Sales invite page), **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the software studio demo** shows another industry on the same engine.
+- **Then the rules (about one more minute):** on the invite page, **My private rules** refuses a margin floor below the company's. In the Sales inbox (on the Sales invite page), **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`). **Try the software studio demo** shows another industry on the same engine.
 - **See demo mode:** on the assistants page tick **Switch Muse off**. A banner confirms it, and every
   model answer is then labelled `Demo mode` and a person must check it. Nothing silently substitutes another answer.
 - **Read the trust page:** `/trust` is generated from the running configuration.
@@ -249,8 +249,9 @@ The strongest evidence is our own measured set, which you can rerun: [docs/MEASU
    rejects circles, missing bosses, two top roles and more headcount than the company has, and
    explains the problem in words. If Wonder fails or breaks a rule, a labelled **Template** chart
    is shown instead. The owner edits any role (live validation) and presses **Accept**.
-3. **Assistants:** one `muse-spark-1.3` call per role; the browser starts them together, but the
-   31.9 s setup figure was measured with the calls one after another, so parallel speed is not measured. Skills must come from
+3. **Assistants:** one `muse-spark-1.3` call per role; the browser starts them together. On the deployed link
+   (`docs/MEASURED.md` set 15, one run) accepting the chart took 3.9 s and creating the Sales invite, which waits
+   for every brief, 0.6 s more; the 31.9 s setup figure was measured with the calls one after another. Skills must come from
    `data/skills.json`; anything else is removed and shown as removed. Handoffs may only point at
    roles that exist.
 4. **Invite links:** one per person, tied to a role. A role with no free seat refuses.
@@ -383,7 +384,7 @@ ran (the "Timed runs" tile and the setup time in docs/MEASURED.md); nothing else
 | `muse-voice-transcribe-1.0` | Speech to text for a spoken job note (item 19), one short WAV per request | Not measured: not yet run against the real endpoint; no cost is claimed |
 | `muse-image-1.0` | The illustration shown while Wonder designs the chart (`static/img/chart-wait.webp`), made once when the app was built, not during the wait, and captioned as not the company's chart | Not measured: one generation; the file on disk is 216 KB WebP (216,048 bytes); price per image not published to us, so no cost is claimed |
 | `sam-3.1` | Outline what a short phrase names in a photo so it can be covered before reading (item 20) | Not measured: tested with stubbed replies; one hand check on a synthetic page, not a measured set; price not published, so no cost is claimed |
-| `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged, 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
+| `meta-models/Muse-Glimmer-30B` (open weights, Private mode, served by me on Modal with vLLM) | Finance-step tool call and check, through a configurable provider | 10 of 10 function calls with the right arguments; 12 of 12 seeded errors flagged by the final gate, a rules result, not the model's; 0 statuses below the rules floor; 3 of 10 clean packages raised needlessly (Spark: 0); set 10 |
 
 Details and caveats: [docs/MEASURED.md](docs/MEASURED.md).
 
@@ -471,7 +472,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
 
 | Effort | Calls | Why |
 |---|---|---|
-| `minimal` | chat answers, workflow tool calls and the model check, fix suggestions, reading a paper document, the morning brief, reading the person's own documents | Short answers and checks; measured in set 12: `high` was 3.6 times slower, 4.9 times dearer and flagged no more contradictions |
+| `minimal` | chat answers, workflow tool calls and the model check, fix suggestions, reading a paper document, the morning brief, reading the person's own documents | Short answers and checks; set 12 measures the model check only: there `high` was 3.6 times slower, 4.9 times dearer and flagged no more contradictions |
 | `low` | the org chart (Wonder), role briefs, handoff forms, handover draft, first-days plan | `low` chosen for schema-bound output; not measured (set 12 tested `minimal` and `high` only) |
 
 ## Limits (honest)

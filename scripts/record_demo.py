@@ -215,7 +215,8 @@ def run(base, out):
         go(base.rstrip("/") + "/trust")
         say("What we store: documents and decisions. Never chats, never employee metrics.", 5)
         # The test line is the README's word for word; change both together (check.ps1 prints the counts).
-        card("31 of 31", "end-to-end checks on real models, desktop and phone (set 14, local build).<br>"
+        card("17 of 17", "checks on this deployed link with real models, desktop and 375 px phone "
+             "(<code>scripts/live_check.py</code>, 1 Nov 2026, MEASURED set 16).<br>"
              "321 Python test functions (784 cases with parametrization) and 36 JS tests, "
              "<code>powershell -File scripts/check.ps1</code>.<br>"
              "SOLIFAN independent review: 5 findings, each fixed (docs/evidence/solifan).<br>"

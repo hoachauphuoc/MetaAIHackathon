@@ -391,6 +391,24 @@ Finance answered by meta-models/Muse-Glimmer-30B; the order completed. Total 39.
 
 Caveats: one run; Glimmer was already awake, so this is not a cold start; desktop width only (no phone
 width); it spends model credit; run by the author. The revision number was not recorded.
+
+## Set 16: live check on the deployed revision role-assistants-00034-9z8 (one run, 2026-11-01)
+
+`python scripts/live_check.py <deployed link>` against the deployed Cloud Run revision role-assistants-00034-9z8,
+at desktop width (1280x900) and phone width (375 px), with the real models. 17 of 17 steps ok, no console errors.
+
+| Step | Seconds |
+|---|---|
+| Open the home page | 10.8 |
+| Wonder designs the chart (desktop) | 7.9 |
+| Wonder designs the chart (375 px) | 4.8 |
+| Plan an order | 5.3 |
+| Approve the three steps (Finance in Private mode) | 14.0 |
+
+Finance answered by meta-models/Muse-Glimmer-30B in Private mode. Desktop and 375 px both pass. Total 60.7 s.
+
+Caveats: one run; Glimmer was already awake, so this is not a cold start; run by the author; it spends model
+credit. The revision id is recorded above.
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
 `python scripts/load_test.py 100 meta-models/muse-spark-open-1026 baseten`, one fixed 5-token prompt, sequential.
