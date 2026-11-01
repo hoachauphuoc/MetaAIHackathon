@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 import app as app_module
+import chat
 
 
 @pytest.fixture
@@ -117,6 +118,24 @@ def test_a_known_industry_starts_on_its_own_form_and_freight_keeps_the_order_for
         h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
         assert client.post("/api/company", json={"roles": roles, "size": 3, "industry": industry}, headers=h).status_code == 201
         assert client.get("/api/handoff-schema", headers=h).json["schema"]["id"] == form
+
+
+@pytest.mark.parametrize("industry", ["bakery", "tutoring"])
+def test_an_industry_without_a_form_gets_the_services_form_not_freight(client, industry):
+    h = {"X-Sandbox": client.post("/api/sandbox").json["sandbox"]}
+    chart = client.post("/api/chart", json={"answers": {"company_name": "Crumb", "industry": industry,
+                                                        "headcount": 8}}, headers=h).json
+    assert chart["source"] == "template" and chart["demo_mode"]
+    client.post("/api/company", json={"size": chart["size"], "roles": chart["roles"], "industry": industry},
+                headers=h)
+    form = client.get("/api/handoff-schema", headers=h).json["schema"]
+    assert form["id"] == "services"
+    assert not {"pallets", "route"} & {f["key"] for f in form["fields"]}
+    role = chart["roles"][-1]["id"]
+    client.post("/api/assistants", json={"role_id": role}, headers=h)
+    info = client.get(f"/api/invite/{client.post('/api/invites', json={'role_id': role}, headers=h).json['token']}").json
+    prompt = chat.system_prompt({}, info["assistant"], info["handoff_schema"])
+    assert "Rate card" not in prompt and "pallet" not in prompt
 
 
 def test_private_status_route_says_only_configured_model_and_last_answer(client, monkeypatch):
