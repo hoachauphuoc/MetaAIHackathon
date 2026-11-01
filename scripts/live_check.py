@@ -4,7 +4,8 @@ Usage: python scripts/live_check.py <url>      (needs requirements-dev.txt: Play
 Demo company -> chart -> accept -> Sales invite -> plan an order -> approve all three steps, then reads the Finance
 step: which model answered and whether the order completed. Real models answer, so it spends a few cents of the
 deployed app's credit; warm Private mode first (scripts/warm_glimmer.py) or the Finance step will say it is starting.
-Exit code 1 when any step fails, the order does not complete, or no model answered the Finance step.
+Exit code 1 when any step fails, the order does not complete, no model answered the Finance step, or a
+Demo mode label (template brief, Private mode starting) is visible on the invite page or the finished order.
 """
 import re
 import sys
@@ -30,7 +31,7 @@ def main(url):
                 print(f"ok    {time.time() - start:6.1f} s  {what}")
             except Exception as e:  # report and go on: the rest of the path still says something
                 failed = True
-                print(f"FAIL  {time.time() - start:6.1f} s  {what}: {type(e).__name__}")
+                print(f"FAIL  {time.time() - start:6.1f} s  {what}: {type(e).__name__}: {str(e)[:200]}")
 
         invite = {}
 
@@ -48,6 +49,13 @@ def main(url):
                 b.click()
             page.locator("#order-done").wait_for()
 
+        def no_demo_label(where):
+            # A finished path can still be the labelled fallback (template brief, Private mode starting):
+            # the judges read that as "not on real models", so a visible label fails the check.
+            notes = [n.inner_text() for n in page.locator(".demo-note").all() if n.is_visible()]
+            if notes:
+                raise RuntimeError(f"{where} shows {notes[0]!r}")
+
         step("open the home page", lambda: page.goto(base))
         step("start the demo company", lambda: button("Try the demo company").click())
         step("Wonder designs the chart", lambda: (button("Design my org chart").click(),
@@ -57,7 +65,9 @@ def main(url):
         step("create the Sales invite", make_invite)
         step("plan an order", lambda: (page.goto(base + invite["href"]), button("Plan this order").click(),
                                        button("Approve and hand over").first.wait_for()))
+        step("no Demo mode label on the invite page or the plan", lambda: no_demo_label("the invite page"))
         step("approve the three steps (Finance runs in Private mode)", approve_all)
+        step("no Demo mode or Private mode starting label at the end", lambda: no_demo_label("the finished order"))
         finance = page.locator("li.step").last.inner_text() if page.locator("li.step").count() else ""
         model = re.search(r"Answered by (\S+)", finance)  # the badges share one line with the status
         answered = f"Answered by {model.group(1)}" if model else "no model answered"
