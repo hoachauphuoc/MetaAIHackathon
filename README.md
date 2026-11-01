@@ -1,5 +1,12 @@
 # Role Assistants
 
+**Ten survey answers in, an AI assistant for every role out: 31.9 s of app time on Meta Muse, and no handoff moves until a person presses Approve.**
+<sub>31.9 s: app side only, one real-model run, five-role demo company, owner typing excluded ([docs/MEASURED.md](docs/MEASURED.md), "Setup time"). No real company has used it yet: every figure comes from synthetic data and the author's own test cases.</sub>
+
+| 31 of 31 | 9 of 10 vs 2 of 10 | 10 of 10 |
+|---|---|---|
+| end-to-end checks on real models in a hidden browser, desktop and 375 px phone (set 14, one run, local build, not the deployed link, no Private mode) | rule questions answered with the playbook and company rules in the prompt vs a plain role prompt (set 4, author-written questions) | contradictions the rules cannot see (0 of 10) flagged by the Spark check, 1 false alarm on 10 clean (set 11, author-written cases) |
+
 A small company answers ten questions. Meta Muse Wonder designs its org chart, code rules check
 the chart, and Muse Spark writes an AI assistant brief for every role. Employees open their own
 link, chat with their role's assistant and run a team workflow in which one person approves every
@@ -136,7 +143,7 @@ The measured row is the app's side only; the human row is my estimate and is lab
 | One assistant and invite link per role | Admin-set spending caps (today: a per-sandbox call limit for the demo) |
 | Browser-side masking of emails, phone, card and ID numbers (not names, not photos) | Native desktop and phone apps |
 | Handoffs gated at every step by a person pressing Approve, after which the server issues an HMAC-protected receipt (not a personal signature; in the demo the same invited user approves at all three steps) | Connectors to SAP, OCR, AWS, Google Cloud, Azure, HR and ERP systems |
-| Private mode on Glimmer (an idle endpoint woke in 166 s, measured once) | Free-text personal working styles (today a private rule is a number) |
+| Private mode on Glimmer (an idle endpoint woke in 166 s before the GPU snapshot, measured once, and in 23 to 31 s after it, measured four times) | Free-text personal working styles (today a private rule is a number) |
 
 Where I want it to go: from a five-person company to a group with subsidiaries, each level able to tighten
 its parent's limits but never loosen them, and later into the systems a business already runs. None of that
@@ -152,7 +159,7 @@ second column is claimed as working.
   minutes (probably warm) or not (may be asleep); the server only reports its last answer, it never probes the endpoint.
   Finance runs on the open-weights model in Private mode; if no provider is reachable it shows
   `Private mode starting` (or `unavailable`) and `A person must check this` (see Limits). The endpoint
-  sleeps when idle and took 166 s to wake in the one timed cold start (docs/MEASURED.md, set 10): if you see `Private mode starting`, the Finance step tries
+  sleeps when idle and took 166 s to wake in the one timed cold start before the GPU snapshot and 23 to 31 s in four timed runs after it (docs/MEASURED.md, set 10): if you see `Private mode starting`, the Finance step tries
   again on its own with a countdown for about five minutes (or press **Run this step again**); it never
   switches to another model. On the invite page, **Start a new order**
   jumps to the order form.
@@ -432,7 +439,7 @@ Each call sets `reasoning_effort` itself; reasoning tokens are billed as output.
   GPU (its model card names it [816B with 42B active](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B)), so the Finance step uses Glimmer (open weights) served by me on Modal
   (`scripts/private_modal.py`). It is configured by `PRIVATE_PROVIDER`, `PRIVATE_BASE_URL`,
   `PRIVATE_MODEL`, `PRIVATE_API_KEY_FILE`; `/trust` shows the model in use. Measured in set 10 on a
-  warm endpoint. A cold start took 166 s in the one timed run (docs/MEASURED.md, set 10; `python scripts/warm_glimmer.py 45` wakes the
+  warm endpoint. A cold start took 166 s in the one timed run before the GPU snapshot and 23 to 31 s in four runs after it (docs/MEASURED.md, set 10; `python scripts/warm_glimmer.py 45` wakes the
   endpoint, keeps it warm for 45 minutes and prints how long the wake took) and the app waits 35 s a try, so when the endpoint is
   idle the step says `Private mode starting` (once per request, inside the 120 s request limit) and asks a
   person to wait while the step retries on its own (or press **Run this step again**); when Private mode is not configured it says `Private mode unavailable`. It never

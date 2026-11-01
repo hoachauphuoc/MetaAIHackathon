@@ -84,6 +84,14 @@ endpoint that had been idle. Four tries timed out at the app's 35 s limit (`Priv
 answered in 2 s: 166 s from the first request to the first answer. Tries were about 40 s apart, so the model was
 ready somewhere in the last gap; 166 s is the upper bound a person waits. One run.
 
+Cold start with the GPU memory snapshot, timed four times on 2026-11-01 (Vietnam time) with a one-sentence prompt sent
+straight to the deployed endpoint (the app was not involved): first answer after 31 s (08:10, after about nine hours
+without a request), 23 s (08:35), 23 s (08:50) and 27 s (09:05), the last three each 15 minutes after the previous
+request. Every request was answered on its first try. A warm endpoint answered the same prompt in 4 s (one run,
+2026-10-31), so the wake itself is roughly 19 to 27 s. Not confirmed: that the container was asleep each time (no
+access to the Modal dashboard from the test machine), the timing from a user's browser, and any prompt longer than one
+sentence. The 166 s run above was before the snapshot and is kept as the old figure, not replaced.
+
 ## Set 11: contradictions the rules cannot see (Spark leg)
 
 `python scripts/measure.py set11`, 2026-10-28, Spark 1.3. Ten packages that pass every rule but whose
@@ -389,7 +397,7 @@ The Baseten price is not returned by its API, so this run states tokens and no c
 A load test of the endpoint, not evidence about users. Tokens are the Meta API's own count; the cost is not computed here.
 ## Load test: Muse-Glimmer-30B on Modal, warm (100 sequential requests, 2026-10-30)
 
-`python scripts/load_test.py 100 meta-models/Muse-Glimmer-30B glimmer`, run right after a warm wake (165 s cold start, see set 10 and the warm log), same 5-token prompt, sequential.
+`python scripts/load_test.py 100 meta-models/Muse-Glimmer-30B glimmer`, run right after a warm wake (a 166 s cold start before the GPU snapshot, see set 10 and the warm log), same 5-token prompt, sequential.
 
 | Result | Value |
 |---|---|

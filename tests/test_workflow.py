@@ -240,6 +240,17 @@ def test_valid_but_different_calendar_date_is_recomputed_and_flagged(monkeypatch
     assert result["status"] == "needs_human_check" and result["demo_mode"] is True
 
 
+def test_a_different_calendar_title_with_the_right_date_is_not_a_mismatch(monkeypatch):
+    # The title is wording; flagging it made every real run's Operations step ask for a person.
+    plan = plan_for()
+    receipts = approve_all(plan, 1)
+    monkeypatch.setattr(muse, "complete", FakeMuse(
+        tool_args={"title": "Delivery Acme 12 pallets", "date": "2026-11-20"}))
+    result = run(plan, "schedule", receipts)["result"]
+    assert result["tool_result"]["date"] == "2026-11-20"
+    assert result["demo_mode"] is False
+
+
 def test_muse_down_gives_labelled_demo_result_with_human_check(monkeypatch):
     monkeypatch.setattr(muse, "complete", lambda *a, **k: reply(demo_mode=True, demo_reason="TimeoutError"))
     result = run(plan_for(), "quote", {})["result"]

@@ -132,7 +132,11 @@ def _args_match_source(step, chosen, values):
     # Valid types are not enough: the values must be the signed order's and the approved quote's.
     try:
         args = json.loads(chosen) if isinstance(chosen, str) else dict(chosen)
-        return _as_browser_sends(args) == _as_browser_sends(tool_arguments(step, values))
+        expected = tool_arguments(step, values)
+        if step["tool"] == "make_calendar_event":
+            # The title is wording the model may choose; only the date is a fact of the signed order.
+            args, expected = {"date": args.get("date")}, {"date": expected["date"]}
+        return _as_browser_sends(args) == _as_browser_sends(expected)
     except Exception:
         return False
 

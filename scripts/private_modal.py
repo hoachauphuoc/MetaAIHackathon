@@ -18,9 +18,9 @@ Then point the app at it (the key goes in a file, never on the command line):
 The first request after idle waits for the model to load (166 s timed on an H200, docs/MEASURED.md set 10, before
 snapshots); the app gives up after 35 s and labels the step "Private mode starting". A GPU memory snapshot is meant to
 cut that: the server loads once at deploy, goes to sleep (weights offloaded to CPU), and Modal stores the container
-state, so a cold start restores it and wakes the GPU instead of reloading 56 GiB. It is untested for Glimmer: after
-`modal deploy` run `modal run scripts/private_modal.py` once while the app is idle (10+ minutes) and read the seconds
-it prints. If the deploy or the wake fails, `GLIMMER_SNAPSHOT=0 modal deploy scripts/private_modal.py` serves without
+state, so a cold start restores it and wakes the GPU instead of reloading 56 GiB. Timed for Glimmer: 23 to 31 s in four runs after the
+snapshot (docs/MEASURED.md set 10). After `modal deploy` run `modal run scripts/private_modal.py` once while the app
+is idle (10+ minutes) to read the seconds it prints. If the deploy or the wake fails, `GLIMMER_SNAPSHOT=0 modal deploy scripts/private_modal.py` serves without
 snapshots. Snapshots only exist for deployed apps, so `modal run` here asks the deployed endpoint. The container stays
 warm for 10 minutes after the last request, then the GPU is released and billing stops.
 
