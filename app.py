@@ -60,13 +60,23 @@ def create_app(db_path=None):
         data = request.get_json(silent=True)
         return data if isinstance(data, dict) else {}
 
+    def bearer_token():
+        """The invite token travels in a header so it never lands in a URL, where access logs would keep it."""
+        value = request.headers.get("Authorization", "")
+        return value[7:].strip() if value[:7].lower() == "bearer " else ""
+
+    @app.before_request
+    def refuse_token_in_url():
+        if request.path.startswith("/api/") and "token" in request.args:
+            return jsonify(error="token_in_url", message="Send the token in the Authorization header."), 400
+
     @app.after_request
     def security_headers(response):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
             "frame-ancestors 'none'")
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "no-referrer"  # the invite token sits in the URL
+        response.headers["Referrer-Policy"] = "no-referrer"  # defence in depth: invite links keep the token in the fragment, which is never sent
         return response
 
     def page(name):
@@ -76,8 +86,9 @@ def create_app(db_path=None):
     def index_page():
         return page("index.html")
 
-    @app.get("/join/<token>")
-    def join_page(token):
+    @app.get("/join")
+    @app.get("/join/<token>")  # old link form; the page moves the token into the fragment, the server ignores it
+    def join_page(token=None):
         return page("join.html")
 
     @app.get("/trust")
@@ -287,11 +298,15 @@ def create_app(db_path=None):
         token = db.add_person(sandbox_id, role["id"], name, role["headcount"])
         if token is None:
             return jsonify(error="role_full", message=f"{role['title']} has no free seat."), 409
-        return jsonify(token=token, url=f"/join/{token}"), 201
+        return jsonify(token=token, url=f"/join#{token}"), 201
 
-    @app.get("/api/invite/<token>")
-    def invite(token):
-        person = db.person_by_token(token)
+    @app.get("/api/invite/<path:token>")
+    def invite_token_in_path(token):
+        return jsonify(error="token_in_url", message="Send the token in the Authorization header."), 400
+
+    @app.get("/api/invite")
+    def invite():
+        person = db.person_by_token(bearer_token())
         company = db.get_company(person["sandbox_id"]) or {}
         kit = db.get_assistants(person["sandbox_id"]).get(person["role_id"])
         role = next((r for r in company.get("roles", []) if r["id"] == person["role_id"]), None)
@@ -454,7 +469,7 @@ def create_app(db_path=None):
 
     def me_and_context():
         body = body_json()
-        token = str(body.get("token") or request.args.get("token") or "")
+        token = str(body.get("token") or bearer_token())
         me = {**db.person_by_token(token), "token": token}
         company = db.get_company(me["sandbox_id"]) or {"roles": []}
         return body, me, company

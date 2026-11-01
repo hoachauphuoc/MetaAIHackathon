@@ -127,7 +127,7 @@ def test_brief_is_owner_only_isolated_and_stores_nothing(client, busy):
     assert "Other Company Order" not in json.dumps(r)
     after = {t: db.db.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in db.table_names()}
     assert after == before
-    assert client.get("/api/owner/brief", query_string={"token": busy["sales"]}).status_code != 200
+    assert client.get("/api/owner/brief", headers={"Authorization": f"Bearer {busy["sales"]}"}).status_code != 200
 
 
 def test_nothing_open_means_no_model_call(client, monkeypatch):

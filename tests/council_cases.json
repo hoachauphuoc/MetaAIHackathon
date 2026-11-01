@@ -692,12 +692,15 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/no-such-token-xyz-123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       404,
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer no-such-token-xyz-123"
     }
    },
    {
@@ -1032,7 +1035,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -1043,6 +1046,9 @@
      "body_lacks": [
       "CanaryDraftZZ9"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -1080,7 +1086,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/bad-token-xyz123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       404,
@@ -1093,6 +1099,9 @@
       "Traceback",
       "werkzeug"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bad-token-xyz123"
     }
    },
    {
@@ -1768,8 +1777,10 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "headers": {},
+    "path": "/api/invite",
+    "headers": {
+     "Authorization": "Bearer xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
     "expect": {
      "status": [
       410
@@ -2685,11 +2696,14 @@
   "steps": [
    {
     "method": "GET",
-    "path": "/api/inbox?token=forged-xyz-123",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer forged-xyz-123"
     }
    },
    {
@@ -2734,11 +2748,14 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/forged-xyz-123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer forged-xyz-123"
     }
    }
   ],
@@ -2984,11 +3001,14 @@
    },
    {
     "method": "GET",
-    "path": "/api/personal-rules?token=forged-xyz-123",
+    "path": "/api/personal-rules",
     "expect": {
      "status": [
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer forged-xyz-123"
     }
    }
   ],
@@ -3644,21 +3664,27 @@
   "steps": [
    {
     "method": "GET",
-    "path": "/api/invite/bad-token-xyz123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bad-token-xyz123"
     }
    },
    {
     "method": "GET",
-    "path": "/api/invite/9999999999999999999999",
+    "path": "/api/invite",
     "expect": {
      "status": [
       404,
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer 9999999999999999999999"
     }
    },
    {
@@ -3758,11 +3784,14 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token=bad-token-xyz",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bad-token-xyz"
     }
    },
    {
@@ -5463,12 +5492,15 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/does-not-exist-12345",
+    "path": "/api/invite",
     "expect": {
      "status": [
       404,
       410
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer does-not-exist-12345"
     }
    },
    {
@@ -6756,7 +6788,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -6767,6 +6799,9 @@
      "body_lacks": [
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -11989,7 +12024,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -12000,6 +12035,9 @@
      "body_lacks": [
       "SecretZebra42hello"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -12073,7 +12111,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tok}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -12081,11 +12119,14 @@
      "body_lacks": [
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -12093,6 +12134,9 @@
      "body_lacks": [
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -12394,7 +12438,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tok}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -12403,6 +12447,9 @@
       "Beta",
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -22258,7 +22305,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tokA}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -22269,11 +22316,14 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tokA}"
     }
    },
    {
     "method": "GET",
-    "path": "/api/invite/bogus-token-xyz-123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       410
@@ -22281,6 +22331,9 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bogus-token-xyz-123"
     }
    }
   ],
@@ -25130,7 +25183,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/bad-token-xyz-123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       400,
@@ -25140,6 +25193,9 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bad-token-xyz-123"
     }
    }
   ],
@@ -25684,7 +25740,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -25693,6 +25749,9 @@
       "ZebraChatSecret771122",
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -25779,7 +25838,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -25787,6 +25846,9 @@
      "body_lacks": [
       "CompareSecret445566"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -30950,7 +31012,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -30959,6 +31021,9 @@
       "SECRET_CANARY_A1",
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -31159,7 +31224,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tokA}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -31171,6 +31236,9 @@
       "Beta2",
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tokA}"
     }
    }
   ],
@@ -31767,7 +31835,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tok_a}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -31778,11 +31846,14 @@
      "body_lacks": [
       "BetaB"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok_a}"
     }
    },
    {
     "method": "GET",
-    "path": "/api/invite/forged-xyz123",
+    "path": "/api/invite",
     "expect": {
      "status": [
       401,
@@ -31792,6 +31863,9 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer forged-xyz123"
     }
    }
   ],
@@ -32466,7 +32540,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -32478,6 +32552,9 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -32591,7 +32668,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -32603,6 +32680,9 @@
       "2099-12-31",
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -33332,9 +33412,10 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "headers": {
-     "X-Sandbox": "{sandbox_a}"
+     "X-Sandbox": "{sandbox_a}",
+     "Authorization": "Bearer {tok}"
     },
     "expect": {
      "status": [
@@ -33347,9 +33428,10 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token=bad123",
+    "path": "/api/inbox",
     "headers": {
-     "X-Sandbox": "{sandbox_a}"
+     "X-Sandbox": "{sandbox_a}",
+     "Authorization": "Bearer bad123"
     },
     "expect": {
      "status": [
@@ -34554,7 +34636,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -34566,6 +34648,9 @@
       "{tok}",
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -34653,7 +34738,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token={tok}",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       200
@@ -34665,11 +34750,14 @@
       "{tok}",
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    },
    {
     "method": "GET",
-    "path": "/api/invite/{tok}",
+    "path": "/api/invite",
     "expect": {
      "status": [
       200
@@ -34680,6 +34768,9 @@
      "body_lacks": [
       "Traceback"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer {tok}"
     }
    }
   ],
@@ -34992,7 +35083,7 @@
    },
    {
     "method": "GET",
-    "path": "/api/inbox?token=bogus-bad-token-xyz",
+    "path": "/api/inbox",
     "expect": {
      "status": [
       410
@@ -35004,6 +35095,9 @@
       "Traceback",
       "{tok}"
      ]
+    },
+    "headers": {
+     "Authorization": "Bearer bogus-bad-token-xyz"
     }
    },
    {

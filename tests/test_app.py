@@ -133,7 +133,8 @@ def test_an_industry_without_a_form_gets_the_services_form_not_freight(client, i
     assert not {"pallets", "route"} & {f["key"] for f in form["fields"]}
     role = chart["roles"][-1]["id"]
     client.post("/api/assistants", json={"role_id": role}, headers=h)
-    info = client.get(f"/api/invite/{client.post('/api/invites', json={'role_id': role}, headers=h).json['token']}").json
+    info = client.get("/api/invite", headers={"Authorization": "Bearer " + client.post(
+        '/api/invites', json={'role_id': role}, headers=h).json['token']}).json
     prompt = chat.system_prompt({}, info["assistant"], info["handoff_schema"])
     assert "Rate card" not in prompt and "pallet" not in prompt
 

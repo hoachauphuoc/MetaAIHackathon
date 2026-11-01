@@ -118,7 +118,7 @@ def test_a_person_may_tighten_but_not_loosen_the_company_and_chat_uses_it(client
     assert refused.status_code == 422 and refused.json["errors"][0]["rule"] == "margin_floor_pct"
     ok = client.put("/api/personal-rules", json={"token": token, "margin_floor_pct": 25, "escalation_usd": 10000})
     assert ok.status_code == 200
-    assert client.get(f"/api/personal-rules?token={token}").json["rules"]["escalation_usd"] == 10000
+    assert client.get("/api/personal-rules", headers={"Authorization": f"Bearer {token}"}).json["rules"]["escalation_usd"] == 10000
     schema = rules.bind_levels([{"margin_floor_pct": 25, "escalation_usd": 10000}], {**PARAMS, **GROUP},
                                rules.DEFAULT_SCHEMA)[1]
     assert "USD 10,000" in chat.company_rules({"shows_cost": False}, schema)
@@ -139,7 +139,7 @@ def test_the_canary_in_a_personal_rule_never_reaches_the_owner_or_another_sandbo
                 got = client.get(rule.rule, headers=headers)
                 seen.append(got.get_data(as_text=True))
     assert seen and not any("31337" in text for text in seen)
-    assert client.get(f"/api/personal-rules?token={other_token}").json["rules"] is None
+    assert client.get("/api/personal-rules", headers={"Authorization": f"Bearer {other_token}"}).json["rules"] is None
 
 
 def test_a_person_who_leaves_takes_their_private_rules_with_them(client):

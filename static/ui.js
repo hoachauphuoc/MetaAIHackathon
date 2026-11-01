@@ -21,8 +21,9 @@ export function clear(node, ...children) {
 
 export class Expired extends Error {}
 
-export async function api(path, { method = 'GET', body, sandbox } = {}) {
+export async function api(path, { method = 'GET', body, sandbox, token } = {}) {
   const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (sandbox) headers['X-Sandbox'] = sandbox;
   const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });

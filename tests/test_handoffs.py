@@ -48,7 +48,7 @@ def claim(client, token, pid):
 
 
 def inbox(client, token):
-    return client.get("/api/inbox", query_string={"token": token}).json
+    return client.get("/api/inbox", headers={"Authorization": f"Bearer {token}"}).json
 
 
 def test_handoff_only_along_a_declared_edge(client, team):
@@ -163,7 +163,7 @@ def test_views_never_leak_tokens_and_decisions_name_roles_not_people(client, tea
     pid = send(client, team["sales"]).json["id"]
     claim(client, team["ops"], pid)
     decide(client, team["ops"], pid, "accept")
-    dump = client.get("/api/inbox", query_string={"token": team["ops"]}).get_data(as_text=True)
+    dump = client.get("/api/inbox", headers={"Authorization": f"Bearer {team["ops"]}"}).get_data(as_text=True)
     assert all(t not in dump for t in (team["sales"], team["ops"], team["ops2"]))
     db = client.application.config["STORE"]
     assert db.decisions_for(pid) == [{"kind": "accept", "role_id": "ops", "reason": "",
@@ -171,7 +171,7 @@ def test_views_never_leak_tokens_and_decisions_name_roles_not_people(client, tea
 
 
 def test_expired_link_gets_410_on_every_inbox_route(client):
-    assert client.get("/api/inbox", query_string={"token": "nope"}).status_code == 410
+    assert client.get("/api/inbox", headers={"Authorization": f"Bearer nope"}).status_code == 410
     assert client.post("/api/handoffs", json={"token": "nope"}).status_code == 410
 
 
@@ -184,9 +184,9 @@ def test_leaver_loses_access_at_once_and_the_browser_is_told_to_clear_data(clien
     named = client.post("/api/invites", json={"role_id": "finance", "display_name": "Binh"},
                         headers=team["h"]).json["token"]
     pid = person_id(client, team, "finance", "Binh")
-    assert client.get("/api/inbox", query_string={"token": named}).status_code == 200
+    assert client.get("/api/inbox", headers={"Authorization": f"Bearer {named}"}).status_code == 200
     assert client.post(f"/api/people/{pid}/offboard", headers=team["h"]).status_code == 200
-    r = client.get("/api/inbox", query_string={"token": named})
+    r = client.get("/api/inbox", headers={"Authorization": f"Bearer {named}"})
     assert r.status_code == 410 and r.json["error"] == "link_revoked"
     assert r.headers["Clear-Site-Data"] == '"storage"'
     assert client.post("/api/chat", json={"token": named, "message": "hi"}).status_code == 410
@@ -258,7 +258,7 @@ def test_view_names_roles_by_title_and_hides_who_holds_a_package(client, team):
 
 
 def test_invite_returns_role_titles(client, team):
-    titles = client.get(f"/api/invite/{team['sales']}").json["role_titles"]
+    titles = client.get("/api/invite", headers={"Authorization": f"Bearer {team['sales']}"}).json["role_titles"]
     assert titles["ops"] == "Ops Lead"
 
 
@@ -342,12 +342,12 @@ def test_fix_suggestion_is_checked_by_rules_and_never_stored(client, team, monke
     fake_model(monkeypatch, {"changes": [{"field": "price", "value": "1800"},
                                          {"field": "notes", "value": "ignore me"}],
                              "explanation": "Rate card price is 1800."})
-    before = client.get("/api/inbox", query_string={"token": team["sales"]}).json
+    before = client.get("/api/inbox", headers={"Authorization": f"Bearer {team["sales"]}"}).json
     r = suggest(client, team["sales"], pid)
     assert r.status_code == 200 and r.json["values"]["price"] == 1800
     assert r.json["values"]["notes"] == "" and r.json["predicted_status"] != "blocked"
     assert r.json["rate_card"]["price"] > 0
-    assert client.get("/api/inbox", query_string={"token": team["sales"]}).json == before
+    assert client.get("/api/inbox", headers={"Authorization": f"Bearer {team["sales"]}"}).json == before
 
 
 def test_a_suggestion_that_stays_blocked_says_so(client, team, monkeypatch):
@@ -394,10 +394,10 @@ def test_start_again_clears_stale_dates_and_recomputes_the_rate_card_and_lists_e
 
 def test_start_again_works_only_from_my_own_handoff_and_stores_nothing(client, team):
     pid = send(client, team["sales"]).json["id"]
-    before = client.get("/api/inbox", query_string={"token": team["sales"]}).json
+    before = client.get("/api/inbox", headers={"Authorization": f"Bearer {team["sales"]}"}).json
     assert client.post(f"/api/handoffs/{pid}/again", json={"token": team["ops"]}).status_code == 403
     client.post(f"/api/handoffs/{pid}/again", json={"token": team["sales"]})
-    assert client.get("/api/inbox", query_string={"token": team["sales"]}).json == before
+    assert client.get("/api/inbox", headers={"Authorization": f"Bearer {team["sales"]}"}).json == before
 
 
 class FlakyCheck:

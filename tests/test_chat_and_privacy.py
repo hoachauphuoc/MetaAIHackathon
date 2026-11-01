@@ -22,6 +22,10 @@ def setup_company(client):
     return h
 
 
+def bearer(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
 def invite(client, h, role="sales"):
     return client.post("/api/invites", json={"role_id": role, "display_name": "Lan"}, headers=h)
 
@@ -42,7 +46,7 @@ def test_assistant_needs_an_accepted_chart(client):
 def test_invite_opens_the_assistant_of_that_role_only(client):
     h = setup_company(client)
     token = invite(client, h).json["token"]
-    r = client.get(f"/api/invite/{token}").json
+    r = client.get("/api/invite", headers=bearer(token)).json
     assert r["role"]["id"] == "sales" and r["assistant"]["role_id"] == "sales"
     assert r["company"] == "Acme"
 
@@ -53,8 +57,27 @@ def test_role_with_no_free_seat_is_refused(client):
     assert invite(client, h, "md").status_code == 409
 
 
+def test_invite_token_never_travels_in_a_url(client):
+    h = setup_company(client)
+    made = invite(client, h).json
+    token = made["token"]
+    assert made["url"] == f"/join#{token}"
+    for path in ("/api/inbox", "/api/personal-rules", "/api/invite"):
+        r = client.get(f"{path}?token={token}")
+        assert r.status_code == 400 and r.json["error"] == "token_in_url"
+        assert client.get(path, headers=bearer(token)).status_code == 200
+    assert client.get(f"/api/invite/{token}").json["error"] == "token_in_url"
+    assert client.get(f"/api/invite/{token}", headers=bearer(token)).status_code == 400
+
+
+def test_join_page_is_served_at_the_fragment_url_and_the_old_path(client):
+    for path in ("/join", "/join/anything"):
+        r = client.get(path)
+        assert r.status_code == 200 and b"join.js" in r.data
+
+
 def test_unknown_token_is_410(client):
-    assert client.get("/api/invite/nope").status_code == 410
+    assert client.get("/api/invite", headers=bearer("nope")).status_code == 410
     assert client.post("/api/chat", json={"token": "nope", "message": "hi"}).status_code == 410
 
 

@@ -113,7 +113,7 @@ def test_a_non_logistics_company_runs_the_inbox_end_to_end(client):
     client.post("/api/handoff-schema", json={"schema": rules.SCHEMAS["services"]}, headers=h)
     sales = client.post("/api/invites", json={"role_id": "sales"}, headers=h).json["token"]
     ops = client.post("/api/invites", json={"role_id": "ops"}, headers=h).json["token"]
-    assert client.get(f"/api/invite/{sales}").json["handoff_schema"]["id"] == "services"
+    assert client.get("/api/invite", headers={"Authorization": f"Bearer {sales}"}).json["handoff_schema"]["id"] == "services"
     values = {"client": "Dental Co", "service": "Audit", "hours": 8, "price": 900, "cost": 1000,
               "start_date": NEXT_WEEK}
     sent = client.post("/api/handoffs", json={"token": sales, "to_role": "ops", "values": values})
@@ -141,7 +141,7 @@ def test_the_package_keeps_the_form_it_was_sent_with(client):
               "delivery_date": NEXT_WEEK}
     pid = client.post("/api/handoffs", json={"token": sales, "to_role": "ops", "values": values}).json["id"]
     client.post("/api/handoff-schema", json={"schema": rules.SCHEMAS["services"]}, headers=h)
-    box = client.get("/api/inbox", query_string={"token": sales}).json["packages"]
+    box = client.get("/api/inbox", headers={"Authorization": f"Bearer {sales}"}).json["packages"]
     assert box[0]["id"] == pid and box[0]["schema"]["id"] == "logistics"
 
 

@@ -192,7 +192,7 @@ export function inboxPanel(info, token) {
   }
 
   async function refresh() {
-    const res = await api(`/api/inbox?token=${encodeURIComponent(token)}`);
+    const res = await api('/api/inbox', { token });
     const t = res.data.today;
     clear(todayBox,
       badge(`${t.waiting_for_me} waiting for you`, 'info'),
@@ -334,7 +334,7 @@ export function inboxPanel(info, token) {
     el('button', { onclick: async () => exportAs('approved-csv') }, 'Export approved (CSV)'),
     el('button', { onclick: async () => exportAs('approved-json') }, 'Export approved (JSON)'));
   async function exportAs(kind) {
-    const res = await api(`/api/inbox?token=${encodeURIComponent(token)}`);
+    const res = await api('/api/inbox', { token });
     const packages = res.data.packages.filter((p) => p.schema.id === schema.id);
     if (kind === 'approved-csv') download('approved-handoffs.csv', toApprovedCsv(packages, schema), 'text/csv');
     else if (kind === 'approved-json') download('approved-handoffs.json', toApprovedJson(packages, schema), 'application/json');

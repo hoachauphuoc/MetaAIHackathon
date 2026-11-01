@@ -419,7 +419,7 @@ OWASP Top 10 for LLM applications, as applied here:
 | Risk | What the code does |
 |---|---|
 | LLM01 Prompt injection | Customer notes sit inside a `<data>` block marked untrusted; the model can only raise a status; measured on 8 injection cases |
-| LLM02 Sensitive information disclosure | No message table, no message logging, Referrer-Policy `no-referrer` because the invite token sits in the URL |
+| LLM02 Sensitive information disclosure | No message table, no message logging, Referrer-Policy `no-referrer`. Invite tokens travel in the Authorization header and invite links use the URL fragment (`/join#token`), so the token is never in a query string or link path and the server never receives it in a URL |
 | LLM05 Improper output handling | Strict JSON schemas, rules validate every output, `textContent` only in the UI, CSP `script-src 'self'` |
 | LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; server-issued HMAC receipts after Approve (not personal signatures) |
 | LLM10 Unbounded consumption | 80 model calls per sandbox, a daily cost ceiling, 24-hour sandboxes |

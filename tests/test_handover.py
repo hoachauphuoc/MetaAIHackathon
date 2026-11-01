@@ -37,7 +37,7 @@ def team(client):
 
 
 def inbox(client, token):
-    return client.get("/api/inbox", query_string={"token": token}).json["packages"]
+    return client.get("/api/inbox", headers={"Authorization": f"Bearer {token}"}).json["packages"]
 
 
 def counts(client):

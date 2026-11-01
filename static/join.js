@@ -2,10 +2,11 @@
 // every handoff. Chat history and workflow results live only in this browser (IndexedDB).
 import { approvedOrderDraft } from '/static/exchange.js';
 import { findingsBlock, inboxPanel, inputFor } from '/static/inbox.js';
+import { readJoinToken } from '/static/jointoken.js';
 import { confirmMask } from '/static/mask.js';
 import { api, badge, clear, demoNote, el, Expired, statusBadge } from '/static/ui.js';
 
-const token = location.pathname.split('/').pop();
+const token = readJoinToken(location, history);
 const app = document.getElementById('app');
 
 // --- browser-only storage ----------------------------------------------------------------
@@ -460,7 +461,7 @@ function personalRulesPanel() {
     el('p', { class: 'muted' }, 'Stricter limits for your own assistant only. Only you can read them: ' +
       'not the owner, not your unit. They can never be looser than the company limits.'), out);
   const load = async () => {
-    const res = await api(`/api/personal-rules?token=${encodeURIComponent(token)}`);
+    const res = await api('/api/personal-rules', { token });
     const above = res.data.company || {}, mine = res.data.rules || {};
     clear(out);
     for (const rule of Object.keys(RULE_LABELS)) {
@@ -488,7 +489,7 @@ function personalRulesPanel() {
 // --- page ------------------------------------------------------------------------------
 (async () => {
   try {
-    const res = await api(`/api/invite/${encodeURIComponent(token)}`);
+    const res = await api('/api/invite', { token });
     const info = res.data;
     document.getElementById('title').textContent = `${info.role?.title || 'Your role'} at ${info.company || 'your company'}`;
     if (!info.assistant) {
