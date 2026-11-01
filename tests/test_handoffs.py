@@ -398,3 +398,52 @@ def test_start_again_works_only_from_my_own_handoff_and_stores_nothing(client, t
     assert client.post(f"/api/handoffs/{pid}/again", json={"token": team["ops"]}).status_code == 403
     client.post(f"/api/handoffs/{pid}/again", json={"token": team["sales"]})
     assert client.get("/api/inbox", query_string={"token": team["sales"]}).json == before
+
+
+class FlakyCheck:
+    """Stands in for the model on the handoff check: the first `bad` answers are empty or cut off, then a verdict."""
+    def __init__(self, bad, verdict=None):
+        self.bad, self.budgets = bad, []
+        self.verdict = verdict or {"status": "needs_attention", "summary": "Two sentences.", "findings": ["Odd route"]}
+
+    def __call__(self, messages, **kw):
+        import json
+        self.budgets.append(kw["max_tokens"])
+        text = ("", '{"status": "cle')[len(self.budgets) % 2] if len(self.budgets) <= self.bad else json.dumps(self.verdict)
+        return {"model": muse.SPARK, "answered_by": muse.SPARK, "latency_ms": 1, "demo_mode": False, "text": text}
+
+
+def test_an_empty_check_is_retried_once_with_a_larger_budget_and_the_answer_is_used():
+    import handoffs
+    ask = FlakyCheck(bad=1)
+    status, findings, summary = handoffs.run_check(GOOD, tools.PARAMS, datetime.date.today(), ask, lambda: None)
+    assert ask.budgets[1] > ask.budgets[0] and len(ask.budgets) == 2
+    assert status == "needs_attention" and summary == "Two sentences."
+    assert not any("did not finish" in f["message"] for f in findings)
+
+
+def test_two_unreadable_checks_go_to_a_person_and_the_retry_cannot_lower_the_rules_floor():
+    import handoffs
+    ask = FlakyCheck(bad=2)
+    status, findings, summary = handoffs.run_check(GOOD, tools.PARAMS, datetime.date.today(), ask, lambda: None)
+    assert len(ask.budgets) == 2 and status == "needs_human_check" and summary == ""
+    assert any("did not finish" in f["message"] for f in findings)
+    # A below-cost package stays blocked even when the retried check says clear.
+    clear = FlakyCheck(bad=1, verdict={"status": "clear", "summary": "Fine.", "findings": []})
+    status, _, _ = handoffs.run_check({**GOOD, "price": 1000}, tools.PARAMS, datetime.date.today(), clear, lambda: None)
+    assert status == "blocked"
+
+
+def test_a_verdict_with_a_status_outside_the_ranks_is_unreadable_not_a_crash():
+    import workflow
+    ask = FlakyCheck(bad=0, verdict={"status": "approved", "summary": "x", "findings": []})
+    verdict, why = workflow.soft_check({"id": "s", "title": "t"}, GOOD, "clear", ask, lambda: None, [])
+    assert verdict is None and why == "Muse returned an unreadable check" and len(ask.budgets) == 2
+
+
+def test_a_demo_mode_check_is_labelled_and_not_retried():
+    import workflow
+    calls = []
+    ask = lambda messages, **kw: calls.append(1) or muse.demo_result(muse.SPARK, "FAKE_AI")
+    verdict, why = workflow.soft_check({"id": "s", "title": "t"}, GOOD, "clear", ask, lambda: None, [])
+    assert verdict is None and why == "FAKE_AI" and calls == [1]

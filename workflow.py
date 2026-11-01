@@ -35,6 +35,8 @@ CHECK_SCHEMA = {
     "required": ["status", "findings", "summary"], "additionalProperties": False,
 }
 
+CHECK_BUDGETS = (600, 1200)
+
 CHECK_PROMPT = (
     "You review one handoff in a small company for contradictions and missing information. "
     "Reply with status (clear, needs_attention, needs_human_check or blocked), short findings "
@@ -179,24 +181,29 @@ def call_tool(step, values, ask, blocked, trace):
 
 def soft_check(step, values, rules_status, ask, blocked, trace):
     """Second layer. Returns (verdict, None) or (None, reason it did not finish)."""
-    reason = blocked()
-    if reason:
-        return None, reason
-    call = ask(
-        [{"role": "system", "content": CHECK_PROMPT},
-         {"role": "user", "content": f"Step: {step['title']}\nRules found: {rules_status}\n<data>\n"
-                                     f"{json.dumps(values)}\n</data>"}],
-        response_format={"type": "json_schema",
-                         "json_schema": {"name": "check", "strict": True, "schema": CHECK_SCHEMA}},
-        reasoning_effort="minimal", max_tokens=600)
-    trace.append({"step": step["id"], "tool": "soft_check", "model": call["model"],
-                  "answered_by": call.get("answered_by"),
-                  "ms": call["latency_ms"], "demo_mode": call["demo_mode"]})
-    if call["demo_mode"]:
-        return None, call["demo_reason"]
-    try:
-        verdict = json.loads(call["text"])
-    except ValueError:
+    verdict = None
+    # 600 tokens sometimes ran out before the JSON on the live injection package (2026-11-01): one retry, with
+    # twice the room, on an empty or unreadable answer. A second failure still goes to a person.
+    for budget in CHECK_BUDGETS:
+        reason = blocked()
+        if reason:
+            return None, reason
+        call = ask(
+            [{"role": "system", "content": CHECK_PROMPT},
+             {"role": "user", "content": f"Step: {step['title']}\nRules found: {rules_status}\n<data>\n"
+                                         f"{json.dumps(values)}\n</data>"}],
+            response_format={"type": "json_schema",
+                             "json_schema": {"name": "check", "strict": True, "schema": CHECK_SCHEMA}},
+            reasoning_effort="minimal", max_tokens=budget)
+        trace.append({"step": step["id"], "tool": "soft_check", "model": call["model"],
+                      "answered_by": call.get("answered_by"),
+                      "ms": call["latency_ms"], "demo_mode": call["demo_mode"]})
+        if call["demo_mode"]:
+            return None, call["demo_reason"]
+        verdict = _readable_verdict(call["text"])
+        if verdict:
+            break
+    if verdict is None:
         return None, "Muse returned an unreadable check"
     # The prompt says notes are optional, but the model still sometimes flags an empty field.
     verdict["findings"] = [m for m in verdict["findings"]
@@ -206,6 +213,19 @@ def soft_check(step, values, rules_status, ask, blocked, trace):
     known = set(numbers(json.dumps(values)) + numbers(rules_status))
     verdict["findings"] = [m for m in verdict["findings"] if set(numbers(m)) <= known]
     return verdict, None
+
+
+def _readable_verdict(text):
+    """The verdict if it has the schema's shape, else None: a status outside the ranks must not reach combine_status."""
+    try:
+        verdict = json.loads(text)
+    except ValueError:
+        return None
+    if (isinstance(verdict, dict) and verdict.get("status") in rules.RANK
+            and isinstance(verdict.get("summary"), str) and isinstance(verdict.get("findings"), list)
+            and all(isinstance(m, str) for m in verdict["findings"])):
+        return verdict
+    return None
 
 
 def numbers(text):
