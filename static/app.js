@@ -15,6 +15,14 @@ const PROVENANCE = {
   answers: ['From your answers', 'ok'], ai: ['AI suggestion', 'info'], template: ['Template', 'warn'],
 };
 
+// Who drew the chart, shown on the chart itself. A chart reopened from the company record was saved after the
+// owner's edits, so it is not credited to Wonder.
+export function chartLabel(chart) {
+  if (chart.source === 'wonder' && !chart.demo_mode) return ['Designed by Muse Wonder', 'ok'];
+  if (chart.source === 'template') return ['Template', 'warn'];
+  return ['Saved chart', 'info'];
+}
+
 let sandbox = localStorage.getItem('sandbox');
 let state = { answers: null, chart: null, accepted: false };
 
@@ -190,11 +198,13 @@ function showChart() {
     if (res.ok) { state.accepted = true; showAssistants(); } else await revalidate();
   }));
 
+  const [origin, kind] = chartLabel(chart);
   clear(app, el('section', {}, el('h2', {}, `2. Org chart: ${chart.company || 'your company'}`),
-    chart.demo_mode ? demoNote(chart.demo_reason) : el('p', {}, badge('Designed by Muse Wonder', 'ok'),
-      ` The rules checked it: ${chart.roles.filter((r) => !r.reports_to).length} top role, no circles, ` +
-      `${chart.roles.reduce((n, r) => n + r.headcount, 0)} of ${chart.size} people placed.`),
-    chart.source === 'template' ? el('p', { class: 'muted' }, 'This is a standard chart (Template).') : null,
+    chart.demo_mode ? demoNote(chart.demo_reason) : null,
+    el('p', { class: 'chart-origin' }, badge(origin, kind), chart.source === 'template'
+      ? ' This is a standard chart (Template).'
+      : ` The rules checked it: ${chart.roles.filter((r) => !r.reports_to).length} top role, no circles, ` +
+        `${chart.roles.reduce((n, r) => n + r.headcount, 0)} of ${chart.size} people placed.`),
     list, errorBox, el('div', { class: 'row sticky-actions' }, accept)));
   draw();
   revalidate();
