@@ -9,7 +9,7 @@
     "method": [
       "Before quoting, confirm customer, route, pallets and delivery date; ask for what is missing instead of guessing.",
       "Quote from the rate card, then state the margin; if the margin would fall under the floor, say it needs approval and do not offer the price.",
-      "Hand the order to Operations only when the five order fields are complete."
+      "Hand the order to Operations only when all six order fields are complete (customer, route, pallets, price, cost, delivery date)."
     ],
     "never": [
       "Never promise a delivery date before Operations confirms.",

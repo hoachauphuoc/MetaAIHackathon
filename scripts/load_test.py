@@ -14,20 +14,23 @@ import time
 from openai import OpenAI
 
 PROVIDERS = {
-    "meta": ("https://api.meta.ai/v1", "muse-spark-1.3", lambda: os.environ.get("META_API_KEY_FILE")),
-    "baseten": ("https://inference.baseten.co/v1", "meta-models/muse-spark-open-1026",
-                lambda: os.environ.get("BASETEN_API_KEY_FILE", "C:/Users/phuochoa/.bjt/Baseten.txt")),
+    "meta": ("https://api.meta.ai/v1", "muse-spark-1.3", "META_API_KEY_FILE"),
+    "baseten": ("https://inference.baseten.co/v1", "meta-models/muse-spark-open-1026", "BASETEN_API_KEY_FILE"),
     "glimmer": ("https://hoachauphuoc--muse-glimmer-private-glimmer-serve.us-east.modal.run/v1", "meta-models/Muse-Glimmer-30B",
-                lambda: os.environ.get("PRIVATE_API_KEY_FILE")),
+                "PRIVATE_API_KEY_FILE"),
 }
 PROMPT = "Reply with the single word: ok"
 
 
 def key(provider):
-    path = PROVIDERS[provider][2]()
+    var = PROVIDERS[provider][2]
+    path = os.environ.get(var)
     if path:
         return open(path, encoding="utf-8").read().strip()
-    return os.environ["META_API_KEY"]
+    # Only meta may use a bare env key; the other providers have no such fallback.
+    if provider == "meta" and "META_API_KEY" in os.environ:
+        return os.environ["META_API_KEY"]
+    sys.exit(f"Set {var}" + (" or META_API_KEY" if provider == "meta" else ""))
 
 
 def main(n, model, provider):

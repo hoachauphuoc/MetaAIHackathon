@@ -20,6 +20,8 @@ $bytes = New-Object byte[] 32
 New-Secret "workflow-secret" ([Convert]::ToBase64String($bytes))
 
 # Cloud Run runs as the default compute service account; it must be allowed to read the secrets.
+# That account is shared by every Cloud Run service in the project, so any of them can read these
+# secrets; a dedicated service account would be stricter and is planned after the contest.
 $number = gcloud projects describe $Project --format "value(projectNumber)"
 foreach ($name in "meta-api-key", "private-api-key", "workflow-secret") {
     gcloud secrets add-iam-policy-binding $name --project $Project `

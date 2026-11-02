@@ -12,3 +12,6 @@ recordings/
 node_modules/
 demo_video/
 .council/
+
+# Claude Code local settings and skills: kept on this machine, not in the repo
+.claude/

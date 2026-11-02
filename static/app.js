@@ -73,7 +73,7 @@ async function recordedDemo() {
       poster: '/static/video/welcome_poster.jpg',
       'aria-label': 'Recorded demo of the order workflow, with captions burned in' }),
     el('p', { class: 'muted' }, `A recording from ${when}, filmed while the Private endpoint was warm. A live Private step ` +
-      'that starts cold can take a few minutes, and the live app is the one to trust.'));
+      'that starts cold took 166 s once (before the GPU snapshot) and 23 to 31 s in four later runs, and the live app is the one to trust.'));
 }
 
 async function tryDemo(industry) {

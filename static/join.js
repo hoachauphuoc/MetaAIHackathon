@@ -217,11 +217,11 @@ async function privateReadiness() {
   if (!s.configured) return 'Private mode is not set up on this server: the Finance step will be marked for a person to check.';
   if (s.waking_s !== null)
     return [badge('Private mode: waking up', 'warn'), ` ${s.model} was woken ${s.waking_s} s ago when this form opened. ` +
-      'A cold start took 166 s when timed, so fill the order meanwhile; if it is not ready, the Finance step retries on its own.'];
+      'A cold start took 166 s once, before the GPU snapshot, and 23 to 31 s in four later runs; fill the order meanwhile. If it is not ready, the Finance step retries on its own.'];
   if (s.answered_s_ago !== null && s.answered_s_ago < WARM_S)
     return [badge('Private mode: probably warm', 'ok'), ` ${s.model} answered ${Math.max(1, Math.round(s.answered_s_ago / 60))} min ago.`];
   return [badge('Private mode: may be asleep', 'warn'), ` ${s.model} has not answered in the last 10 minutes. ` +
-    'It sleeps when idle, so the Finance step may say it is starting and retry on its own (about 3 minutes).'];
+    'It sleeps when idle, so the Finance step may say it is starting and retry on its own (a cold start took 166 s once, then 23 to 31 s in four runs).'];
 }
 
 function workflowPanel(routes, myRole) {
@@ -351,7 +351,7 @@ function runner({ plan, signature, roles, receipts = {} }, out, modes = {}, myRo
     });
     stop.addEventListener('click', () => { approve.disabled = stop.disabled = true;
       node.append(el('p', {}, badge('Stopped by you', 'warn'))); });
-    // A cold Private endpoint answers "starting" and wakes in about 3 minutes: the step retries on its own
+    // A cold Private endpoint answers "starting" and wakes in 166 s before the GPU snapshot, 23 to 31 s after it (set 10): the step retries on its own
     // a few times, with a visible countdown, and a person can still retry at once. It never switches models.
     let timer = null;
     const rerun = () => {
@@ -366,7 +366,7 @@ function runner({ plan, signature, roles, receipts = {} }, out, modes = {}, myRo
     if (waking) {
       let left = WAKE_WAIT_S;
       const tick = () => {
-        countdown.textContent = `Private mode is waking up (about 3 minutes). Trying again in ${left} s ` +
+        countdown.textContent = `Private mode is waking up (166 s once before the GPU snapshot, 23 to 31 s after it). Trying again in ${left} s ` +
           `(try ${attempt + 2} of ${WAKE_TRIES + 1}).`;
         if (left-- <= 0) rerun();
       };

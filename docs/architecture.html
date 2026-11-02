@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Role Assistant Foundry architecture</title>
+<style>
+:root {
+  color-scheme:light dark;
+  --bg:#f7f8fa; --card:#ffffff; --text:#1c2230; --muted:#5a6475; --stroke:#3b4a66;
+  --box:#ffffff; --meta:#e3edff; --priv:#efe3ff; --data:#e4f4ea; --arrow:#3b4a66; --grp:#9aa5b8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#10141c; --card:#171d29; --text:#e8ecf4; --muted:#a3adbf; --stroke:#8fa3c7;
+    --box:#1d2535; --meta:#1f3358; --priv:#3a2a5c; --data:#1d3a2b; --arrow:#9fb2d6; --grp:#5a6a85;
+  }
+}
+* { box-sizing:border-box; }
+html, body { max-width:100%; }
+body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; overflow-wrap:anywhere; }
+main { max-width:1140px; margin:0 auto; padding:24px 16px 48px; }
+h1 { font-size:1.6rem; margin:0 0 8px; }
+h2 { font-size:1.15rem; margin:0 0 12px; }
+p { margin:0 0 12px; }
+section { background:var(--card); border:1px solid var(--grp); border-radius:12px; padding:16px; margin:20px 0; }
+.note { color:var(--muted); font-size:.9rem; margin:12px 0 0; }
+.legend { display:flex; flex-wrap:wrap; gap:16px; align-items:center; color:var(--muted); font-size:.9rem; }
+.sw { display:inline-block; width:28px; height:16px; border:2px solid var(--stroke); border-radius:4px; vertical-align:middle; margin-right:6px; background:var(--box); }
+.sw.d { border-style:dashed; }
+svg { display:block; width:100%; height:auto; }
+.narrow { display:none; }
+/* HTML, not SVG, so the row reflows instead of scaling text down or running past the card. */
+.chain { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:28px; list-style:none; margin:0; padding:0; }
+.lvl { position:relative; display:flex; flex-direction:column; justify-content:center; min-height:110px; padding:12px; border:2px solid var(--stroke); border-radius:8px; background:var(--box); text-align:center; }
+.lvl b { font-size:15px; }
+.lvl span { font-size:14px; }
+.lvl.nb { border-style:dashed; background:var(--card); }
+.lvl + .lvl::before { content:""; position:absolute; top:50%; left:-26px; width:18px; border-top:2px solid var(--arrow); }
+.lvl + .lvl::after { content:""; position:absolute; top:calc(50% - 5px); left:-9px; border:5px solid transparent; border-left:7px solid var(--arrow); border-right:0; }
+.lvl.nb::before { border-top-style:dashed; }
+.box { fill:var(--box); stroke:var(--stroke); stroke-width:1.5; }
+.box.meta { fill:var(--meta); }
+.box.priv { fill:var(--priv); }
+.box.data { fill:var(--data); }
+.box.nb { fill:var(--card); }
+.dash { stroke-dasharray:7 5; }
+.grp { fill:none; stroke:var(--grp); stroke-width:1.5; }
+.arr { fill:none; stroke:var(--arrow); stroke-width:1.8; }
+.ahp { fill:var(--arrow); }
+.t { fill:var(--text); font-size:14px; }
+.tt { fill:var(--text); font-size:15px; font-weight:700; }
+.lab { fill:var(--muted); font-size:13px; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.col { border:2px solid var(--stroke); border-radius:8px; padding:12px 16px; background:var(--box); }
+.col.no { background:var(--card); }
+.col h3 { margin:0 0 8px; font-size:1rem; }
+.col ul { margin:0; padding-left:20px; }
+.col li { margin:4px 0; }
+.col li span { display:block; color:var(--muted); font-size:.9rem; }
+@media (max-width: 900px) {
+  svg.wide { display:none; }
+  svg.narrow { display:block; max-width:420px; margin:0 auto; }
+  .cols { grid-template-columns:1fr; }
+  .chain { grid-template-columns:1fr; max-width:420px; margin:0 auto; }
+  .lvl { min-height:0; }
+  .lvl + .lvl::before { top:-26px; left:50%; width:0; height:18px; border-top:0; border-left:2px solid var(--arrow); }
+  .lvl + .lvl::after { top:-9px; left:calc(50% - 4px); border:5px solid transparent; border-top:7px solid var(--arrow); border-bottom:0; }
+  .lvl.nb::before { border-left-style:dashed; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Role Assistant Foundry: architecture</h1>
+<p>Role-based AI assistants for small companies, built on Meta Muse models. Rules decide structure (org chart validity, skill lists, approval limits); the model only writes words and picks tool arguments.</p>
+<div class="legend"><span><i class="sw"></i>solid border: built</span><span><i class="sw d"></i>dashed border: not built</span><span>dashed arrow: conditional link or link to a part not built</span></div>
+
+<section>
+<h2>1. Request path</h2>
+<svg class="wide" viewBox="0 0 1100 460" role="img" aria-label="Request path from browser to Flask, SQLite and models"><defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahp"/></marker></defs>
+<rect class="box " x="10" y="150" width="190" height="110" rx="8"/>
+<text class="tt" x="105.0" y="183.0" text-anchor="middle">Browser</text>
+<text class="t" x="105.0" y="201.0" text-anchor="middle">index, join, trust pages</text>
+<text class="t" x="105.0" y="219.0" text-anchor="middle">masks PII, keeps</text>
+<text class="t" x="105.0" y="237.0" text-anchor="middle">chat history</text>
+<rect class="box " x="260" y="150" width="210" height="110" rx="8"/>
+<text class="tt" x="365.0" y="183.0" text-anchor="middle">Flask on Cloud Run</text>
+<text class="t" x="365.0" y="201.0" text-anchor="middle">gunicorn: 1 worker,</text>
+<text class="t" x="365.0" y="219.0" text-anchor="middle">8 threads</text>
+<text class="t" x="365.0" y="237.0" text-anchor="middle">token in Authorization</text>
+<rect class="box data" x="260" y="320" width="210" height="70" rx="8"/>
+<text class="tt" x="365.0" y="351.0" text-anchor="middle">In-memory SQLite</text>
+<text class="t" x="365.0" y="369.0" text-anchor="middle">purged after 24 h</text>
+<rect class="box meta" x="520" y="150" width="160" height="110" rx="8"/>
+<text class="tt" x="600.0" y="192.0" text-anchor="middle">muse.py</text>
+<text class="t" x="600.0" y="210.0" text-anchor="middle">the only door</text>
+<text class="t" x="600.0" y="228.0" text-anchor="middle">to a model</text>
+<rect class="grp" x="740" y="10" width="350" height="310" rx="10"/><text class="lab" x="752" y="30">Meta API  api.meta.ai/v1</text>
+<rect class="box meta" x="755" y="40" width="320" height="58" rx="8"/>
+<text class="tt" x="915.0" y="65.0" text-anchor="middle">Wonder</text>
+<text class="t" x="915.0" y="83.0" text-anchor="middle">org chart from survey</text>
+<polyline class="arr" points="680,205 715,205 715,69 753,69" marker-end="url(#ah1)"/>
+<rect class="box meta" x="755" y="110" width="320" height="58" rx="8"/>
+<text class="tt" x="915.0" y="135.0" text-anchor="middle">Spark</text>
+<text class="t" x="915.0" y="153.0" text-anchor="middle">briefs, chat, tools, image input</text>
+<polyline class="arr" points="680,205 715,205 715,139 753,139" marker-end="url(#ah1)"/>
+<rect class="box meta" x="755" y="180" width="320" height="58" rx="8"/>
+<text class="tt" x="915.0" y="205.0" text-anchor="middle">Voice</text>
+<text class="t" x="915.0" y="223.0" text-anchor="middle">muse-voice-transcribe-1.0</text>
+<polyline class="arr" points="680,205 715,205 715,209 753,209" marker-end="url(#ah1)"/>
+<rect class="box meta" x="755" y="250" width="320" height="58" rx="8"/>
+<text class="tt" x="915.0" y="275.0" text-anchor="middle">SAM 3.1</text>
+<text class="t" x="915.0" y="293.0" text-anchor="middle">photo regions (boxes)</text>
+<polyline class="arr" points="680,205 715,205 715,279 753,279" marker-end="url(#ah1)"/>
+<rect class="box priv" x="800" y="360" width="290" height="80" rx="8"/>
+<text class="tt" x="945.0" y="387.0" text-anchor="middle">Glimmer on Modal</text>
+<text class="t" x="945.0" y="405.0" text-anchor="middle">Muse-Glimmer-30B, vLLM</text>
+<text class="t" x="945.0" y="423.0" text-anchor="middle">private mode</text>
+<polyline class="arr" points="200,205 258,205" marker-end="url(#ah1)"/>
+<polyline class="arr" points="470,205 518,205" marker-end="url(#ah1)"/>
+<polyline class="arr" points="365,260 365,318" marker-end="url(#ah1)"/>
+<polyline class="arr dash" points="600,260 600,400 798,400" marker-end="url(#ah1)"/>
+<text class="lab" x="610" y="390" text-anchor="start">only when PRIVATE_* set</text>
+<text class="lab" x="229" y="195" text-anchor="middle">HTTPS</text></svg>
+<svg class="narrow" viewBox="0 0 360 835" role="img" aria-label="Request path from browser to Flask, SQLite and models"><defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahp"/></marker></defs>
+<rect class="box " x="30" y="10" width="300" height="70" rx="8"/>
+<text class="tt" x="180.0" y="41.0" text-anchor="middle">Browser</text>
+<text class="t" x="180.0" y="59.0" text-anchor="middle">masks PII, keeps chat history</text>
+<polyline class="arr" points="180,80 180,108" marker-end="url(#ah2)"/>
+<text class="lab" x="190" y="99" text-anchor="start">HTTPS, token in header</text>
+<rect class="box " x="30" y="110" width="300" height="70" rx="8"/>
+<text class="tt" x="180.0" y="141.0" text-anchor="middle">Flask on Cloud Run</text>
+<text class="t" x="180.0" y="159.0" text-anchor="middle">gunicorn: 1 worker, 8 threads</text>
+<polyline class="arr" points="180,180 180,208" marker-end="url(#ah2)"/>
+<rect class="box data" x="30" y="210" width="300" height="60" rx="8"/>
+<text class="tt" x="180.0" y="236.0" text-anchor="middle">In-memory SQLite</text>
+<text class="t" x="180.0" y="254.0" text-anchor="middle">purged after 24 h</text>
+<rect class="box meta" x="30" y="300" width="300" height="60" rx="8"/>
+<text class="tt" x="180.0" y="326.0" text-anchor="middle">muse.py</text>
+<text class="t" x="180.0" y="344.0" text-anchor="middle">the only door to a model</text>
+<polyline class="arr" points="80,180 14,180 14,330 28,330" marker-end="url(#ah2)"/>
+<polyline class="arr" points="180,360 180,388" marker-end="url(#ah2)"/>
+<rect class="grp" x="30" y="390" width="300" height="325" rx="10"/><text class="lab" x="42" y="410">Meta API  api.meta.ai/v1</text>
+<rect class="box meta" x="45" y="422" width="270" height="52" rx="8"/>
+<text class="tt" x="180.0" y="444.0" text-anchor="middle">Wonder</text>
+<text class="t" x="180.0" y="462.0" text-anchor="middle">org chart from survey</text>
+<rect class="box meta" x="45" y="484" width="270" height="62" rx="8"/>
+<text class="tt" x="180.0" y="502.0" text-anchor="middle">Spark</text>
+<text class="t" x="180.0" y="520.0" text-anchor="middle">briefs, chat, tools,</text>
+<text class="t" x="180.0" y="538.0" text-anchor="middle">image input</text>
+<rect class="box meta" x="45" y="556" width="270" height="52" rx="8"/>
+<text class="tt" x="180.0" y="578.0" text-anchor="middle">Voice</text>
+<text class="t" x="180.0" y="596.0" text-anchor="middle">muse-voice-transcribe-1.0</text>
+<rect class="box meta" x="45" y="618" width="270" height="52" rx="8"/>
+<text class="tt" x="180.0" y="640.0" text-anchor="middle">SAM 3.1</text>
+<text class="t" x="180.0" y="658.0" text-anchor="middle">photo regions (boxes)</text>
+<polyline class="arr dash" points="330,330 352,330 352,780 332,780" marker-end="url(#ah2)"/>
+<text class="lab" x="30" y="732" text-anchor="start">only when PRIVATE_* set</text>
+<rect class="box priv" x="30" y="740" width="300" height="80" rx="8"/>
+<text class="tt" x="180.0" y="767.0" text-anchor="middle">Glimmer on Modal</text>
+<text class="t" x="180.0" y="785.0" text-anchor="middle">Muse-Glimmer-30B, vLLM</text>
+<text class="t" x="180.0" y="803.0" text-anchor="middle">private mode</text></svg>
+<p class="note">Any model failure returns demo_mode: true with a label; private mode never falls back to the Meta API. Source: app.py, store.py, muse.py, chart.py, vision.py, voice.py, sam.py, scripts/private_modal.py, scripts/deploy.ps1, Dockerfile.</p>
+</section>
+
+<section>
+<h2>2. Order workflow</h2>
+<svg class="wide" viewBox="0 0 1100 420" role="img" aria-label="Order workflow: quote, schedule, margin"><defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahp"/></marker></defs>
+<rect class="box " x="10" y="40" width="150" height="110" rx="8"/>
+<text class="tt" x="85.0" y="82.0" text-anchor="middle">Plan</text>
+<text class="t" x="85.0" y="100.0" text-anchor="middle">signed HMAC-SHA256</text>
+<text class="t" x="85.0" y="118.0" text-anchor="middle">/api/workflow/plan</text>
+<rect class="box meta" x="210" y="40" width="250" height="110" rx="8"/>
+<text class="tt" x="335.0" y="73.0" text-anchor="middle">1 quote</text>
+<text class="t" x="335.0" y="91.0" text-anchor="middle">role: sales</text>
+<text class="t" x="335.0" y="109.0" text-anchor="middle">quote_price</text>
+<text class="t" x="335.0" y="127.0" text-anchor="middle">Spark</text>
+<polyline class="arr" points="335,150 335,208" marker-end="url(#ah3)"/>
+<rect class="box " x="210" y="210" width="250" height="70" rx="8"/>
+<text class="tt" x="335.0" y="241.0" text-anchor="middle">Approve</text>
+<text class="t" x="335.0" y="259.0" text-anchor="middle">by own sales invite</text>
+<rect class="box meta" x="520" y="40" width="250" height="110" rx="8"/>
+<text class="tt" x="645.0" y="73.0" text-anchor="middle">2 schedule</text>
+<text class="t" x="645.0" y="91.0" text-anchor="middle">role: ops</text>
+<text class="t" x="645.0" y="109.0" text-anchor="middle">make_calendar_event</text>
+<text class="t" x="645.0" y="127.0" text-anchor="middle">Spark</text>
+<polyline class="arr" points="645,150 645,208" marker-end="url(#ah3)"/>
+<rect class="box " x="520" y="210" width="250" height="70" rx="8"/>
+<text class="tt" x="645.0" y="241.0" text-anchor="middle">Approve</text>
+<text class="t" x="645.0" y="259.0" text-anchor="middle">by own ops invite</text>
+<rect class="box priv" x="830" y="40" width="250" height="110" rx="8"/>
+<text class="tt" x="955.0" y="73.0" text-anchor="middle">3 margin</text>
+<text class="t" x="955.0" y="91.0" text-anchor="middle">role: finance</text>
+<text class="t" x="955.0" y="109.0" text-anchor="middle">check_margin</text>
+<text class="t" x="955.0" y="127.0" text-anchor="middle">Glimmer (private)</text>
+<polyline class="arr" points="955,150 955,208" marker-end="url(#ah3)"/>
+<rect class="box " x="830" y="210" width="250" height="70" rx="8"/>
+<text class="tt" x="955.0" y="241.0" text-anchor="middle">Approve</text>
+<text class="t" x="955.0" y="259.0" text-anchor="middle">by own finance invite</text>
+<polyline class="arr" points="160,95 208,95" marker-end="url(#ah3)"/>
+<polyline class="arr" points="460,95 518,95" marker-end="url(#ah3)"/>
+<text class="lab" x="490" y="62" text-anchor="middle">HMAC</text>
+<text class="lab" x="490" y="80" text-anchor="middle">receipt</text>
+<text class="lab" x="490" y="125" text-anchor="middle">+ order</text>
+<text class="lab" x="490" y="141" text-anchor="middle">code</text>
+<polyline class="arr" points="770,95 828,95" marker-end="url(#ah3)"/>
+<text class="lab" x="800" y="62" text-anchor="middle">HMAC</text>
+<text class="lab" x="800" y="80" text-anchor="middle">receipt</text>
+<text class="lab" x="800" y="125" text-anchor="middle">+ order</text>
+<text class="lab" x="800" y="141" text-anchor="middle">code</text>
+<rect class="box data" x="10" y="330" width="1080" height="70" rx="8"/>
+<text class="tt" x="550.0" y="352.0" text-anchor="middle">Every step</text>
+<text class="t" x="550.0" y="370.0" text-anchor="middle">model picks tool args, code computes numbers; rules floor sets status,</text>
+<text class="t" x="550.0" y="388.0" text-anchor="middle">model check can only be stricter</text></svg>
+<svg class="narrow" viewBox="0 0 360 838" role="img" aria-label="Order workflow: quote, schedule, margin"><defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahp"/></marker></defs>
+<rect class="box " x="30" y="10" width="300" height="60" rx="8"/>
+<text class="tt" x="180.0" y="36.0" text-anchor="middle">Plan</text>
+<text class="t" x="180.0" y="54.0" text-anchor="middle">signed HMAC-SHA256</text>
+<polyline class="arr" points="180,70 180,98" marker-end="url(#ah4)"/>
+<rect class="box meta" x="30" y="100" width="300" height="90" rx="8"/>
+<text class="tt" x="180.0" y="123.0" text-anchor="middle">1 quote</text>
+<text class="t" x="180.0" y="141.0" text-anchor="middle">role: sales</text>
+<text class="t" x="180.0" y="159.0" text-anchor="middle">quote_price</text>
+<text class="t" x="180.0" y="177.0" text-anchor="middle">Spark</text>
+<polyline class="arr" points="180,190 180,218" marker-end="url(#ah4)"/>
+<rect class="box " x="30" y="220" width="300" height="56" rx="8"/>
+<text class="tt" x="180.0" y="244.0" text-anchor="middle">Approve</text>
+<text class="t" x="180.0" y="262.0" text-anchor="middle">by own sales invite</text>
+<polyline class="arr" points="180,276 180,304" marker-end="url(#ah4)"/>
+<text class="lab" x="190" y="295" text-anchor="start">receipt + order code</text>
+<rect class="box meta" x="30" y="306" width="300" height="90" rx="8"/>
+<text class="tt" x="180.0" y="329.0" text-anchor="middle">2 schedule</text>
+<text class="t" x="180.0" y="347.0" text-anchor="middle">role: ops</text>
+<text class="t" x="180.0" y="365.0" text-anchor="middle">make_calendar_event</text>
+<text class="t" x="180.0" y="383.0" text-anchor="middle">Spark</text>
+<polyline class="arr" points="180,396 180,424" marker-end="url(#ah4)"/>
+<rect class="box " x="30" y="426" width="300" height="56" rx="8"/>
+<text class="tt" x="180.0" y="450.0" text-anchor="middle">Approve</text>
+<text class="t" x="180.0" y="468.0" text-anchor="middle">by own ops invite</text>
+<polyline class="arr" points="180,482 180,510" marker-end="url(#ah4)"/>
+<text class="lab" x="190" y="501" text-anchor="start">receipt + order code</text>
+<rect class="box priv" x="30" y="512" width="300" height="90" rx="8"/>
+<text class="tt" x="180.0" y="535.0" text-anchor="middle">3 margin</text>
+<text class="t" x="180.0" y="553.0" text-anchor="middle">role: finance</text>
+<text class="t" x="180.0" y="571.0" text-anchor="middle">check_margin</text>
+<text class="t" x="180.0" y="589.0" text-anchor="middle">Glimmer (private)</text>
+<polyline class="arr" points="180,602 180,630" marker-end="url(#ah4)"/>
+<rect class="box " x="30" y="632" width="300" height="56" rx="8"/>
+<text class="tt" x="180.0" y="656.0" text-anchor="middle">Approve</text>
+<text class="t" x="180.0" y="674.0" text-anchor="middle">by own finance invite</text>
+<rect class="box data" x="30" y="718" width="300" height="100" rx="8"/>
+<text class="tt" x="180.0" y="737.0" text-anchor="middle">Every step</text>
+<text class="t" x="180.0" y="755.0" text-anchor="middle">model picks tool args,</text>
+<text class="t" x="180.0" y="773.0" text-anchor="middle">code computes numbers;</text>
+<text class="t" x="180.0" y="791.0" text-anchor="middle">rules floor sets status,</text>
+<text class="t" x="180.0" y="809.0" text-anchor="middle">model can only be stricter</text></svg>
+<p class="note">An invite approves only its own role's step (409 wrong_role, reason other_role), and one named person cannot approve two steps of an order (409 wrong_role, reason same_person). Orders and tool results stay in the browser. Source: workflow.py, app.py, rules.py, tools.py, store.py, static/join.js.</p>
+</section>
+
+<section>
+<h2>3. Hierarchy</h2>
+<ol class="chain" aria-label="Rule hierarchy">
+<li class="lvl"><b>Group</b><span>margin floor, approval limit, banned skills</span></li>
+<li class="lvl"><b>Subsidiary</b><span>may only tighten the rules above</span></li>
+<li class="lvl"><b>Company rules</b><span>checked against levels above</span></li>
+<li class="lvl nb"><b>Department</b><span>not built</span></li>
+<li class="lvl nb"><b>Team</b><span>not built</span></li>
+</ol>
+<p class="note">A unit below may keep or raise the margin floor, keep or lower the approval limit, and must keep every parent ban (it may add more); a looser value is refused. The strictest value on any level wins. Source: rules.py (LEVEL_RULES, validate_child_rules, bind_levels), app.py (/api/levels, /api/handoff-schema).</p>
+</section>
+
+<section>
+<h2>4. Data: stored vs never stored</h2>
+<div class="cols">
+<div class="col"><h3>Stored (8 tables deleted with the sandbox after 24 h; daily_cost is kept)</h3><ul><li>sandboxes, companies, assistants</li><li>people<span>invite token, display name, role; no email, activity or metrics</span></li><li>personal_rules<span>readable only with that person&#x27;s invite</span></li><li>packages<span>handed-off business documents</span></li><li>decisions<span>accept or return</span></li><li>approvals<span>hash of the invite name per step, only to stop one person approving twice; no performance or habit metrics</span></li><li>daily_cost<span>service-wide USD per day, no who or what; not deleted with a sandbox</span></li></ul></div>
+<div class="col no"><h3>Never stored</h3><ul><li>Chat messages and history</li><li>Workflow orders and tool results</li><li>Suggested fixes (until resent)</li><li>Photos (sent once, dropped)</li><li>Voice recordings</li><li>Pasted customer messages</li><li>Morning brief, onboarding ticks</li><li>Handover draft until sent</li><li>Habits, speed, experience, per-person statistics</li><li>Training: paid Standard use is excluded and -contributor ids are refused; the free-credit demo may be used by Meta (check the provider terms)</li></ul></div>
+</div>
+<p class="note">Source: trust.py (STORED, NEVER_STORED), store.py.</p>
+</section>
+</main>
+</body>
+</html>

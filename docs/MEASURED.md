@@ -10,6 +10,12 @@ No figure in this file was re-run or recomputed for that change: every median be
 sets 1, 3, 5, 6, 7, 8, 9, 12 and 13) and the one-off 31.9 s setup total remain the originally
 reported values. Do not mix them with future re-measurements under `statistics.median`.
 
+**What this file shows.** Small, synthetic, author-run measurements of the models and the app, one section per set,
+each with its date and its caveat. Sets in numeric order: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (Private mode, cold start),
+11 and 11p (contradictions, Spark and Glimmer), 12 (reasoning effort), 13 (clinic and software charts), 14 (whole path
+in a hidden browser), 15 and 16 (deployed link). Also: single-call cost and latency, Day-One and handover, setup time,
+three load tests, and PII masking scope. The file order below is the order the sets were added, not numeric.
+
 ## Set 1: does Wonder's org chart pass the rules on the first try?
 
 10 synthetic companies (logistics, retail, services; 5 to 30 people). The chart must pass
@@ -407,8 +413,11 @@ at desktop width (1280x900) and phone width (375 px), with the real models. 17 o
 
 Finance answered by meta-models/Muse-Glimmer-30B in Private mode. Desktop and 375 px both pass. Total 60.7 s.
 
+The table lists the main steps only (they sum to 42.8 s); the other timings that make up the 60.7 s total were not recorded here.
+
 Caveats: one run; Glimmer was already awake, so this is not a cold start; run by the author; it spends model
 credit. The revision id is recorded above.
+
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
 `python scripts/load_test.py 100 meta-models/muse-spark-open-1026 baseten`, one fixed 5-token prompt, sequential.

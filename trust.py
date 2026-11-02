@@ -42,8 +42,8 @@ NEVER_STORED = [
     "nobody, including the owner, sees how far they got.",
     "A handover draft: shown only to the person leaving until they choose to send it.",
     "Anything about how a person works: habits, speed, experience or per-person statistics.",
-    "Employee data is never used to train a model: only Standard mode is used, and any model "
-    "whose id ends in -contributor is refused.",
+    "Paid Standard use is excluded from training and any model id ending in -contributor is refused. "
+    "The demo runs on free Meta credit, and Meta may use data from free-credit traffic (Meta's billing page says content may be used for product improvement while free credits are in use).",
 ]
 
 LIMITS = [
@@ -105,8 +105,9 @@ def build(table_names):
                      "attribution": "No open-weights model is connected."}),
         "private_note": "Finance handoffs run in Private mode. If it is unavailable they are "
                         "marked 'A person must check this', never sent to the standard model. The open-weights "
-                        "endpoint sleeps when idle and takes about 166 s to wake (timed once, docs/MEASURED.md set 10); "
-                        "during the judging window the owner keeps it awake, and the Finance step says so when it is not.",
+                        "endpoint sleeps when idle: a cold start took 166 s once, before the GPU snapshot, and 23 to 31 s in four runs "
+                        "after it (docs/MEASURED.md set 10, not confirmed asleep each time); the owner intends to keep it awake, and the Finance step "
+                        "says so when it is not.",
         "skills": {"allowed": [s["id"] for s in rules.SKILLS["allowed"]],
                    "forbidden": sorted(rules.FORBIDDEN_SKILLS)},
         "limits": LIMITS,

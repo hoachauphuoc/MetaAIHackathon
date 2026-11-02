@@ -1,5 +1,7 @@
 # Independent review by SOLIFAN
 
+Summary: the reviewer found 5 issues (3 high, 1 medium, 1 low); all 5 are fixed. The reviewer did not re-check the fixes, and this is not a certification.
+
 A one-time technical review of this repository by SOLIFAN (reviewer: Mr. Okada Shinji), dated 2026-10-31 JST, performed on commit `1b7e7bde1c0e9f0d437f9c36fbb395e0b39f9a07`. The reviewer gave the owner permission to quote the report, the reviewer's name and the company name in the hackathon submission.
 
 This is not a quality certification. The report says its scope is limited: it re-ran the existing tests with no model calls, walked the public demo once, and reproduced abnormal cases locally with fictional data and stubbed model responses. It did **not** independently re-measure the author's past real-model figures (cost, latency, correct counts).
