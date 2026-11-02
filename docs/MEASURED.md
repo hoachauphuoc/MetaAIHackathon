@@ -293,6 +293,8 @@ the person's two notes kept as written, who-to-ask from the role's handoffs, 4.2
 
 ## Personal-data masking in the browser (no model)
 
+**Superseded by "PII masking scope US and international" (last section): the 12-digit ID rule counted below was removed from `static/pii.js`, so the 24 of 24 no longer describes the current code.**
+
 `node --test tests/js` on `tests/js/pii_cases.json`: 40 sentences written by the project author,
 so they test the patterns, not an independent sample.
 
@@ -413,10 +415,39 @@ at desktop width (1280x900) and phone width (375 px), with the real models. 17 o
 
 Finance answered by meta-models/Muse-Glimmer-30B in Private mode. Desktop and 375 px both pass. Total 60.7 s.
 
-The table lists the main steps only (they sum to 42.8 s); the other timings that make up the 60.7 s total were not recorded here.
+The table lists the main steps only (they sum to 42.8 s). The remaining 17.9 s of the 60.7 s total (60.7 - 42.8) is not itemised: page loads and waits between the timed steps were not timed separately.
 
 Caveats: one run; Glimmer was already awake, so this is not a cold start; run by the author; it spends model
 credit. The revision id is recorded above.
+
+## Set 17: Cold Glimmer walk on the deployed link, one run (2026-11-02)
+
+`python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` after about 12.5 minutes with no
+call to the endpoint (a 750 s wait; the `scaledown_window` is 10 minutes, but the Modal dashboard was not visible, so
+that the container was asleep is not confirmed). Hidden desktop Chromium (1280x900) then 375 px, real models.
+Exit code 1. The revision number was not recorded.
+
+| Step | Seconds | Result |
+|---|---|---|
+| Open the home page (1280 px) | 4.2 | ok |
+| Start the demo company | 0.1 | ok |
+| Wonder designs the chart | 6.2 | ok, "Designed by Muse Wonder" |
+| Accept the chart | 4.9 | ok |
+| Create the Sales, Operations and Finance invites | 2.2 | ok |
+| Plan an order | 5.3 | ok |
+| Approve the three steps (Finance in Private mode) | 240.0 | FAIL: TimeoutError waiting for the "Order code" field |
+| Export approved (CSV) in the Sales inbox | 2.3 | ok, file with 0 approved handoffs |
+| Open the home page (375 px) | 1.9 | ok |
+| Wonder designs the chart (375 px) | 7.8 | ok |
+| Accept the chart (375 px) | 6.0 | ok |
+| Create the invites (375 px) | 1.9 | ok |
+
+Total 285.1 s. Finance: no model answered; the order did not complete. The script's own "Private mode starting"
+check at the end of the walk passed (the label was not visible at that moment), and the script records no retry
+count or retry times, so none are reported. The cause of the 240 s timeout was not diagnosed.
+
+Caveats: one run; one person; run by the author; desktop width for the Finance step; it spends model credit; the
+script does not count model calls; a first invocation with a stray extra argument printed usage and made no call.
 
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
@@ -468,3 +499,28 @@ The Vietnamese 12-digit ID rule and the national-format phone rule were removed.
 | Ordinary business numbers (prices, order numbers, dates, plates, a 12-digit ID number, a bare 10-digit order number) wrongly masked | 0 of 18 |
 
 Other national ID formats and national-format phone numbers without a `+` country code are not masked.
+
+## Check run, 2026-11-02 (no model)
+
+`FAKE_AI=1 .venv\Scripts\python.exe -m pytest -q` and `node --test tests/js/*.test.mjs` (the two test steps of `scripts/check.ps1`, which makes no model call and reads no key): `790 passed in 32.82s`; JS `tests 39`, `pass 39`, `fail 0`. Python test functions counted by the check's own pattern: 327. The counts in the README are unchanged.
+
+## To run (needs owner approval): cold Private mode walk
+
+Not run. It spends model credit and Modal GPU time, so the owner approves first.
+
+1. If `GLIMMER_MIN_CONTAINERS=1` is deployed for the judging days, a plain `modal deploy scripts/private_modal.py` is needed first, otherwise the container never sleeps.
+2. Let the Glimmer container go idle: `scripts/private_modal.py` sets `scaledown_window=10 * MINUTES`, so send no request for more than 10 minutes (set 10 used about nine hours). The test machine cannot see the Modal dashboard, so that the container is asleep is not confirmed (same caveat as set 10); do not run `scripts/warm_glimmer.py` or open the order form in a browser before the walk, because both send a wake request.
+3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 when the Finance step shows `Private mode starting`, so on a cold start record separately: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
+4. Add the result as Set 17 with date, revision, step table, retry count, completion time and caveats; one run.
+
+Cost estimate from recorded figures only: cold start 23 to 31 s after the snapshot (set 10). Muse calls per width, upper bound: one chart USD 0.038 (one UI run) + 5 briefs at USD 0.0047 = USD 0.0615, + 3 workflow steps under USD 0.01 each = under USD 0.0915; two widths (desktop and 375 px) = under USD 0.19. Glimmer GPU price per hour: not recorded. Glimmer GPU time for the walk: not recorded.
+
+## To run (needs owner): timed job, by hand and in the app
+
+Not run. The owner times one order, n = 3 each way, with `scripts/timed_run.py`; the label is "typing baseline, not how companies work today".
+
+- Who holds the stopwatch: the owner, for all six runs (use `--by owner`; record it in `--source`, for example "stopwatch, owner").
+- By hand: start when the order text is in front of the owner; stop when the owner has typed the quote into a blank sheet or message and read it back once. Three runs.
+- In the app: start when **Plan this order** is pressed on the Sales link; stop when the last step shows **Approved: server receipt (HMAC)**. Three runs. Log in a fresh sandbox each time; typing the order is inside the timing in both ways.
+- Record each pair with `python scripts/timed_run.py "<task>" --app <s> --hand <s> --by owner --source "stopwatch, owner" --note "typing baseline, not how companies work today"`, and report all three values of each way, not only the best.
+- No saving is claimed until the three pairs exist.
