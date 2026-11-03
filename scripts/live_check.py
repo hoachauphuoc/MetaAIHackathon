@@ -71,15 +71,18 @@ def main(url):
             # Each role approves its own step on its own invite; the order travels between them as a code.
             for i, role in enumerate(("Sales", "Operations", "Finance")):
                 if i:
+                    # The token is in the URL fragment, so going from one invite to the next would not reload the page.
+                    page.goto("about:blank")
                     page.goto(base + invite[role])
                     page.fill("#order-code", code)
                     button("Continue this order").click()
                 b = button("Approve and hand over").first
                 b.wait_for()
                 page.wait_for_function("b => !b.disabled", arg=b.element_handle())
-                if i < 2:
-                    code = page.get_by_label("Order code", exact=True).input_value()
                 b.click()
+                if i < 2:
+                    # The code box for the next role appears only after this step is approved.
+                    code = page.get_by_label("Order code", exact=True).input_value()
             page.locator("#order-done").wait_for()
 
         def no_demo_label(where):
