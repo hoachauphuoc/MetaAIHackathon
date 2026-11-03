@@ -1,7 +1,6 @@
 # Measured results
 
-Produced by `scripts/measure.py`, `scripts/live_check.py` and `scripts/load_test.py` between 2026-10-27 and 2026-11-02 (each set gives its own date and command), with the real Meta models. The data is synthetic and the samples are small, so these are raw counts, not
-percentages. Anyone with a Meta key can rerun the script.
+Produced by `scripts/measure.py`, `scripts/live_check.py` and `scripts/load_test.py` between 2026-10-27 and 2026-11-02, with the real Meta models. Most sets give their own date and command; sets 1 and 2 (`python scripts/measure.py set1`, `set2`) were run in the first days and their date is not recorded here. The data is synthetic and the samples are small, so these are raw counts, not percentages. Anyone with a Meta key can rerun `scripts/measure.py`; sets 10 and 11p also need a Glimmer endpoint, live checks need `requirements-dev.txt` and the deployed link, and set 14 cannot be rerun from this repository.
 
 **Median definition (L01).** Earlier one-off medians in this file were computed as the upper
 median, `sorted(values)[len(values)//2]`; `scripts/measure.py` now uses `statistics.median`.
@@ -12,7 +11,7 @@ reported values. Do not mix them with future re-measurements under `statistics.m
 **What this file shows.** Small, synthetic, author-run measurements of the models and the app, one section per set,
 each with its date and its caveat. Sets in numeric order: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (Private mode, cold start),
 11 and 11p (contradictions, Spark and Glimmer), 12 (reasoning effort), 13 (clinic and software charts), 14 (whole path
-in a hidden browser), 15 and 16 (deployed link, Glimmer warm), 17 (deployed link, Glimmer cold, failed). Also: single-call cost and latency, Day-One and handover, setup time,
+in a hidden browser), 15 and 16 (deployed link, Glimmer warm), 17 (deployed link, Glimmer probably cold, failed). Also: single-call cost and latency, Day-One and handover, setup time,
 three load tests, and PII masking scope. The file order below is the order the sets were added, not numeric.
 
 ## Set 1: does Wonder's org chart pass the rules on the first try?
@@ -225,7 +224,7 @@ the whole output anyway.
 
 | Result | Value |
 |---|---|
-| Lines shown (5 per list, 5 runs) | 70 |
+| Lines shown (up to 5 per list: 4 + 5 + 5 per run, 5 runs) | 70 |
 | Lines written by Spark | 70 of 70 |
 | Model lines dropped (unknown id) or replaced (named a person) | 0 |
 | People's names in the output | 0 |
@@ -327,7 +326,7 @@ tooling kept outside this repository, so this set is reported, not rerunnable fr
 
 | Step | Seconds | What the page showed |
 |---|---|---|
-| Open the home page | 0.3 | Role Assistants |
+| Open the home page | 0.3 | Role Assistants (the name before the rename to Role Assistant Foundry) |
 | Press Try the demo company | 0.1 | survey shown |
 | Press Design my org chart | 8.0 | chart shown |
 | Accept this chart | 5.0 | assistants page |
@@ -339,7 +338,7 @@ tooling kept outside this repository, so this set is reported, not rerunnable fr
 | Levels: Group bans a skill, Subsidiary saves without it (expect refusal naming Group) | 2.5 | Group bans "Draft a message": a unit below it must keep that ban. |
 | Open /trust | 0.1 | What we store, and what we never do |
 | Clinic demo: chart, assistants and an invite link for every role | 19.3 | 5 roles in this run: clinic director, clinic operations lead, dentist, billing officer, patient support (Wonder designs the chart each time, so titles differ between runs) |
-| Clinic: send a treatment-plan quote to the next role | 2.6 | clinic operations lead to dentist: Clear Sent to the Dentist team. It waits in |
+| Clinic: send a treatment-plan quote to the next role | 2.6 | clinic operations lead to dentist: Clear, sent to the Dentist team (the page text is cut off in the observer's record) |
 | Clinic: the receiving role takes it and accepts | 1.7 | took it, then pressed Accept; the inbox then showed 0 waiting and 0 in the team queue |
 | Phone: demo company then chart | 7.7 | scrollWidth 375 |
 | Phone: accept the chart and open the Sales invite | 5.7 | invite page |
@@ -349,7 +348,7 @@ tooling kept outside this repository, so this set is reported, not rerunnable fr
 | Phone: approve step 3 | 0.9 | ok |
 | Phone: elements wider than the viewport | 0.0 | overflowing 0 |
 
-Attack and layout checks, all passed: One sandbox never reads another's company; One sandbox never lists another's assistants; An unknown sandbox id is refused; No forbidden skill reaches an assistant; A non-PNG/JPEG photo is refused before any model call; A non-WAV recording is refused before any model call; /trust states what is never stored; No element wider than a 375 px phone; Real mode shows no FAKE_AI label; No console errors besides expected 422 refusals.
+Attack and layout checks, all passed: One sandbox never reads another's company; One sandbox never lists another's assistants; An unknown sandbox id is refused; No forbidden skill reaches an assistant; A non-PNG/JPEG photo is refused before any model call; A non-WAV recording is refused before any model call; /trust states what is never stored; No element wider than a 375 px phone; Real mode shows no FAKE_AI label; No console errors besides expected 422 refusals. (The check's name is as recorded; the code accepts png, jpeg and webp, `vision.py`.)
 ## Set 11p: contradictions on Glimmer (Private mode, one run, 2026-10-30)
 
 `python scripts/measure.py set11p`, warm endpoint (Glimmer answered 3 s after a cold start the same afternoon).
@@ -362,7 +361,7 @@ Attack and layout checks, all passed: One sandbox never reads another's company;
 | Model check did not finish | 0 of 20 |
 
 One run, synthetic data. Glimmer finds more contradictions than the rules but raises false alarms on 4 of 10 clean packages, which a person then checks. It is not a measured accuracy claim beyond this set.
-## Live check on the deployed judge path (X07, X08)
+## Live check on the deployed link, revision role-assistants-00025-xn8 (one run, 2026-10-30, before live checks got set numbers)
 
 `python scripts/live_check.py <deployed link>`, 2026-10-30 06:22 ET (17:22 Vietnam time), revision role-assistants-00025-xn8, Glimmer warm from a 5 s wake at 06:22:31 ET.
 
@@ -419,7 +418,7 @@ The table lists the main steps only (they sum to 42.8 s). The remaining 17.9 s o
 Caveats: one run; Glimmer was already awake, so this is not a cold start; run by the author; it spends model
 credit. The revision id is recorded above.
 
-## Set 17: Cold Glimmer walk on the deployed link, one run (2026-11-02)
+## Set 17: walk on the deployed link with Glimmer probably cold, failed at Finance, one run (2026-11-02)
 
 `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` after about 12.5 minutes with no
 call to the endpoint (a 750 s wait; the `scaledown_window` is 10 minutes, but the Modal dashboard was not visible, so
@@ -441,7 +440,7 @@ Exit code 1. The revision number was not recorded.
 | Accept the chart (375 px) | 6.0 | ok |
 | Create the invites (375 px) | 1.9 | ok |
 
-Total 285.1 s. Finance: no model answered; the order did not complete. The script's own "Private mode starting"
+Total 285.1 s; the rows sum to 282.8 s, and the remaining 2.3 s (page loads and waits between steps) was not timed separately. Finance: no model answered; the order did not complete. The script's own "Private mode starting"
 check at the end of the walk passed (the label was not visible at that moment), and the script records no retry
 count or retry times, so none are reported. The cause of the 240 s timeout was not diagnosed.
 
@@ -509,7 +508,7 @@ Set 17 (above) was the first attempt and failed at the Finance step. A second at
 
 1. If `GLIMMER_MIN_CONTAINERS=1` is deployed for the judging days, a plain `modal deploy scripts/private_modal.py` is needed first, otherwise the container never sleeps.
 2. Let the Glimmer container go idle: `scripts/private_modal.py` sets `scaledown_window=10 * MINUTES`, so send no request for more than 10 minutes (set 10 used about nine hours). The test machine cannot see the Modal dashboard, so that the container is asleep is not confirmed (same caveat as set 10); do not run `scripts/warm_glimmer.py` or open the order form in a browser before the walk, because both send a wake request.
-3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 when the Finance step shows `Private mode starting`, so on a cold start record separately: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
+3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 on any failed step: a timeout (set 17 waited 240 s for the "Order code" field) or a `Private mode starting` label at the end. It records no retry count, so on a cold start note by hand: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
 4. Add the result as Set 18 with date, revision, step table, retry count, completion time and caveats; one run.
 
 Cost estimate from recorded figures only: cold start 23 to 31 s after the snapshot (set 10). Muse calls per width, upper bound: one chart USD 0.038 (one UI run) + 5 briefs at USD 0.0047 = USD 0.0615, + 3 workflow steps under USD 0.01 each = under USD 0.0915; two widths (desktop and 375 px) = under USD 0.19. Glimmer GPU price per hour: not recorded. Glimmer GPU time for the walk: not recorded.
@@ -520,6 +519,6 @@ Not run. The owner times one order, n = 3 each way, with `scripts/timed_run.py`;
 
 - Who holds the stopwatch: the owner, for all six runs (use `--by owner`; record it in `--source`, for example "stopwatch, owner").
 - By hand: start when the order text is in front of the owner; stop when the owner has typed the quote into a blank sheet or message and read it back once. Three runs.
-- In the app: start when **Plan this order** is pressed on the Sales link; stop when the last step shows **Approved: server receipt (HMAC)**. Three runs. Log in a fresh sandbox each time; typing the order is inside the timing in both ways.
+- In the app: start when the order form is opened on the Sales link (typing the order is inside the timing); stop when the last step shows **Approved: server receipt (HMAC)**. Three runs, each in a fresh sandbox opened before the stopwatch starts.
 - Record each pair with `python scripts/timed_run.py "<task>" --app <s> --hand <s> --by owner --source "stopwatch, owner" --note "typing baseline, not how companies work today"`, and report all three values of each way, not only the best.
 - No saving is claimed until the three pairs exist.

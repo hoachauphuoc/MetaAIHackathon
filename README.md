@@ -15,15 +15,15 @@ Contents: [Stage One checklist](#stage-one-checklist) · [What is measured](#wha
 
 ## Stage One checklist
 
-Legend: **Answer** is our claim, **Proof** is where to check it. What is built and what is not: [Built today, and not built](#built-today-and-not-built).
+Legend: **Answer** is the claim, **Proof** is where to check it. What is built and what is not: [Built today, and not built](#built-today-and-not-built).
 
 | Item | Answer | Proof |
 |---|---|---|
-| Track | **Indie developer** (solo builder) | This README |
+| Track | **Indie developer**, built solo by PhuocHoa | This README, [LICENSE](LICENSE), `git log` |
 | Problem statement | **Build for Your World.** Owners of small companies (around ten people) want AI but fear leaked client data, and employees fear AI the company can watch; this gives each role an assistant under the company's own rules. | [The problem](docs/PROJECT_DETAILS.md#the-problem-and-what-this-makes-possible), [Founder's story](#founders-story-why-role-assistant-foundry) |
 | Meta models used | Muse Wonder (`muse-wonder-1.0`), Muse Spark (`muse-spark-1.3`), Muse Glimmer 30B on Modal (Private mode); Muse Voice Transcribe and SAM 3.1 are experimental, unmeasured | [Meta models used](#meta-models-used), `muse.py` |
 | Live link | https://role-assistants-662084666675.us-central1.run.app | [docs/MEASURED.md](docs/MEASURED.md), set 16: one run on the deployed revision `role-assistants-00034-9z8`, 17 of 17 steps ok at desktop and 375 px width |
-| Demo video | Submitted video: https://youtu.be/n30I40GJSMQ (178 s, cut from the V19 recording). The home page plays a 127 s cut of the same recording, in this repository as `static/video/welcome.mp4`. | [YouTube](https://youtu.be/n30I40GJSMQ), [static/video/welcome.mp4](static/video/welcome.mp4) |
+| Demo video | Submitted video: https://youtu.be/n30I40GJSMQ (178 s). The home page plays a 127 s cut of the same recording, in this repository as `static/video/welcome.mp4`. | [YouTube](https://youtu.be/n30I40GJSMQ), [static/video/welcome.mp4](static/video/welcome.mp4) |
 | Public repository | https://github.com/hoachauphuoc/MetaAIHackathon, MIT | [LICENSE](LICENSE) |
 | Built during the building period | First commit `04ef41b`, 27 Oct 2026 00:09 ET; every commit in this repository is from the building period | [Building period](#building-period-built-during-the-hackathon), `git log --reverse --format='%h %aI %s'` |
 | Written before the building period | The idea and planning notes written on 26 Oct 2026 (planning, API study, feature research, design reviews) are **not** in this repository | [Building period](#building-period-built-during-the-hackathon) |
@@ -51,7 +51,7 @@ Not measured: time and mental space freed. No hours saved are claimed; the hand-
 
 - **Open** https://role-assistants-662084666675.us-central1.run.app, press **Try the demo company**, then **Design my org chart**. Nothing to sign up for.
 - **Fast path:** accept the chart and wait for the assistants; press **Create invite link** on Sales, Operations and Finance; open Sales, press **Plan this order** and approve; paste the order code under **Continue an order** on the Operations link, then the Finance link, and approve each step.
-- *Limit: there is no login and an invite link is the whole credential. Sandboxes live in memory, are removed after 24 hours, and an unknown sandbox gets `410 sandbox_expired`.*
+- *Limit: there is no login and an invite link is the whole credential. Sandboxes live in memory, are removed after 24 hours, and an unknown sandbox gets `410 sandbox_expired`. If the Finance step shows `Private mode starting`, the open-weights endpoint is waking: wait for the countdown or press **Run this step again**; it never switches model on its own (one cold walk did not finish within 240 s, set 17).*
 - Full walkthrough, Private mode timing and demo mode: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md#try-it)
 
 ## How it works
@@ -62,7 +62,7 @@ A survey of 10 questions goes to Muse Wonder, which draws the org chart as JSON;
 
 | Layer | Items |
 |---|---|
-| BUILT and tested | Per-role approval, code-checked org chart, role assistants and handoff forms, Group and Subsidiary levels, HMAC receipts, Private mode without silent fallback, invite tokens out of URLs; hand-written clinic and software-studio templates and the logistics workflow |
+| BUILT and tested | Per-role approval, code-checked org chart, role assistants and handoff forms, Group and Subsidiary levels, HMAC receipts, Private mode without silent fallback, invite tokens out of server-visible URLs; hand-written clinic and software-studio templates and the logistics workflow |
 | NEXT, planned, not built | Role and skill template library per industry, a durable database, accounts and login, departments and teams |
 | VISION, not built, not scheduled | Many companies and industries on one platform, multiple languages, connections between folders across levels, connectors, native apps, other ideas |
 
@@ -82,13 +82,13 @@ Full table and caveats: [docs/MODELS.md](docs/MODELS.md) and [docs/MEASURED.md](
 ## Privacy and safety design (each line has a test)
 
 - **Chat history is kept in the employee's browser**; the server passes each message to the model and stores none; no per-person metrics are kept.
-- **Masking first:** emails, phone numbers, card numbers, keys and listed client names are masked in the browser before a model sees the text.
+- **Masking first:** emails, phone numbers, card numbers, keys and listed client names are masked in the browser before a chat message, a handoff's notes, a handover or a pasted customer message reaches a model. Other form fields, unlisted personal names and photos are not masked (stated on `/trust`).
 - **Standard mode only:** chat, chart and check calls refuse any `-contributor` model id; Voice and SAM use fixed Standard ids. The public demo runs on free hackathon credits that Meta may use for product improvement, so it is for sample data only.
 - **Isolated sandboxes:** one sandbox cannot read another.
 - **Blocked stays blocked:** a handoff priced below cost stays blocked even when its note says to mark it clear.
 - **Model text never becomes HTML:** the UI uses `textContent` only and the check script fails on `innerHTML`.
 
-`/trust` states what the app stores, generated from the running configuration. The full table of tests, the OWASP mapping, and claim and proof are in [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md).
+`/trust` states what the app stores and which chart and chat models it uses, generated from the running configuration; Voice and SAM, both experimental, are listed in [docs/MODELS.md](docs/MODELS.md). The full table of tests, the OWASP mapping, and claim and proof are in [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md).
 
 ## Founder's story: why Role Assistant Foundry
 
@@ -122,7 +122,7 @@ python scripts/record_demo.py              # records the golden path as a captio
 python scripts/warm_glimmer.py 45          # wakes the Private-mode endpoint, keeps it warm 45 minutes, prints the wake time
 ```
 
-Today this is a demo only; real use means deploying it yourself. Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager). A push to `main` runs the same checks in GitHub Actions (`.github/workflows/deploy.yml`) and, when they pass and the `GCP_SA_KEY` secret is set, runs that script. The Private-mode endpoint scales to zero; the owner intends to run `GLIMMER_MIN_CONTAINERS=1 modal deploy scripts/private_modal.py` for the judging days only, which keeps one container awake (billed by the second), and a plain `modal deploy` turns it off. That is an intention, not a guarantee: a visitor may still meet a cold endpoint (set 17). Opening the order form or starting a demo also wakes it (one request, no data, at most every two minutes): that shortens a cold start, it does not remove it.
+Today this is a demo only; real use means deploying it yourself. Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager). A push to `main` runs the same checks in GitHub Actions (`.github/workflows/deploy.yml`) and, when they pass and the `GCP_SA_KEY` secret is set, runs that script. The Private-mode endpoint scales to zero; the owner intends to run `$env:GLIMMER_MIN_CONTAINERS = 1; modal deploy scripts/private_modal.py` for the judging days only, which keeps one container awake (billed by the second); `modal deploy scripts/private_modal.py` from a new shell (without the variable) turns it off. That is an intention, not a guarantee: a visitor may still meet a cold endpoint (set 17). Opening the order form or starting a demo also wakes it (one fixed one-word request, no order data, at most every two minutes): that shortens a cold start, it does not remove it.
 
 ## License
 

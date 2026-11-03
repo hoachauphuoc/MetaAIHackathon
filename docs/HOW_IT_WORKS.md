@@ -139,7 +139,7 @@ time at the company:
    must read before sending.*
 13. **The assistant reads your documents:** in chat, Spark can call three read-only tools (list
    my documents by group, read one document, count them). Code scopes every result to what that
-   person sees in their inbox; no result names a person or carries a link; document text, notes
+   person sees in their inbox; no result field names a person or carries a link (free-text notes come back as sent, pattern-masked, and may still hold a name someone typed); document text, notes
    included, goes back to the model as untrusted data. The assistant only reads: claiming,
    accepting, returning and sending stay with people. Measured: 11 of 11 questions on a seeded inbox,
    0 leaks, 0 followed injections; equal to pasting the inbox into the prompt on accuracy and slightly
@@ -216,7 +216,7 @@ Three layers. Each item is labelled BUILT, NEXT or VISION. None of the NEXT or V
 - **BUILT** Group and Subsidiary levels; a child can only tighten the parent's rules (`rules.py`).
 - **BUILT** a server-issued HMAC receipt for each approved step (`workflow.py`, `app.py`).
 - **BUILT** Private mode on an open-weights endpoint; it never falls back silently (`muse.py`).
-- **BUILT** invite links keep the token out of URLs: Authorization header for API calls, URL fragment for the link (`app.py`).
+- **BUILT** invite tokens kept out of server-visible URLs: Authorization header for API calls, the URL fragment (`/join#token`, never sent to the server) for the link (`app.py`).
 - **BUILT, hand-written:** the clinic and software-studio templates and the logistics workflow (Sales -> Operations -> Finance), written by a person.
 - **Experimental, not measured:** Voice input (item 19) and covering parts of a photo with SAM (item 20).
 
