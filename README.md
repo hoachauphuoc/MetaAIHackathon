@@ -41,7 +41,7 @@ Every figure below has a set number in [docs/MEASURED.md](docs/MEASURED.md); all
 | 10 of 10, 1 false alarm in 10 | Contradictions the rules cannot see (0 of 10) flagged by the Spark check, with 1 false alarm on 10 clean packages (set 11, author-written cases) |
 | 39.5 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 15, 2026-11-01, one run; the revision was not recorded) |
 | 60.7 s | The deployed revision `role-assistants-00034-9z8` walked at desktop and 375 px width, 17 of 17 steps ok, Glimmer already awake (set 16, 2026-11-01, one run) |
-| Failed, 240 s | The deployed link walked after about 12.5 minutes idle (Glimmer probably asleep): the Finance step timed out at 240 s and the order did not complete; cause not diagnosed (set 17, 2026-11-02, one run) |
+| 77.4 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 18, 2026-11-03, one run, revision not recorded). A walk on a cold endpoint has not been measured; set 17's failure was a defect in the check script before the Finance step |
 
 Not measured: time and mental space freed. No hours saved are claimed; the hand-timed run is `scripts/timed_run.py` and has no by-hand time yet.
 
@@ -51,7 +51,7 @@ Not measured: time and mental space freed. No hours saved are claimed; the hand-
 
 - **Open** https://role-assistants-662084666675.us-central1.run.app, press **Try the demo company**, then **Design my org chart**. Nothing to sign up for.
 - **Fast path:** accept the chart and wait for the assistants; press **Create invite link** on Sales, Operations and Finance; open Sales, press **Plan this order** and approve; paste the order code under **Continue an order** on the Operations link, then the Finance link, and approve each step.
-- *Limit: there is no login and an invite link is the whole credential. Sandboxes live in memory, are removed after 24 hours, and an unknown sandbox gets `410 sandbox_expired`. If the Finance step shows `Private mode starting`, the open-weights endpoint is waking: wait for the countdown or press **Run this step again**; it never switches model on its own (one cold walk did not finish within 240 s, set 17).*
+- *Limit: there is no login and an invite link is the whole credential. Sandboxes live in memory, are removed after 24 hours, and an unknown sandbox gets `410 sandbox_expired`. If the Finance step shows `Private mode starting`, the open-weights endpoint is waking: wait for the countdown or press **Run this step again**; it never switches model on its own (a full walk on a cold endpoint has not been measured).*
 - Full walkthrough, Private mode timing and demo mode: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md#try-it)
 
 ## How it works

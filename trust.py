@@ -105,9 +105,8 @@ def build(table_names):
                         "marked 'A person must check this' and are never sent to the standard model on their own; "
                         "only the person can choose Public for that step. The open-weights "
                         "endpoint sleeps when idle: a cold start took 166 s once, before the GPU snapshot, and 23 to 31 s in four runs "
-                        "after it (docs/MEASURED.md set 10, not confirmed asleep each time); one full walk on a probably "
-                        "cold endpoint did not finish the Finance step within 240 s and the order did not complete "
-                        "(set 17, cause not diagnosed). The owner intends to keep it awake during the judging days, "
+                        "after it (docs/MEASURED.md set 10, not confirmed asleep each time); a full walk on a cold "
+                        "endpoint has not been measured (docs/MEASURED.md sets 17 and 18). The owner intends to keep it awake during the judging days, "
                         "which is not a guarantee, and the Finance step says so when it is not awake.",
         "skills": {"allowed": [s["id"] for s in rules.SKILLS["allowed"]],
                    "forbidden": sorted(rules.FORBIDDEN_SKILLS)},

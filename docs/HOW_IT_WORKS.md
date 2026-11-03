@@ -30,8 +30,8 @@ Moved from the README; the README has the short version.
     ([docs/MEASURED.md](MEASURED.md), set 10; not confirmed that the endpoint was asleep each of the four times).
   - The app waits 35 s a try, so a cold step shows `Private mode starting` and `A person must check this`, then retries
     on its own with a countdown (or press **Run this step again**); it never switches to another model.
-    In the one end-to-end walk on a probably cold endpoint (set 17), the Finance step had not finished after 240 s
-    and the order did not complete; the cause was not diagnosed. The owner intends to keep Glimmer awake during the
+    A full walk on a cold endpoint has not been measured (set 17 failed earlier, in a defect of the check script; set 18
+    passed with Glimmer awake). The owner intends to keep Glimmer awake during the
     judging days; that is an intention, not a guarantee.
   - When Private mode is not configured it shows `Private mode unavailable`.
 - **Then the rules:** on the invite page, **My private rules** refuses a margin floor below the company's. In the

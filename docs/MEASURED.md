@@ -11,7 +11,7 @@ reported values. Do not mix them with future re-measurements under `statistics.m
 **What this file shows.** Small, synthetic, author-run measurements of the models and the app, one section per set,
 each with its date and its caveat. Sets in numeric order: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (Private mode, cold start),
 11 and 11p (contradictions, Spark and Glimmer), 12 (reasoning effort), 13 (clinic and software charts), 14 (whole path
-in a hidden browser), 15 and 16 (deployed link, Glimmer warm), 17 (deployed link, Glimmer probably cold, failed). Also: single-call cost and latency, Day-One and handover, setup time,
+in a hidden browser), 15 and 16 (deployed link, Glimmer warm), 17 (deployed link, failed because of a script defect, no information on a cold endpoint) and 18 (deployed link, Glimmer warm). Also: single-call cost and latency, Day-One and handover, setup time,
 three load tests, and PII masking scope. The file order below is the order the sets were added, not numeric.
 
 ## Set 1: does Wonder's org chart pass the rules on the first try?
@@ -418,7 +418,7 @@ The table lists the main steps only (they sum to 42.8 s). The remaining 17.9 s o
 Caveats: one run; Glimmer was already awake, so this is not a cold start; run by the author; it spends model
 credit. The revision id is recorded above.
 
-## Set 17: walk on the deployed link with Glimmer probably cold, failed at Finance, one run (2026-11-02)
+## Set 17: walk on the deployed link after 12.5 minutes idle, failed in the script before Finance, one run (2026-11-02)
 
 `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` after about 12.5 minutes with no
 call to the endpoint (a 750 s wait; the `scaledown_window` is 10 minutes, but the Modal dashboard was not visible, so
@@ -442,10 +442,35 @@ Exit code 1. The revision number was not recorded.
 
 Total 285.1 s; the rows sum to 282.8 s, and the remaining 2.3 s (page loads and waits between steps) was not timed separately. Finance: no model answered; the order did not complete. The script's own "Private mode starting"
 check at the end of the walk passed (the label was not visible at that moment), and the script records no retry
-count or retry times, so none are reported. The cause of the 240 s timeout was not diagnosed.
+count or retry times, so none are reported. **Cause, found 2026-11-03:** a defect in `scripts/live_check.py`, not the endpoint. It read the "Order code" box before the first Approve click, but that box appears only after Sales has approved, so the walk waited 240 s at the first approval and never reached the Finance step. The same timeout reproduced on 2026-11-03 with the unfixed script; the fixed script passes (set 18). Set 17 therefore says nothing about a cold Glimmer.
 
 Caveats: one run; one person; run by the author; desktop width for the Finance step; it spends model credit; the
 script does not count model calls; a first invocation with a stray extra argument printed usage and made no call.
+
+## Set 18: live check on the deployed link, Glimmer warm, one run (2026-11-03)
+
+`python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` after commit 21ed83a was deployed
+and the Private-mode endpoint had been woken by the owner. The Cloud Run revision name was not recorded. Hidden desktop
+Chromium (1280x900), then 375 px, real models. Exit code 0.
+
+| Step | Seconds |
+|---|---|
+| Open the home page (1280 px) | 1.9 |
+| Wonder designs the chart | 8.9 |
+| Accept the chart | 7.5 |
+| Create the Sales, Operations and Finance invites | 2.6 |
+| Plan an order | 11.4 |
+| Approve the three steps (Finance in Private mode) | 22.1 |
+| Export approved (CSV) in the Sales inbox | 0.5 (file with 0 approved handoffs) |
+| 375 px: chart 6.9, accept 8.1, invites 3.8 | passes |
+
+Finance answered by meta-models/Muse-Glimmer-30B and the order completed; no "Demo mode" or "Private mode starting"
+label was visible. Total 77.4 s. The two runs just before this one on the same day failed because of defects in
+`scripts/live_check.py` (it read the order code before approving, and moving between invite links changed only the
+URL fragment, so the page did not reload); both were fixed in commit 825d08f and are not product failures.
+
+Caveats: one run; one person; run by the author; Glimmer already awake, so this says nothing about a cold start; it
+spends model credit; the revision was not recorded; the 375 px pass stops at invite creation.
 
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
@@ -504,12 +529,12 @@ Other national ID formats and national-format phone numbers without a `+` countr
 
 ## To run again (needs owner approval): cold Private mode walk
 
-Set 17 (above) was the first attempt and failed at the Finance step. A second attempt needs owner approval: it spends model credit and Modal GPU time.
+Set 17 (above) did not test this: its script defect stopped it before the Finance step. A cold walk needs owner approval: it spends model credit and Modal GPU time.
 
 1. If `GLIMMER_MIN_CONTAINERS=1` is deployed for the judging days, a plain `modal deploy scripts/private_modal.py` is needed first, otherwise the container never sleeps.
 2. Let the Glimmer container go idle: `scripts/private_modal.py` sets `scaledown_window=10 * MINUTES`, so send no request for more than 10 minutes (set 10 used about nine hours). The test machine cannot see the Modal dashboard, so that the container is asleep is not confirmed (same caveat as set 10); do not run `scripts/warm_glimmer.py` or open the order form in a browser before the walk, because both send a wake request.
-3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 on any failed step: a timeout (set 17 waited 240 s for the "Order code" field) or a `Private mode starting` label at the end. It records no retry count, so on a cold start note by hand: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
-4. Add the result as Set 18 with date, revision, step table, retry count, completion time and caveats; one run.
+3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 on any failed step: a timeout or a `Private mode starting` label at the end. It records no retry count, so on a cold start note by hand: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
+4. Add the result as the next set with date, revision, step table, retry count, completion time and caveats; one run.
 
 Cost estimate from recorded figures only: cold start 23 to 31 s after the snapshot (set 10). Muse calls per width, upper bound: one chart USD 0.038 (one UI run) + 5 briefs at USD 0.0047 = USD 0.0615, + 3 workflow steps under USD 0.01 each = under USD 0.0915; two widths (desktop and 375 px) = under USD 0.19. Glimmer GPU price per hour: not recorded. Glimmer GPU time for the walk: not recorded.
 
