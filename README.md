@@ -41,7 +41,7 @@ Every figure below has a set number in [docs/MEASURED.md](docs/MEASURED.md); all
 | 10 of 10, 1 false alarm in 10 | Contradictions the rules cannot see (0 of 10) flagged by the Spark check, with 1 false alarm on 10 clean packages (set 11, author-written cases) |
 | 39.5 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 15, 2026-11-01, one run; the revision was not recorded) |
 | 60.7 s | The deployed revision `role-assistants-00034-9z8` walked at desktop and 375 px width, 17 of 17 steps ok, Glimmer already awake (set 16, 2026-11-01, one run) |
-| 77.4 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 18, 2026-11-03, one run, revision not recorded). A walk on a cold endpoint has not been measured; set 17's failure was a defect in the check script before the Finance step |
+| 77.4 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 18, 2026-11-03, one run, revision `role-assistants-00039-682`). A walk on a cold endpoint has not been measured; set 17's failure was a defect in the check script before the Finance step |
 
 Not measured: time and mental space freed. No hours saved are claimed; the hand-timed run is `scripts/timed_run.py` and has no by-hand time yet.
 

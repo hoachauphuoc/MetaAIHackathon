@@ -450,7 +450,8 @@ script does not count model calls; a first invocation with a stray extra argumen
 ## Set 18: live check on the deployed link, Glimmer warm, one run (2026-11-03)
 
 `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` after commit 21ed83a was deployed
-and the Private-mode endpoint had been woken by the owner. The Cloud Run revision name was not recorded. Hidden desktop
+and the Private-mode endpoint had been woken by the owner, on Cloud Run revision role-assistants-00039-682 (deployed
+2026-11-03 04:06:55 UTC; the next revision, 00040-vxn, 04:44:22 UTC, changed only the /trust text and documents). Hidden desktop
 Chromium (1280x900), then 375 px, real models. Exit code 0.
 
 | Step | Seconds |
@@ -470,7 +471,7 @@ label was visible. Total 77.4 s. The two runs just before this one on the same d
 URL fragment, so the page did not reload); both were fixed in commit 825d08f and are not product failures.
 
 Caveats: one run; one person; run by the author; Glimmer already awake, so this says nothing about a cold start; it
-spends model credit; the revision was not recorded; the 375 px pass stops at invite creation.
+spends model credit; the revision is taken from the deployment times, as the run itself does not print it; the 375 px pass stops at invite creation.
 
 ## Load test: Muse Spark Open on Baseten (100 sequential requests, 2026-10-30)
 
