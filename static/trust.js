@@ -6,7 +6,7 @@ import { api, badge, clear, el } from '/static/ui.js';
   const list = (items) => el('ul', { class: 'plain' }, items.map((i) => el('li', {}, i)));
   clear(document.getElementById('app'),
     el('section', {}, el('h2', {}, 'What the server stores'),
-      el('p', { class: 'muted' }, `Everything is deleted after ${t.retention}.`),
+      el('p', { class: 'muted' }, `Sandbox data is deleted after ${t.retention}; daily_cost, one dollar total per day with no who or what, is kept.`),
       el('ul', { class: 'plain' }, t.stored.map((s) => el('li', {}, el('strong', {}, `${s.table}: `), s.what)))),
     el('section', {}, el('h2', {}, 'What is never stored'), list(t.never_stored)),
     el('section', {}, el('h2', {}, 'Models'),

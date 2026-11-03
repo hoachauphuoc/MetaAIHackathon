@@ -90,7 +90,7 @@ ready somewhere in the last gap; 166 s is the upper bound a person waits. One ru
 
 Cold start with the GPU memory snapshot, timed four times on the evening of 2026-10-31 ET (morning of 2026-11-01 Vietnam time) with a one-sentence prompt sent
 straight to the deployed endpoint (the app was not involved): first answer after 31 s (21:10 ET, after about nine hours
-without a request), 23 s (21:35 ET), 23 s (21:50 ET) and 27 s (22:05 ET), the last three each 15 minutes after the previous
+without a request), 23 s (21:35 ET), 23 s (21:50 ET) and 27 s (22:05 ET), 25, 15 and 15 minutes after the previous
 request. Every request was answered on its first try. A warm endpoint answered the same prompt in 4 s (one run,
 2026-10-31), so the wake itself is roughly 19 to 27 s. Not confirmed: that the container was asleep each time (no
 access to the Modal dashboard from the test machine), the timing from a user's browser, and any prompt longer than one
