@@ -30,6 +30,9 @@ Moved from the README; the README has the short version.
     ([docs/MEASURED.md](MEASURED.md), set 10; not confirmed that the endpoint was asleep each of the four times).
   - The app waits 35 s a try, so a cold step shows `Private mode starting` and `A person must check this`, then retries
     on its own with a countdown (or press **Run this step again**); it never switches to another model.
+    In the one end-to-end walk on a probably cold endpoint (set 17), the Finance step had not finished after 240 s
+    and the order did not complete; the cause was not diagnosed. The owner intends to keep Glimmer awake during the
+    judging days; that is an intention, not a guarantee.
   - When Private mode is not configured it shows `Private mode unavailable`.
 - **Then the rules:** on the invite page, **My private rules** refuses a margin floor below the company's. In the
   Sales inbox, **Export approved (CSV)** downloads only handoffs every approver accepted (`tests/js/exchange.test.mjs`).
@@ -211,7 +214,7 @@ Three layers. Each item is labelled BUILT, NEXT or VISION. None of the NEXT or V
 - **BUILT** code-checked org chart: cycles, orphans and excess headcount are rejected (`rules.py`).
 - **BUILT** a role assistant and a handoff form per role, drafted by the model and checked by code (`assistants.py`, `handoffs.py`).
 - **BUILT** Group and Subsidiary levels; a child can only tighten the parent's rules (`rules.py`).
-- **BUILT** a signed (HMAC) receipt for each approved step (`workflow.py`, `app.py`).
+- **BUILT** a server-issued HMAC receipt for each approved step (`workflow.py`, `app.py`).
 - **BUILT** Private mode on an open-weights endpoint; it never falls back silently (`muse.py`).
 - **BUILT** invite links keep the token out of URLs: Authorization header for API calls, URL fragment for the link (`app.py`).
 - **BUILT, hand-written:** the clinic and software-studio templates and the logistics workflow (Sales -> Operations -> Finance), written by a person.

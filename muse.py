@@ -44,8 +44,8 @@ def check_model(model, private=False):
 PRIVATE_STARTING = "Private mode starting"
 PRIVATE_COLD = "Private mode asleep"  # a person chose Private for a step while the endpoint is not warm: nothing was sent
 _private_answered_at = None  # when the open-weights endpoint last answered; one number, nothing about who asked"
-# A cold container needs about 3 minutes, so waiting longer cannot help: answer "starting" well inside the
-# 120 s the host allows a request, or the person sees a 504 and no label.
+# A cold start can outlast one request (166 s before the GPU snapshot, 23 to 31 s after it, MEASURED set 10):
+# answer "starting" well inside the 120 s the host allows a request, or the person sees a 504 and no label.
 PRIVATE_TIMEOUT = 35
 
 

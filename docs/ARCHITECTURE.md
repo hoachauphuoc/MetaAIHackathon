@@ -27,7 +27,7 @@ flowchart LR
   M -.->|"only when PRIVATE_* set"| G
 ```
 
-Any model failure returns `demo_mode: true` with a label; `FAKE_AI=1` forces demo mode. Model ids ending in `-contributor` are refused. Private mode never falls back to the Meta API.
+Any model failure returns `demo_mode: true` with a label; `FAKE_AI=1` forces demo mode. Every chat, chart and check call refuses a model id ending in `-contributor`; Voice and SAM use fixed Standard ids. Private mode never falls back to the Meta API.
 
 Source: `static/*.html`, `static/app.js`, `static/join.js`, `app.py`, `store.py`, `muse.py`, `chart.py`, `vision.py`, `voice.py`, `sam.py`, `scripts/private_modal.py`, `scripts/deploy.ps1`, `Dockerfile`.
 

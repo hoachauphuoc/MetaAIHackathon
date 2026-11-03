@@ -1,7 +1,6 @@
 # Measured results
 
-Produced by `python scripts/measure.py` on 2026-10-27 (rerun the same day after the handoff-check prompt changed; counts were identical) with the real models `muse-wonder-1.0` and
-`muse-spark-1.3`. The data is synthetic and the samples are small, so these are raw counts, not
+Produced by `scripts/measure.py`, `scripts/live_check.py` and `scripts/load_test.py` between 2026-10-27 and 2026-11-02 (each set gives its own date and command), with the real Meta models. The data is synthetic and the samples are small, so these are raw counts, not
 percentages. Anyone with a Meta key can rerun the script.
 
 **Median definition (L01).** Earlier one-off medians in this file were computed as the upper
@@ -13,7 +12,7 @@ reported values. Do not mix them with future re-measurements under `statistics.m
 **What this file shows.** Small, synthetic, author-run measurements of the models and the app, one section per set,
 each with its date and its caveat. Sets in numeric order: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 (Private mode, cold start),
 11 and 11p (contradictions, Spark and Glimmer), 12 (reasoning effort), 13 (clinic and software charts), 14 (whole path
-in a hidden browser), 15 and 16 (deployed link). Also: single-call cost and latency, Day-One and handover, setup time,
+in a hidden browser), 15 and 16 (deployed link, Glimmer warm), 17 (deployed link, Glimmer cold, failed). Also: single-call cost and latency, Day-One and handover, setup time,
 three load tests, and PII masking scope. The file order below is the order the sets were added, not numeric.
 
 ## Set 1: does Wonder's org chart pass the rules on the first try?
@@ -504,14 +503,14 @@ Other national ID formats and national-format phone numbers without a `+` countr
 
 `FAKE_AI=1 .venv\Scripts\python.exe -m pytest -q` and `node --test tests/js/*.test.mjs` (the two test steps of `scripts/check.ps1`, which makes no model call and reads no key): `790 passed in 32.82s`; JS `tests 39`, `pass 39`, `fail 0`. Python test functions counted by the check's own pattern: 327. The counts in the README are unchanged.
 
-## To run (needs owner approval): cold Private mode walk
+## To run again (needs owner approval): cold Private mode walk
 
-Not run. It spends model credit and Modal GPU time, so the owner approves first.
+Set 17 (above) was the first attempt and failed at the Finance step. A second attempt needs owner approval: it spends model credit and Modal GPU time.
 
 1. If `GLIMMER_MIN_CONTAINERS=1` is deployed for the judging days, a plain `modal deploy scripts/private_modal.py` is needed first, otherwise the container never sleeps.
 2. Let the Glimmer container go idle: `scripts/private_modal.py` sets `scaledown_window=10 * MINUTES`, so send no request for more than 10 minutes (set 10 used about nine hours). The test machine cannot see the Modal dashboard, so that the container is asleep is not confirmed (same caveat as set 10); do not run `scripts/warm_glimmer.py` or open the order form in a browser before the walk, because both send a wake request.
 3. Run `python scripts/live_check.py https://role-assistants-662084666675.us-central1.run.app` (needs `requirements-dev.txt`). The script exits 1 when the Finance step shows `Private mode starting`, so on a cold start record separately: whether `Private mode starting` appeared, how many retries the countdown made, and the seconds from the Finance step to the finished order.
-4. Add the result as Set 17 with date, revision, step table, retry count, completion time and caveats; one run.
+4. Add the result as Set 18 with date, revision, step table, retry count, completion time and caveats; one run.
 
 Cost estimate from recorded figures only: cold start 23 to 31 s after the snapshot (set 10). Muse calls per width, upper bound: one chart USD 0.038 (one UI run) + 5 briefs at USD 0.0047 = USD 0.0615, + 3 workflow steps under USD 0.01 each = under USD 0.0915; two widths (desktop and 375 px) = under USD 0.19. Glimmer GPU price per hour: not recorded. Glimmer GPU time for the walk: not recorded.
 

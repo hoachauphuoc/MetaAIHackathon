@@ -20,8 +20,8 @@ The six briefs are in `briefs.json`. Outputs of each run are in `runs/<date>/`.
 - Stage 4 sees only the URL, figure and unit, not the stage 2 reasoning, so the check is independent.
 - Muse sees figures and short quotes, never URLs. Ideas that cite evidence ids not in the data are dropped. If Muse fails the file says `demo_mode: true`.
 - `FINDINGS.md` and the backlog may cite only `verified` ids (`research.py cites`).
-- README rows come from `research.py impact-rows`: verified, independent sources only. Vendor figures are labelled as the vendor's own survey. The product answer in each row is written by the author after approving the row.
+- The impact rows in docs/IMPACT_AND_COSTS.md come from `research.py impact-rows` or are cited directly from the linked page; company-run surveys are labelled as such. The product answer in each row is written by the author.
 
 ## Run
 
-`/survey` in Claude Code runs all six briefs; `/survey b1` runs one. The skill is `.claude/skills/survey/SKILL.md`.
+`/survey` in Claude Code runs all six briefs; `/survey b1` runs one. The pipeline was run from Claude Code with a local skill that is not part of this repository; `scripts/research.py` and its tests are.

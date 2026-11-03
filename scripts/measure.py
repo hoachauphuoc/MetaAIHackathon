@@ -26,7 +26,7 @@ rules, and how often it raises a false alarm. Spark by default; `set11p` runs th
 the Private-mode model (Glimmer on Modal, warm endpoint).
 Set 12: reasoning effort. The 20 packages of set 11 through the model layer at "minimal" (what the
 app uses) and at "high" with the app's 600-token budget and with 3000: contradictions flagged, false alarms, median latency and cost of each.
-Usage: python scripts/measure.py [set1 ... set12]   (no argument runs sets 1-9; set11 and set12 are named; set10 and set11p need the PRIVATE_* variables; key via META_API_KEY
+Usage: python scripts/measure.py [set1 ... set13, set11p]   (no argument runs sets 1-9; set11, set12 and set13 are named; set10 and set11p need the PRIVATE_* variables; key via META_API_KEY
 or META_API_KEY_FILE; spends a few dollars)
 """
 import concurrent.futures

@@ -42,25 +42,23 @@ NEVER_STORED = [
     "nobody, including the owner, sees how far they got.",
     "A handover draft: shown only to the person leaving until they choose to send it.",
     "Anything about how a person works: habits, speed, experience or per-person statistics.",
-    "Paid Standard use is excluded from training and any model id ending in -contributor is refused. "
-    "The demo runs on free Meta credit, and Meta may use data from free-credit traffic (Meta's billing page says content may be used for product improvement while free credits are in use).",
+    "Paid Standard use is excluded from training, and every chat, chart and check call refuses a model id ending in -contributor.",
 ]
 
 LIMITS = [
     "Demo only: an invite link is the whole credential, there are no passwords.",
     "Voice input is experimental: the transcription endpoint has not been run on real audio, so no accuracy is claimed.",
-    "This demo runs on the hackathon's free Meta credits, and Meta's account page says content sent "
+    "This demo runs on the hackathon's free Meta credits, and Meta's billing page says content sent "
     "while free credits are in use may be used for product improvement. Do not enter real company "
     "data here; a paid account does not carry that term.",
     "Sandboxes are deleted after 24 hours and may be lost earlier if the service restarts.",
     "Emails, phone numbers (US formats and international numbers written with a + country code), payment card "
     "numbers (checksum-verified), US Social Security numbers, IBANs, passwords and API keys, and the client names you "
     "list are masked in your browser before the notes of a handoff or a chat message are sent to a model. Other "
-    "national ID formats, unlisted personal names and photos are not masked, and the other form fields are not "
-    "masked either, so keep personal names out of them. A handover is masked field by field. Cover names and phone "
-    "numbers before taking a photo.",
-    "Other national ID formats (passports, non-US ID numbers) and phone numbers written in a national format "
-    "without a + country code (except US formats) are not masked.",
+    "national ID formats (passports, non-US ID numbers), phone numbers written in a national format without a + "
+    "country code (except US formats), unlisted personal names and photos are not masked, and the other form fields "
+    "are not masked either, so keep personal names out of them. A handover is masked field by field. Cover names and "
+    "phone numbers before taking a photo.",
     "Reading a photo can go wrong. The values only fill the form; the person checks every field "
     "and the rules check them again. A field the model says it cannot read is left empty and marked.",
     "The code helper (software companies) explains, reviews and drafts code. It has no tool that runs, deploys or pushes "
@@ -103,11 +101,14 @@ def build(table_names):
                     if private else
                     {"available": False, "label": "Private mode unavailable.",
                      "attribution": "No open-weights model is connected."}),
-        "private_note": "Finance handoffs run in Private mode. If it is unavailable they are "
-                        "marked 'A person must check this', never sent to the standard model. The open-weights "
+        "private_note": "Finance handoffs run in Private mode by default. If it is unavailable they are "
+                        "marked 'A person must check this' and are never sent to the standard model on their own; "
+                        "only the person can choose Public for that step. The open-weights "
                         "endpoint sleeps when idle: a cold start took 166 s once, before the GPU snapshot, and 23 to 31 s in four runs "
-                        "after it (docs/MEASURED.md set 10, not confirmed asleep each time); the owner intends to keep it awake, and the Finance step "
-                        "says so when it is not.",
+                        "after it (docs/MEASURED.md set 10, not confirmed asleep each time); one full walk on a probably "
+                        "cold endpoint did not finish the Finance step within 240 s and the order did not complete "
+                        "(set 17, cause not diagnosed). The owner intends to keep it awake during the judging days, "
+                        "which is not a guarantee, and the Finance step says so when it is not awake.",
         "skills": {"allowed": [s["id"] for s in rules.SKILLS["allowed"]],
                    "forbidden": sorted(rules.FORBIDDEN_SKILLS)},
         "limits": LIMITS,

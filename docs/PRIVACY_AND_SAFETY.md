@@ -9,7 +9,7 @@ Moved from the README; the README has the short version.
 | Numbers come from code: from the signed order and quote; model-returned arguments that differ are recomputed and flagged `needs_human_check` | `test_bad_tool_arguments_are_retried_once_then_taken_from_the_package` and the Finance note filter in `workflow.py` |
 | After a person presses Approve the server issues an HMAC-protected receipt; a forged step is refused | `test_a_receipt_for_another_result_or_another_run_is_refused` |
 | An invite approves only its own role's step | `409 wrong_role` in `app.py`, `tests/test_workflow.py` |
-| Names you list are masked in the browser; pattern masking alone does not find names | `tests/js/client_names.test.mjs`; [docs/MEASURED.md](MEASURED.md), set 2 and "PII masking scope US and international" |
+| Names you list are masked in the browser; pattern masking alone does not find names | `tests/js/client_names.test.mjs`; [docs/MEASURED.md](MEASURED.md), "PII masking scope US and international" (names: 0 of 4 found by patterns, by design) |
 | The calendar file is built by code and refused without a date | `test_a_calendar_file_is_built_by_code_and_refused_without_a_date` |
 | Every browser module parses before it reaches a browser | `test_every_browser_module_parses` |
 
@@ -43,7 +43,7 @@ OWASP Top 10 for LLM applications, as applied here:
 
 | Risk | What the code does |
 |---|---|
-| LLM01 Prompt injection | Customer notes sit inside a `<data>` block marked untrusted; the model can only raise a status; measured on 8 injection cases (sets 2 and 10) |
+| LLM01 Prompt injection | Customer notes sit inside a `<data>` block marked untrusted; the model can only raise a status; measured on 8 injection cases in each of sets 2 (Spark) and 10 (Glimmer) |
 | LLM02 Sensitive information disclosure | No message table, no message logging, Referrer-Policy `no-referrer`; invite tokens in the Authorization header and the URL fragment, never in a query string |
 | LLM05 Improper output handling | Strict JSON schemas, rules validate every output, `textContent` only in the UI, CSP `script-src 'self'` |
 | LLM06 Excessive agency | Models only choose arguments of three deterministic tools; every handoff needs a person; server-issued HMAC receipts after Approve |

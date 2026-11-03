@@ -7,10 +7,9 @@ Small companies want an AI assistant for each role, but nobody wants AI deciding
 - **A person approves** each step, and the server issues an HMAC receipt per approval; each invite link approves one role only.
 - **Private mode** never switches to another model silently.
 
-**Live now:** the trial is 24 hours and uses sample data only; no real users yet. Link: https://role-assistants-662084666675.us-central1.run.app
+**Live now:** each demo sandbox is deleted after 24 hours; sample data only, no real users yet. Link: https://role-assistants-662084666675.us-central1.run.app
 
-[Try it](https://role-assistants-662084666675.us-central1.run.app) · [Video](static/video/welcome.mp4) · [Evidence and full examples](docs/PROJECT_DETAILS.md)
-<!-- The submitted video URL is for the owner to add here before submission. -->
+[Try it](https://role-assistants-662084666675.us-central1.run.app) · [Demo video, 178 s](https://youtu.be/n30I40GJSMQ) · [127 s home-page cut in this repository](static/video/welcome.mp4) · [Evidence and full examples](docs/PROJECT_DETAILS.md)
 
 Contents: [Stage One checklist](#stage-one-checklist) · [What is measured](#what-is-measured) · [Try it](#try-it) · [How it works](#how-it-works) · [Built today](#built-today-and-not-built) · [Models](#meta-models-used) · [Privacy](#privacy-and-safety-design-each-line-has-a-test) · [Run it](#run-it) · Docs: [How it works](docs/HOW_IT_WORKS.md) · [Models](docs/MODELS.md) · [Privacy](docs/PRIVACY_AND_SAFETY.md) · [Impact and costs](docs/IMPACT_AND_COSTS.md) · [Details](docs/PROJECT_DETAILS.md)
 
@@ -20,19 +19,20 @@ Legend: **Answer** is our claim, **Proof** is where to check it. What is built a
 
 | Item | Answer | Proof |
 |---|---|---|
+| Track | **Indie developer** (solo builder) | This README |
 | Problem statement | **Build for Your World.** Owners of small companies (around ten people) want AI but fear leaked client data, and employees fear AI the company can watch; this gives each role an assistant under the company's own rules. | [The problem](docs/PROJECT_DETAILS.md#the-problem-and-what-this-makes-possible), [Founder's story](#founders-story-why-role-assistant-foundry) |
 | Meta models used | Muse Wonder (`muse-wonder-1.0`), Muse Spark (`muse-spark-1.3`), Muse Glimmer 30B on Modal (Private mode); Muse Voice Transcribe and SAM 3.1 are experimental, unmeasured | [Meta models used](#meta-models-used), `muse.py` |
 | Live link | https://role-assistants-662084666675.us-central1.run.app | [docs/MEASURED.md](docs/MEASURED.md), set 16: one run on the deployed revision `role-assistants-00034-9z8`, 17 of 17 steps ok at desktop and 375 px width |
-| Demo video | `static/video/welcome.mp4` in this repository (also played on the home page); the submitted video is the file `demo_video/golden_path_2026-11-01_v19.mp4` (URL to be added by the owner) | [static/video/welcome.mp4](static/video/welcome.mp4) |
+| Demo video | Submitted video: https://youtu.be/n30I40GJSMQ (178 s, cut from the V19 recording). The home page plays a 127 s cut of the same recording, in this repository as `static/video/welcome.mp4`. | [YouTube](https://youtu.be/n30I40GJSMQ), [static/video/welcome.mp4](static/video/welcome.mp4) |
 | Public repository | https://github.com/hoachauphuoc/MetaAIHackathon, MIT | [LICENSE](LICENSE) |
-| Built during the building period | First commit `04ef41b`, 27 Oct 2026 00:09 ET; from this first commit on (it holds the smoke script and the dev skills) | [Building period](#building-period-built-during-the-hackathon), `git log --reverse --format='%h %aI %s'` |
+| Built during the building period | First commit `04ef41b`, 27 Oct 2026 00:09 ET; every commit in this repository is from the building period | [Building period](#building-period-built-during-the-hackathon), `git log --reverse --format='%h %aI %s'` |
 | Written before the building period | The idea and planning notes written on 26 Oct 2026 (planning, API study, feature research, design reviews) are **not** in this repository | [Building period](#building-period-built-during-the-hackathon) |
 
 ## What is measured
 
 Every figure below has a set number in [docs/MEASURED.md](docs/MEASURED.md); all sets are small, synthetic and run by the author.
 
-- **Measured:** 31.9 s app-side setup (one run); 31 of 31 end-to-end checks (set 14, one run, local build).
+- **Strongest proof:** contradictions the rules cannot see, 10 of 10 flagged by Spark with 1 false alarm in 10 (set 11); 31 of 31 end-to-end checks on real models (set 14).
 
 | Figure | What it is |
 |---|---|
@@ -41,6 +41,7 @@ Every figure below has a set number in [docs/MEASURED.md](docs/MEASURED.md); all
 | 10 of 10, 1 false alarm in 10 | Contradictions the rules cannot see (0 of 10) flagged by the Spark check, with 1 false alarm on 10 clean packages (set 11, author-written cases) |
 | 39.5 s | The deployed link walked end to end on desktop, Finance answered by Muse-Glimmer-30B, Glimmer already awake (set 15, 2026-11-01, one run; the revision was not recorded) |
 | 60.7 s | The deployed revision `role-assistants-00034-9z8` walked at desktop and 375 px width, 17 of 17 steps ok, Glimmer already awake (set 16, 2026-11-01, one run) |
+| Failed, 240 s | The deployed link walked after about 12.5 minutes idle (Glimmer probably asleep): the Finance step timed out at 240 s and the order did not complete; cause not diagnosed (set 17, 2026-11-02, one run) |
 
 Not measured: time and mental space freed. No hours saved are claimed; the hand-timed run is `scripts/timed_run.py` and has no by-hand time yet.
 
@@ -80,9 +81,9 @@ Full table and caveats: [docs/MODELS.md](docs/MODELS.md) and [docs/MEASURED.md](
 
 ## Privacy and safety design (each line has a test)
 
-- **Chat stays in the employee's browser**, not on the server; no per-person metrics are kept.
+- **Chat history is kept in the employee's browser**; the server passes each message to the model and stores none; no per-person metrics are kept.
 - **Masking first:** emails, phone numbers, card numbers, keys and listed client names are masked in the browser before a model sees the text.
-- **Standard mode only:** `-contributor` model ids are refused. The public demo runs on free hackathon credits that Meta may use for product improvement, so it is for sample data only.
+- **Standard mode only:** chat, chart and check calls refuse any `-contributor` model id; Voice and SAM use fixed Standard ids. The public demo runs on free hackathon credits that Meta may use for product improvement, so it is for sample data only.
 - **Isolated sandboxes:** one sandbox cannot read another.
 - **Blocked stays blocked:** a handoff priced below cost stays blocked even when its note says to mark it clear.
 - **Model text never becomes HTML:** the UI uses `textContent` only and the check script fails on `innerHTML`.
@@ -121,7 +122,7 @@ python scripts/record_demo.py              # records the golden path as a captio
 python scripts/warm_glimmer.py 45          # wakes the Private-mode endpoint, keeps it warm 45 minutes, prints the wake time
 ```
 
-Today this is a demo only; real use means deploying it yourself. Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager). A push to `main` runs the same checks in GitHub Actions (`.github/workflows/deploy.yml`) and, when they pass and the `GCP_SA_KEY` secret is set, runs that script. The Private-mode endpoint scales to zero; the owner intends to run `GLIMMER_MIN_CONTAINERS=1 modal deploy scripts/private_modal.py` for the judging days only, which keeps one container awake (billed by the second), and a plain `modal deploy` turns it off. Opening the order form or starting a demo also wakes it (one request, no data, at most every two minutes): that shortens a cold start, it does not remove it.
+Today this is a demo only; real use means deploying it yourself. Deploy: `scripts/deploy.ps1 -Project <id>` (Cloud Run, one instance, secrets from Secret Manager). A push to `main` runs the same checks in GitHub Actions (`.github/workflows/deploy.yml`) and, when they pass and the `GCP_SA_KEY` secret is set, runs that script. The Private-mode endpoint scales to zero; the owner intends to run `GLIMMER_MIN_CONTAINERS=1 modal deploy scripts/private_modal.py` for the judging days only, which keeps one container awake (billed by the second), and a plain `modal deploy` turns it off. That is an intention, not a guarantee: a visitor may still meet a cold endpoint (set 17). Opening the order form or starting a demo also wakes it (one request, no data, at most every two minutes): that shortens a cold start, it does not remove it.
 
 ## License
 
