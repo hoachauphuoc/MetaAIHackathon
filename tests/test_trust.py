@@ -23,11 +23,11 @@ def test_no_table_or_column_can_hold_chat_or_person_metrics(client):
             assert not any(w in col for w in ("message", "chat", "prompt", "reply", "score", "rating"))
 
 
-def test_trust_lists_forbidden_skills_and_the_two_standard_models(client):
+def test_trust_lists_forbidden_skills_and_the_four_standard_models(client):
     data = client.get("/api/trust").json
     assert {"evaluate_person", "rank_employees", "hr_decision", "monitor_activity"} == set(
         data["skills"]["forbidden"])
-    assert {m["id"] for m in data["models"]} == {muse.WONDER, muse.SPARK}
+    assert {m["id"] for m in data["models"]} == {muse.WONDER, muse.SPARK, muse.TRANSCRIBE, muse.SEGMENT}
     assert all(not m["id"].endswith("-contributor") for m in data["models"])
 
 

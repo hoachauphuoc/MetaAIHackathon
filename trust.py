@@ -74,6 +74,9 @@ MODEL_USE = {
     muse.SPARK: "Writes assistant briefs, answers chat, calls tools, checks and summarises handoffs, "
                 "suggests a fix for a returned package, reads photos of paper documents, writes the "
                 "owner's morning brief, plans a new person's first days and drafts a leaver's handover.",
+    muse.TRANSCRIBE: "Turns a spoken job note into text (experimental, not measured).",
+    muse.SEGMENT: "Finds what you name in a photo so the browser can cover it before Spark reads it "
+                  "(experimental, not measured).",
 }
 
 

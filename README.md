@@ -88,7 +88,7 @@ Full table and caveats: [docs/MODELS.md](docs/MODELS.md) and [docs/MEASURED.md](
 - **Blocked stays blocked:** a handoff priced below cost stays blocked even when its note says to mark it clear.
 - **Model text never becomes HTML:** the UI uses `textContent` only and the check script fails on `innerHTML`.
 
-`/trust` states what the app stores and which chart and chat models it uses, generated from the running configuration; Voice and SAM, both experimental, are listed in [docs/MODELS.md](docs/MODELS.md). The full table of tests, the OWASP mapping, and claim and proof are in [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md).
+`/trust` states what the app stores and which Meta API models it calls (Wonder, Spark, and Voice and SAM marked experimental, not measured), generated from the running configuration; details are in [docs/MODELS.md](docs/MODELS.md). The full table of tests, the OWASP mapping, and claim and proof are in [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md).
 
 ## Founder's story: why Role Assistant Foundry
 
